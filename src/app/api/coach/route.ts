@@ -229,10 +229,21 @@ You must output your response STRICTLY as a JSON object matching this schema:
 }
 Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
 
+    const draftSuggestionSystemPrompt = `You are a World Champion VGC Coach. The player is in the Team Preview phase against their opponent.
+Your task is to analyze the Player's 6-man roster and the Opponent's 6-man roster, and suggest exactly 4 Pokémon for the player to bring into the match.
+
+You must output your response STRICTLY as a JSON object matching this schema:
+{
+  "suggestedDraft": ["Pokemon A", "Pokemon B", "Pokemon C", "Pokemon D"],
+  "rationale": "A brief explanation of why these 4 Pokémon optimally counter the opponent's composition."
+}
+Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
+
     const systemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "fetch_meta" ? fetchMetaSystemPrompt
       : action === "turn1" ? turn1SystemPrompt
+      : action === "draft_suggestion" ? draftSuggestionSystemPrompt
       : auditSystemPrompt;
     const userPrompt = action === "optimize"
       ? "Calculate the optimal 66-SP distributions for this team.\nTeam: " + JSON.stringify(team, null, 2)
@@ -242,6 +253,8 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
       ? "Generate 5 distinct, high-level competitive VGC 2026 Regulation M-B tournament teams. Return ONLY the JSON object."
       : action === "turn1"
       ? "Turn 1 has begun. Recalculate tactics.\nPlayer Locked Roster: " + JSON.stringify(playerLockedRoster, null, 2) + "\nOpponent Known Leads: " + JSON.stringify(opponentKnownLeads, null, 2) + "\nOpponent Potential Backline: " + JSON.stringify(opponentPotentialBackline, null, 2) + (currentMatchContext ? `\n\nCRITICAL UPDATE: This is Turn 2+. The user has provided the following context for what just happened:\n"${currentMatchContext}"\nRecalculate all tactics based on this new board state.` : "")
+      : action === "draft_suggestion"
+      ? "Analyze the matchup and suggest 4 Pokémon for the player to bring.\nPlayer Roster: " + JSON.stringify(team, null, 2) + "\nOpponent Roster: " + JSON.stringify(opponent, null, 2)
       : "Analyze the following team and provide a VGC Audit and Lead Plan.\nTeam: " + JSON.stringify(team, null, 2) + (opponent ? "\nOpponent: " + JSON.stringify(opponent, null, 2) : "");
 
     const apiKey = process.env.AI_API_KEY;
@@ -304,6 +317,13 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
             ]
           },
           contingency_plans: []
+        });
+      }
+
+      if (action === "draft_suggestion") {
+        return NextResponse.json({
+          suggestedDraft: [team[0]?.name, team[1]?.name, team[2]?.name, team[3]?.name].filter(Boolean),
+          rationale: "Default safe draft prioritizing balanced typing and speed control."
         });
       }
 

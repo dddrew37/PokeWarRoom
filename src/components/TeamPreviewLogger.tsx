@@ -29,6 +29,10 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
   const [matchPhase, setMatchPhase] = useState<"pregame" | "turn1">("pregame");
   const [playerLockedIndices, setPlayerLockedIndices] = useState<number[]>([]);
   const [opponentLeadIndices, setOpponentLeadIndices] = useState<number[]>([]);
+  
+  // AI Draft Assistant
+  const [isDrafting, setIsDrafting] = useState(false);
+  const [coachNotes, setCoachNotes] = useState("");
 
   // Auto-focus on mount
   useEffect(() => {
@@ -112,6 +116,43 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
       setPlaybookData(data);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleSuggestDraft = async () => {
+    setIsDrafting(true);
+    setCoachNotes("");
+    try {
+      const payload = {
+        action: "draft_suggestion",
+        team: playerTeam,
+        opponent: selected
+      };
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      
+      if (data.suggestedDraft) {
+        const newIndices: number[] = [];
+        data.suggestedDraft.forEach((name: string) => {
+          const idx = playerTeam.findIndex(p => normalize(p.name) === normalize(name));
+          if (idx !== -1 && newIndices.length < 4 && !newIndices.includes(idx)) {
+            newIndices.push(idx);
+          }
+        });
+        setPlayerLockedIndices(newIndices);
+      }
+      if (data.rationale) {
+        setCoachNotes(data.rationale);
+      }
+    } catch (e) {
+      console.error(e);
+      setCoachNotes("Failed to fetch draft suggestion.");
+    } finally {
+      setIsDrafting(false);
     }
   };
 
@@ -236,6 +277,33 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
             );
           })}
         </div>
+
+        {/* AI Draft Assistant */}
+        {matchPhase === "turn1" && selected.length === 6 && (
+          <div className="pt-2 flex flex-col gap-3">
+            <button
+              onClick={handleSuggestDraft}
+              disabled={isDrafting}
+              className="w-full py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-blue-600/20 border-blue-500/50 text-blue-400 hover:bg-blue-600/30 hover:border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.15)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
+            >
+              {isDrafting ? "Analyzing Matchup..." : "💡 Ask AI Coach: Suggest Draft"}
+            </button>
+            
+            {coachNotes && (
+              <div 
+                className="bg-blue-950/40 border border-blue-900/50 rounded-xl p-4 cursor-pointer hover:border-blue-700/50 transition-colors relative group animate-in fade-in slide-in-from-top-2 duration-300"
+                onClick={() => setCoachNotes("")}
+              >
+                <div className="absolute top-2 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-400 text-xs font-bold">✕ Dismiss</div>
+                <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Coach's Notes
+                </h4>
+                <p className="text-sm text-blue-100 leading-relaxed font-medium">{coachNotes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right Column: Opponent Logger */}
