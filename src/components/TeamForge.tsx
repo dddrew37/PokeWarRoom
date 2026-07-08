@@ -22,6 +22,24 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
   const [savedTeams, setSavedTeams] = useState<any[]>([]);
 
   const [showMetaModal, setShowMetaModal] = useState(false);
+  const [isFetchingMeta, setIsFetchingMeta] = useState(false);
+  const [liveMetaTeams, setLiveMetaTeams] = useState<{ name: string; paste: string; description?: string }[]>(metaTeamsData);
+
+  const handleFetchLadderTeams = async () => {
+    setIsFetchingMeta(true);
+    try {
+      const res = await fetch("/api/ladder-teams");
+      if (!res.ok) throw new Error("API error " + res.status);
+      const data = await res.json();
+      if (Array.isArray(data?.teams) && data.teams.length > 0) {
+        setLiveMetaTeams(data.teams);
+      }
+    } catch (e) {
+      console.error("Ladder teams scrape failed, keeping static fallback:", e);
+    } finally {
+      setIsFetchingMeta(false);
+    }
+  };
 
   // Team name input — replaces the prompt() for saving rosters
   const [teamName, setTeamName] = useState("");
@@ -368,10 +386,11 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 Load Roster
               </button>
               <button
-                onClick={() => setShowMetaModal(true)}
-                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-amber-600/20 border border-amber-500/50 text-amber-400 hover:bg-amber-600/30 hover:border-amber-500 uppercase tracking-widest"
+                onClick={() => { setShowMetaModal(true); handleFetchLadderTeams(); }}
+                disabled={isFetchingMeta}
+                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-amber-600/20 border border-amber-500/50 text-amber-400 hover:bg-amber-600/30 hover:border-amber-500 uppercase tracking-widest flex items-center justify-center gap-2"
               >
-                Load Meta Core
+                {isFetchingMeta ? "Scraping..." : "Load Ladder Team"}
               </button>
             </div>
             
@@ -476,7 +495,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-amber-500">Regulation M-B Meta Cores</h3>
+              <h3 className="text-xl font-black text-amber-500">Ladder Teams (6-Man)</h3>
               <button 
                 onClick={() => setShowMetaModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors"
@@ -486,18 +505,27 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
             </div>
 
             <div className="overflow-y-auto space-y-3 pr-2">
-              {metaTeamsData.map((team, idx) => (
-                <div 
-                  key={idx}
-                  onClick={() => handleLoadMetaTeam(team.paste)}
-                  className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500/50 transition-colors group"
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-black text-white group-hover:text-amber-400 transition-colors">{team.name}</h4>
+              {isFetchingMeta ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 animate-pulse">
+                    <div className="h-4 bg-zinc-800 rounded w-2/5 mb-2"></div>
+                    <div className="h-3 bg-zinc-800 rounded w-4/5"></div>
                   </div>
-                  <p className="text-xs text-zinc-400">{team.description}</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                liveMetaTeams.map((team, idx) => (
+                  <div 
+                    key={idx}
+                    onClick={() => handleLoadMetaTeam(team.paste)}
+                    className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500/50 transition-colors group"
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <h4 className="font-black text-white group-hover:text-amber-400 transition-colors">{team.name}</h4>
+                    </div>
+                    {team.description && <p className="text-xs text-zinc-400">{team.description}</p>}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -505,19 +533,24 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
 
       {/* Assessment Modal */}
       {assessmentResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto py-12">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl relative">
-            <button 
-              onClick={() => setAssessmentResult(null)}
-              className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 mb-6 text-sm font-bold"
-            >
-              ← Return to Roster
-            </button>
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-black text-indigo-400">Team Assessment</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-50 bg-zinc-900 p-6 border-b border-zinc-800 shadow-sm flex flex-col gap-4">
+              <button 
+                onClick={() => setAssessmentResult(null)}
+                className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold w-fit"
+              >
+                ← Close Assessment & Return to Roster
+              </button>
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-black text-indigo-400">Team Assessment</h3>
+              </div>
             </div>
             
-            <div className="space-y-6 text-zinc-300">
+            {/* Scrollable Content */}
+            <div className="p-6 overflow-y-auto space-y-6 text-zinc-300">
               <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-4">
                 <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">Verdict</h4>
                 <p className="text-sm font-medium">{assessmentResult.overall_verdict}</p>

@@ -93,8 +93,8 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
   const handleFetchLadderTeams = async () => {
     setIsFetchingMeta(true);
     try {
-      // GET /api/limitless — scrapes play.limitlesstcg.com for real tournament teams
-      const res = await fetch("/api/limitless");
+      // GET /api/ladder-teams — scrapes play.limitlesstcg.com for real tournament teams
+      const res = await fetch("/api/ladder-teams");
       if (!res.ok) throw new Error("API error " + res.status);
       const data = await res.json();
       // Defensive: only update if the scraper returned a valid teams array

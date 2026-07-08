@@ -39,7 +39,7 @@ async function findLatestTournamentId(): Promise<string | null> {
     const $ = load(html);
 
     let found: string | null = null;
-    $('table.completed-tournaments tr[data-format="1"]').each((_i, row) => {
+    $('table.completed-tournaments tr').each((_i, row) => {
       if (found) return;
       const href = $(row).find('td a[href*="/tournament/"]').first().attr('href') ?? '';
       // href shape: /tournament/{id}/standings
