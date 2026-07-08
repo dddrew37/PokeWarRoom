@@ -10,6 +10,11 @@ export interface PlaybookData {
     preserve_targets: string[];
     top_findings: string;
   };
+  decision_audit?: {
+    speed_tier_analysis: string;
+    primary_threat_identified: string;
+    risk_assessment_justification: string;
+  };
   primary_win_condition?: FlowchartNode;
   contingency_plans?: FlowchartNode[];
   default_leads?: string[]; // kept for backwards compatibility with old saves
@@ -54,6 +59,7 @@ export default function LivePlaybook({
   onNextTurn?: (context: string) => Promise<void>
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showAuditLogic, setShowAuditLogic] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [matchContext, setMatchContext] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -147,6 +153,35 @@ export default function LivePlaybook({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* AI Decision Logic Audit */}
+      {data.decision_audit && (
+        <div className="px-6 pb-6">
+          <button 
+            onClick={() => setShowAuditLogic(!showAuditLogic)}
+            className="flex items-center gap-2 text-[11px] font-black tracking-widest uppercase text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
+          >
+            {showAuditLogic ? "▼" : "▶"} ??? Audit AI Logic
+          </button>
+          
+          {showAuditLogic && (
+            <div className="bg-black/80 border border-zinc-800/80 rounded-2xl p-6 font-mono text-xs space-y-6 shadow-inner animate-in fade-in slide-in-from-top-2 duration-300">
+              <div>
+                <span className="text-emerald-500 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; speed_tier_analysis</span>
+                <p className="text-zinc-400 leading-relaxed">{data.decision_audit.speed_tier_analysis}</p>
+              </div>
+              <div className="border-t border-zinc-800/50 pt-4">
+                <span className="text-red-400 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; primary_threat_identified</span>
+                <p className="text-zinc-400 leading-relaxed">{data.decision_audit.primary_threat_identified}</p>
+              </div>
+              <div className="border-t border-zinc-800/50 pt-4">
+                <span className="text-blue-400 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; risk_assessment_justification</span>
+                <p className="text-zinc-400 leading-relaxed">{data.decision_audit.risk_assessment_justification}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

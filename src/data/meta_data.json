@@ -3788,7 +3788,20 @@
         "Pollen Puff",
         "Stomping Tantrum",
         "Tera Blast"
-      ]
+      ],
+      "topItems": [
+        "Rocky Helmet",
+        "Sitrus Berry"
+      ],
+      "topTeras": [
+        "Water",
+        "Dark",
+        "Fire"
+      ],
+      "commonSpreads": [
+        "252 HP / 156 Def / 100 SpD"
+      ],
+      "role": "Redirection Support / Spore Enabler / Regenerator Pivot"
     },
     {
       "id": "ampharos",
@@ -4897,7 +4910,20 @@
         "Electro Shot",
         "Hard Press",
         "Dragon Cheer"
-      ]
+      ],
+      "topItems": [
+        "Assault Vest",
+        "Power Herb"
+      ],
+      "topTeras": [
+        "Fairy",
+        "Flying",
+        "Bug"
+      ],
+      "commonSpreads": [
+        "252 HP / 252 SpA / 4 Spe"
+      ],
+      "role": "Special Sweeper / Rain Abuser / Stamina Wall"
     },
     {
       "id": "archen",
@@ -12675,7 +12701,20 @@
         "Tera Blast",
         "Snowscape",
         "Trailblaze"
-      ]
+      ],
+      "topItems": [
+        "Clear Amulet",
+        "Sitrus Berry"
+      ],
+      "topTeras": [
+        "Water",
+        "Fire",
+        "Ice"
+      ],
+      "commonSpreads": [
+        "252 HP / 252 Atk / 4 SpD"
+      ],
+      "role": "Trick Room Sweeper / Physical Wallbreaker"
     },
     {
       "id": "calyrex-shadow",
@@ -12790,7 +12829,21 @@
         "Lash Out",
         "Astral Barrage",
         "Tera Blast"
-      ]
+      ],
+      "topItems": [
+        "Focus Sash",
+        "Spell Tag",
+        "Life Orb"
+      ],
+      "topTeras": [
+        "Ghost",
+        "Fairy",
+        "Normal"
+      ],
+      "commonSpreads": [
+        "4 HP / 252 SpA / 252 Spe"
+      ],
+      "role": "Hyper Fast Special Sweeper / Late Game Cleaner"
     },
     {
       "id": "camerupt",
@@ -49305,7 +49358,21 @@
         "Tera Blast",
         "Trailblaze",
         "Temper Flare"
-      ]
+      ],
+      "topItems": [
+        "Sitrus Berry",
+        "Safety Goggles",
+        "Assault Vest"
+      ],
+      "topTeras": [
+        "Ghost",
+        "Grass",
+        "Water"
+      ],
+      "commonSpreads": [
+        "252 HP / 156 Def / 100 SpD"
+      ],
+      "role": "Defensive Pivot / Intimidate Support / Fake Out"
     },
     {
       "id": "indeedee-female",
@@ -109577,7 +109644,20 @@
         "Ice Spinner",
         "Trailblaze",
         "Chilling Water"
-      ]
+      ],
+      "topItems": [
+        "Mystic Water",
+        "Choice Scarf",
+        "Focus Sash"
+      ],
+      "topTeras": [
+        "Water",
+        "Grass"
+      ],
+      "commonSpreads": [
+        "4 HP / 252 Atk / 252 Spe"
+      ],
+      "role": "Physical Wallbreaker / Guaranteed Critical Hits / Protect Bypass"
     },
     {
       "id": "urshifu-single-strike",
@@ -117971,7 +118051,17 @@
         "Play Rough",
         "Swords Dance",
         "Taunt"
-      ]
+      ],
+      "topItems": [
+        "Wellspring Mask"
+      ],
+      "topTeras": [
+        "Water"
+      ],
+      "commonSpreads": [
+        "252 HP / 148 Def / 108 Spe"
+      ],
+      "role": "Follow Me Support / Physical Attacker"
     },
     {
       "id": "urshifurapidstrike",
@@ -117998,7 +118088,20 @@
         "Detect",
         "U-turn",
         "Taunt"
-      ]
+      ],
+      "topItems": [
+        "Mystic Water",
+        "Choice Scarf",
+        "Focus Sash"
+      ],
+      "topTeras": [
+        "Water",
+        "Grass"
+      ],
+      "commonSpreads": [
+        "4 HP / 252 Atk / 252 Spe"
+      ],
+      "role": "Physical Wallbreaker / Guaranteed Critical Hits / Protect Bypass"
     },
     {
       "id": "urshifusinglestrike",
@@ -118052,7 +118155,20 @@
         "Protect",
         "Seed Bomb",
         "Swords Dance"
-      ]
+      ],
+      "topItems": [
+        "Clear Amulet",
+        "Sitrus Berry"
+      ],
+      "topTeras": [
+        "Water",
+        "Fire",
+        "Ice"
+      ],
+      "commonSpreads": [
+        "252 HP / 252 Atk / 4 SpD"
+      ],
+      "role": "Trick Room Sweeper / Physical Wallbreaker"
     },
     {
       "id": "calyrexshadow",
@@ -118079,7 +118195,21 @@
         "Protect",
         "Nasty Plot",
         "Draining Kiss"
-      ]
+      ],
+      "topItems": [
+        "Focus Sash",
+        "Spell Tag",
+        "Life Orb"
+      ],
+      "topTeras": [
+        "Ghost",
+        "Fairy",
+        "Normal"
+      ],
+      "commonSpreads": [
+        "4 HP / 252 SpA / 252 Spe"
+      ],
+      "role": "Hyper Fast Special Sweeper / Late Game Cleaner"
     },
     {
       "id": "froslassmega",
@@ -118135,7 +118265,18 @@
         "Protect",
         "Overheat",
         "Energy Ball"
-      ]
+      ],
+      "topItems": [
+        "Scovillainite"
+      ],
+      "topTeras": [
+        "Fire",
+        "Grass"
+      ],
+      "commonSpreads": [
+        "252 SpA / 4 SpD / 252 Spe"
+      ],
+      "role": "Sun Sweeper / Fast Special Attacker / Chlorophyll Abuser"
     },
     {
       "id": "charizardmegay",
@@ -118216,7 +118357,18 @@
         "Icy Wind",
         "Taunt",
         "Will-O-Wisp"
-      ]
+      ],
+      "topItems": [
+        "Gengarite"
+      ],
+      "topTeras": [
+        "Normal",
+        "Fairy"
+      ],
+      "commonSpreads": [
+        "4 HP / 252 SpA / 252 Spe"
+      ],
+      "role": "Shadow Tag Trapper / Perish Song Enabler / Fast Special Attacker"
     }
   ],
   "legal_items": [

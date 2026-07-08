@@ -5,6 +5,7 @@ import { metaPokemon, Pokemon, POKEBALL_FALLBACK } from "../lib/pokemon";
 import { parsePokePaste, ParsedPokemon } from "../lib/parser";
 import metaTeamsData from "../data/meta_teams.json";
 import LivePlaybook from "./LivePlaybook";
+import SpeedBoard from "./SpeedBoard";
 
 const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -195,6 +196,18 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
   if (playbookData) {
     return (
       <div className="w-full flex flex-col items-center">
+        {matchPhase === "turn1" && (
+          <div className="w-full max-w-2xl px-6 pt-4">
+            <SpeedBoard 
+              playerMons={
+                draftLeadsIndices.length === 2 
+                  ? draftLeadsIndices.map(i => playerTeam[i])
+                  : playerLockedIndices.slice(0, 2).map(i => playerTeam[i])
+              } 
+              opponentMons={opponentLeadIndices.map(i => selected[i])} 
+            />
+          </div>
+        )}
         <LivePlaybook 
           team={selected} 
           data={playbookData} 

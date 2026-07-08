@@ -13,5 +13,15 @@
     "name": "Hyper Offense",
     "description": "Incredibly fast Calyrex-Shadow core featuring Chi-Yu's Beads of Ruin to boost Astral Barrage.",
     "paste": "Calyrex-Shadow @ Focus Sash\n\nAbility: As One (Spectrier)\n\nTimid Nature\n\n- Astral Barrage\n- Expanding Force\n- Nasty Plot\n- Protect\n\n\nChi-Yu @ Choice Scarf\n\nAbility: Beads of Ruin\n\nTimid Nature\n\n- Heat Wave\n- Dark Pulse\n- Snarl\n- Overheat\n\n\nWhimsicott @ Focus Sash\n\nAbility: Prankster\n\nTimid Nature\n\n- Tailwind\n- Moonblast\n- Encore\n- Protect\n\n\nUrshifu-Single-Strike @ Black Glasses\n\nAbility: Unseen Fist\n\nAdamant Nature\n\n- Wicked Blow\n- Close Combat\n- Sucker Punch\n- Detect\n\n\nRaging Bolt @ Booster Energy\n\nAbility: Protosynthesis\n\nModest Nature\n\n- Thunderclap\n- Thunderbolt\n- Draco Meteor\n- Protect\n\n\nClefairy @ Eviolite\n\nAbility: Friend Guard\n\nBold Nature\n\n- Follow Me\n- Helping Hand\n- Icy Wind\n- Protect"
+  },
+  {
+    "name": "Perish Trap",
+    "description": "Defensive control team that traps opponents with Gothitelle's Shadow Tag while stalling out Perish Song turns.",
+    "paste": "Gothitelle @ Sitrus Berry\n\nAbility: Shadow Tag\n\nCalm Nature\n\n- Fake Out\n- Psychic\n- Trick Room\n- Protect\n\n\nAmoonguss @ Rocky Helmet\n\nAbility: Regenerator\n\nRelaxed Nature\n\n- Spore\n- Rage Powder\n- Pollen Puff\n- Protect\n\n\nPolitoed @ Sitrus Berry\n\nAbility: Drizzle\n\nCalm Nature\n\n- Perish Song\n- Scald\n- Icy Wind\n- Protect\n\n\nIncineroar @ Assault Vest\n\nAbility: Intimidate\n\nCareful Nature\n\n- Flare Blitz\n- Knock Off\n- Parting Shot\n- Fake Out\n\n\nFlutter Mane @ Booster Energy\n\nAbility: Protosynthesis\n\nTimid Nature\n\n- Perish Song\n- Shadow Ball\n- Dazzling Gleam\n- Protect\n\n\nRaging Bolt @ Booster Energy\n\nAbility: Protosynthesis\n\nModest Nature\n\n- Thunderclap\n- Thunderbolt\n- Draco Meteor\n- Protect"
+  },
+  {
+    "name": "Dual-Mega Offense",
+    "description": "Aggressive Regulation M-B core utilizing multiple Mega options depending on the matchup.",
+    "paste": "Scovillain-Mega @ Scovillainite\n\nAbility: Moody\n\nTimid Nature\n\n- Flamethrower\n- Energy Ball\n- Spicy Extract\n- Protect\n\n\nGengar-Mega @ Gengarite\n\nAbility: Shadow Tag\n\nTimid Nature\n\n- Sludge Bomb\n- Shadow Ball\n- Icy Wind\n- Protect\n\n\nRillaboom @ Assault Vest\n\nAbility: Grassy Surge\n\nAdamant Nature\n\n- Wood Hammer\n- Grassy Glide\n- U-turn\n- Fake Out\n\n\nUrshifu-Rapid-Strike @ Mystic Water\n\nAbility: Unseen Fist\n\nAdamant Nature\n\n- Surging Strikes\n- Close Combat\n- Aqua Jet\n- Detect\n\n\nTornadus @ Focus Sash\n\nAbility: Prankster\n\nTimid Nature\n\n- Bleakwind Storm\n- Tailwind\n- Taunt\n- Protect\n\n\nClefairy @ Eviolite\n\nAbility: Friend Guard\n\nBold Nature\n\n- Follow Me\n- Helping Hand\n- Icy Wind\n- Protect"
   }
 ]

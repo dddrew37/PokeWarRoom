@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import staticMetaTeams from '../../../data/meta_teams.json';
+import metaData from '../../../data/meta_data.json';
 
 export async function POST(request: Request) {
   try {
@@ -72,6 +73,17 @@ Each flowchart MUST contain between 3 and 6 turns. Do NOT stop after Turn 1. The
 
 
 
+# CHAIN OF THOUGHT: DECISION AUDIT (CRITICAL)
+
+Before mapping the \`turns\`, you MUST evaluate the board state step-by-step.
+Your JSON MUST include a \`decision_audit\` object containing:
+- \`speed_tier_analysis\`: Who goes first based on base stats, Tailwind, or Trick Room.
+- \`primary_threat_identified\`: Which opponent Pokémon poses the immediate highest risk.
+- \`risk_assessment_justification\`: Why you chose the primary strategy instead of pivoting or using an alternative plan.
+This forces you to "show your work" using strict competitive VGC logic.
+
+
+
 # VGC DOUBLES SCHEMA REQUIREMENT
 
 This is a VGC Doubles format. Every turn MUST have exactly 2 player actions. You MUST explicitly name the 2 Leads and the 2 In The Back for each path.
@@ -85,6 +97,11 @@ You must output your response STRICTLY as a JSON object matching this schema so 
     "team_identity": "Brief summary of what the team wants to establish early.",
     "preserve_targets": ["Pokemon Name"],
     "top_findings": "Highest impact structural observations."
+  },
+  "decision_audit": {
+    "speed_tier_analysis": "Explanation of speed control.",
+    "primary_threat_identified": "Analysis of the biggest threat.",
+    "risk_assessment_justification": "Why this specific play is the best."
   },
   "primary_win_condition": {
     "path_name": "Primary Win Condition",
@@ -199,12 +216,23 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 # VGC DOUBLES SCHEMA REQUIREMENT
 Every turn MUST have exactly 2 player actions. You MUST explicitly name the 2 Leads and the 2 In The Back for each path.
 
+# CHAIN OF THOUGHT: DECISION AUDIT (CRITICAL)
+Before providing the turn actions, you MUST evaluate the board state step-by-step. Include a \`decision_audit\` object containing:
+- \`speed_tier_analysis\`: Who goes first based on base stats, Tailwind, or Trick Room.
+- \`primary_threat_identified\`: Which opponent Pokémon poses the immediate highest risk.
+- \`risk_assessment_justification\`: Why you chose the primary strategy instead of pivoting or using an alternative plan.
+
 You must output your response STRICTLY as a JSON object matching this schema:
 {
   "audit": {
     "team_identity": "Matchup analysis of the opening board state.",
     "preserve_targets": ["Crucial Pokemon to keep alive against their backline"],
     "top_findings": "Immediate Turn 1 tactical threats and positioning advantages."
+  },
+  "decision_audit": {
+    "speed_tier_analysis": "Explanation of speed control.",
+    "primary_threat_identified": "Analysis of the biggest threat.",
+    "risk_assessment_justification": "Why this specific play is the best."
   },
   "primary_win_condition": {
     "path_name": "Turn 1 Execution",
@@ -244,12 +272,50 @@ You must output your response STRICTLY as a JSON object matching this schema:
 }
 Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
 
-    const systemPrompt = action === "optimize" ? optimizeSystemPrompt
+    let finalSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "fetch_meta" ? fetchMetaSystemPrompt
       : action === "turn1" ? turn1SystemPrompt
       : action === "draft_suggestion" ? draftSuggestionSystemPrompt
       : auditSystemPrompt;
+
+    if (action === "draft_suggestion" || action === "audit" || action === "turn1") {
+      let oppArray = opponent || [];
+      if (action === "turn1") {
+        oppArray = [...(opponentKnownLeads || []), ...(opponentPotentialBackline || [])];
+      }
+      
+      if (oppArray.length > 0) {
+        let detectedArchetype = "Unknown";
+        let bestMatchCount = 0;
+        
+        staticMetaTeams.forEach((archetype: any) => {
+          let matchCount = 0;
+          oppArray.forEach((p: any) => {
+            if (archetype.paste.toLowerCase().includes(p.name.toLowerCase())) {
+              matchCount++;
+            }
+          });
+          if (matchCount >= 3 && matchCount > bestMatchCount) {
+            bestMatchCount = matchCount;
+            detectedArchetype = archetype.name;
+          }
+        });
+
+        let metaProfiles = "";
+        oppArray.forEach((p: any) => {
+          const normalized = p.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const match = metaData.pokemon.find((m: any) => m.id === normalized || m.name.toLowerCase() === p.name.toLowerCase());
+          if (match && match.role) {
+            metaProfiles += `- ${p.name}: Typically runs [${match.topItems.join(', ')}], Tera [${match.topTeras.join(', ')}]. Role: [${match.role}].\n`;
+          }
+        });
+
+        const metaContextInjection = `\n\n# OPPONENT META DATA (CRITICAL)\n- Archetype Detected: ${detectedArchetype}\n\n${metaProfiles}\nCRITICAL INSTRUCTION: Base your tactical flowchart and damage assessments on the OPPONENT META DATA provided above. Do not guess their items or roles.`;
+        finalSystemPrompt += metaContextInjection;
+      }
+    }
+
     const userPrompt = action === "optimize"
       ? "Calculate the optimal 66-SP distributions for this team.\nTeam: " + JSON.stringify(team, null, 2)
       : action === "assess"
@@ -307,6 +373,11 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
             preserve_targets: ["Your primary damage dealer"],
             top_findings: "The opponent's known leads dictate immediate defensive switching or Fake Out pressure."
           },
+          decision_audit: {
+            speed_tier_analysis: "Opponent outspeeds with natural base stats unless we use Tailwind.",
+            primary_threat_identified: "Opponent's offensive lead.",
+            risk_assessment_justification: "Protecting allows scouting their choice of target without risking a knockout."
+          },
           primary_win_condition: {
             path_name: "Optimal Turn 1 Execution",
             leads: ["Your Lead 1", "Your Lead 2"],
@@ -340,6 +411,11 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
           team_identity: "Hyper-Offense Tailwind featuring standard priority and redirection.",
           preserve_targets: ["Urshifu", "Flutter Mane"],
           top_findings: "Lacks reliable speed control if Tornadus is denied setup. Relies heavily on Focus Sash and immediate pressure."
+        },
+        decision_audit: {
+          speed_tier_analysis: "Tornadus guarantees we move first with Prankster Tailwind, making Urshifu the fastest threat on the board.",
+          primary_threat_identified: "Incineroar's Intimidate and Fake Out threaten our setup.",
+          risk_assessment_justification: "Ignoring Intimidate with Surging Strikes is optimal to remove early pressure."
         },
         primary_win_condition: {
           path_name: "Primary Win Condition: Tailwind Aggro",
@@ -423,7 +499,7 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
       body: JSON.stringify({
         model: model,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: finalSystemPrompt },
           { role: "user", content: userPrompt }
         ],
         response_format: { type: "json_object" },
