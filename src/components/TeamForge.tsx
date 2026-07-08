@@ -507,14 +507,14 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
       {assessmentResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto py-12">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-2xl shadow-2xl relative">
+            <button 
+              onClick={() => setAssessmentResult(null)}
+              className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 mb-6 text-sm font-bold"
+            >
+              ← Return to Roster
+            </button>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-2xl font-black text-indigo-400">Team Assessment</h3>
-              <button 
-                onClick={() => setAssessmentResult(null)}
-                className="text-zinc-500 hover:text-white transition-colors"
-              >
-                ✕
-              </button>
             </div>
             
             <div className="space-y-6 text-zinc-300">

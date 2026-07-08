@@ -111,8 +111,11 @@ export default function LivePlaybook({
     <div className="w-full max-w-2xl mx-auto flex flex-col min-h-screen h-fit overflow-y-auto bg-zinc-950 -mt-4 pt-6">
       {/* Header */}
       <div className="flex items-center justify-between p-4 bg-zinc-950 sticky top-0 z-50">
-        <button onClick={onBack} className="text-zinc-400 hover:text-white text-sm font-bold bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-800 transition-colors">
-          ← Back
+        <button 
+          onClick={onBack} 
+          className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold bg-zinc-900 px-4 py-2 rounded-xl border border-zinc-800"
+        >
+          ← Return to Roster
         </button>
         <div className="flex items-center gap-3 text-right">
           {!readOnly && (
