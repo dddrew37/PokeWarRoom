@@ -551,33 +551,41 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
             
             {/* Scrollable Content */}
             <div className="p-6 overflow-y-auto space-y-6 text-zinc-300">
-              <div className="bg-indigo-900/20 border border-indigo-500/30 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2">Verdict</h4>
-                <p className="text-sm font-medium">{assessmentResult.overall_verdict}</p>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest mb-3">Vulnerabilities</h4>
-                <ul className="space-y-2">
-                  {assessmentResult.weaknesses?.map((w: string, i: number) => (
-                    <li key={i} className="text-sm bg-zinc-950 p-3 rounded-lg border border-zinc-800 flex gap-3">
-                      <span className="text-red-500 font-bold">•</span>
-                      <span>{w}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-3">Suggested Leads</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {assessmentResult.suggested_leads?.map((lead: any, i: number) => (
-                    <div key={i} className="bg-zinc-950 p-4 rounded-xl border border-zinc-800">
-                      <p className="font-black text-emerald-400 mb-1">{lead.pair}</p>
-                      <p className="text-sm text-zinc-400 leading-relaxed">{lead.reason}</p>
+              <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1">Top Team Cores (Modes)</h4>
+              <div className="grid grid-cols-1 gap-6">
+                {assessmentResult.modes?.map((mode: any, i: number) => (
+                  <div key={i} className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 flex flex-col gap-4 shadow-sm">
+                    <div className="flex justify-between items-start">
+                      <h5 className="text-xl font-black text-white">{mode.name}</h5>
                     </div>
-                  ))}
-                </div>
+                    
+                    <div className="flex gap-3 flex-wrap">
+                      {mode.pokemon?.map((name: string, pIdx: number) => {
+                        const match = team.find(t => t.name.toLowerCase() === name.toLowerCase() || t.name.toLowerCase().includes(name.toLowerCase()));
+                        return (
+                          <div key={pIdx} className="bg-zinc-900 border border-zinc-800 rounded-xl p-2 flex items-center gap-2 shadow-inner">
+                            {match ? (
+                              <img 
+                                src={`https://play.pokemonshowdown.com/sprites/gen5/${match.id}.png`}
+                                className="w-8 h-8 object-contain drop-shadow-md"
+                                onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
+                                alt={name}
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-[10px]">?</div>
+                            )}
+                            <span className="text-xs font-bold text-zinc-300 pr-2">{name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    <div className="bg-indigo-900/20 border border-indigo-900/50 rounded-xl p-4">
+                      <h6 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1.5">When To Use</h6>
+                      <p className="text-sm text-indigo-100/90 leading-relaxed font-medium">{mode.whenToUse}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

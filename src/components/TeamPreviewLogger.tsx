@@ -33,6 +33,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
   // AI Draft Assistant
   const [isDrafting, setIsDrafting] = useState(false);
   const [coachNotes, setCoachNotes] = useState("");
+  const [draftLeadsIndices, setDraftLeadsIndices] = useState<number[]>([]);
 
   // Auto-focus on mount
   useEffect(() => {
@@ -145,6 +146,16 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
         });
         setPlayerLockedIndices(newIndices);
       }
+      if (data.suggestedLeads) {
+        const leadIndices: number[] = [];
+        data.suggestedLeads.forEach((name: string) => {
+          const idx = playerTeam.findIndex(p => normalize(p.name) === normalize(name));
+          if (idx !== -1 && leadIndices.length < 2 && !leadIndices.includes(idx)) {
+            leadIndices.push(idx);
+          }
+        });
+        setDraftLeadsIndices(leadIndices);
+      }
       if (data.rationale) {
         setCoachNotes(data.rationale);
       }
@@ -240,6 +251,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
           {playerTeam.map((p, i) => {
             const isSelected = playerLockedIndices.includes(i);
             const isSelectable = matchPhase === "turn1";
+            const isDraftLead = draftLeadsIndices.includes(i);
             return (
               <div 
                 key={i} 
@@ -268,6 +280,11 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
                 <span className={`absolute bottom-2 text-[10px] font-bold px-1 text-center leading-tight uppercase tracking-widest ${isSelected ? 'text-emerald-300' : 'text-zinc-400'}`}>
                   {p.name}
                 </span>
+                {isDraftLead && (
+                  <div className="absolute top-2 left-2 bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_10px_rgba(245,158,11,0.5)] font-black text-[10px]">
+                    L
+                  </div>
+                )}
                 {isSelected && (
                   <div className="absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-1 shadow-sm">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>

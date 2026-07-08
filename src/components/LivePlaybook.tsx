@@ -319,7 +319,7 @@ export default function LivePlaybook({
             <textarea
               value={matchContext}
               onChange={(e) => setMatchContext(e.target.value)}
-              placeholder="e.g. Protect on Urshifu, Amoonguss swapped in for Incineroar. Tailwind is up for 3 more turns."
+              placeholder="Update board state (What just happened?) to recalculate actual Turn 2+..."
               className="w-full bg-zinc-900 border-2 border-zinc-800 rounded-xl px-4 py-3 text-sm text-white font-medium focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all placeholder:text-zinc-600 resize-none min-h-[80px]"
               disabled={isUpdating}
             />

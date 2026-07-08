@@ -170,9 +170,13 @@ Identify structural vulnerabilities and recommend strong opening leads based on 
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
-  "weaknesses": ["String explaining a specific meta vulnerability (e.g., weak to Rain, weak to Trick Room)"],
-  "suggested_leads": [{"pair": "Pokemon A + Pokemon B", "reason": "Why this is a strong opening"}],
-  "overall_verdict": "A brief 2-sentence summary of the team's viability."
+  "modes": [
+    {
+      "name": "Mode Name (e.g. Hard Trick Room, Fast Aggro)",
+      "pokemon": ["Pokemon 1", "Pokemon 2", "Pokemon 3", "Pokemon 4"],
+      "whenToUse": "Explanation of when this core is optimal and which matchups it counters."
+    }
+  ]
 }
 Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
@@ -203,7 +207,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
     "top_findings": "Immediate Turn 1 tactical threats and positioning advantages."
   },
   "primary_win_condition": {
-    "path_name": "Optimal Turn 1 Execution",
+    "path_name": "Turn 1 Execution",
     "leads": ["Player Lead 1", "Player Lead 2"],
     "in_the_back": ["Player Back 1", "Player Back 2"],
     "turns": [
@@ -220,7 +224,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
   },
   "contingency_plans": [
     {
-      "path_name": "Conservative Defensive Pivot",
+      "path_name": "Turn 2 Contingencies",
       "leads": ["Player Lead 1", "Player Lead 2"],
       "in_the_back": ["Player Back 1", "Player Back 2"],
       "turns": []
@@ -235,7 +239,8 @@ Your task is to analyze the Player's 6-man roster and the Opponent's 6-man roste
 You must output your response STRICTLY as a JSON object matching this schema:
 {
   "suggestedDraft": ["Pokemon A", "Pokemon B", "Pokemon C", "Pokemon D"],
-  "rationale": "A brief explanation of why these 4 Pokémon optimally counter the opponent's composition."
+  "suggestedLeads": ["Pokemon A", "Pokemon B"],
+  "rationale": "A brief explanation of why these 4 Pokémon optimally counter the opponent's composition, and why those 2 are the best leads."
 }
 Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
 
@@ -280,16 +285,18 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
 
       if (action === "assess") {
         return NextResponse.json({
-          weaknesses: [
-            "Extremely vulnerable to Trick Room setups without a dedicated counter or priority Taunt.",
-            "Lacks reliable speed control outside of a single Tailwind user.",
-            "Weak to Wide Guard spam against double spread moves."
-          ],
-          suggested_leads: [
-            { pair: "Tornadus + Urshifu", reason: "Standard aggressive Tailwind opening that threatens immediate KOs." },
-            { pair: "Incineroar + Amoonguss", reason: "Defensive pivot lead to scout and put threats to sleep." }
-          ],
-          overall_verdict: "This is a strong Hyper-Offense core that relies on early momentum. However, it requires careful pivoting against hard Trick Room to maintain control."
+          modes: [
+            {
+              name: "Tailwind Aggro",
+              pokemon: ["Tornadus", "Urshifu", "Flutter Mane", "Raging Bolt"],
+              whenToUse: "Optimal against balanced and slower offensive teams. Use Tornadus to set Tailwind and apply immediate pressure."
+            },
+            {
+              name: "Defensive Pivot",
+              pokemon: ["Incineroar", "Amoonguss", "Raging Bolt", "Urshifu"],
+              whenToUse: "Best against hard Trick Room or Hyper Offense. Use Fake Out and Spore to mitigate early damage and stall out opponent's conditions."
+            }
+          ]
         });
       }
 
@@ -323,6 +330,7 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
       if (action === "draft_suggestion") {
         return NextResponse.json({
           suggestedDraft: [team[0]?.name, team[1]?.name, team[2]?.name, team[3]?.name].filter(Boolean),
+          suggestedLeads: [team[0]?.name, team[1]?.name].filter(Boolean),
           rationale: "Default safe draft prioritizing balanced typing and speed control."
         });
       }
