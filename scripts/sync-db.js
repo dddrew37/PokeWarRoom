@@ -1,0 +1,151 @@
+const fs = require('fs');
+const path = require('path');
+
+const API_BASE = 'https://pokeapi.co/api/v2';
+
+async function fetchWithRetry(url, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      if (i === retries - 1) throw e;
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+}
+
+function formatName(str) {
+  if (!str) return '';
+  
+  // Custom replacements for standard naming conventions
+  const nameParts = str.split('-');
+  
+  // Handle Regional Forms (usually appended as -alola, -galar, -hisui, -paldea)
+  const regions = {
+    'alola': 'Alolan',
+    'galar': 'Galarian',
+    'hisui': 'Hisuian',
+    'paldea': 'Paldean'
+  };
+  
+  const lastPart = nameParts[nameParts.length - 1];
+  if (regions[lastPart]) {
+    const regionName = regions[lastPart];
+    nameParts.pop(); // remove region from end
+    nameParts.unshift(regionName); // add to front
+  }
+
+  // Handle specific forms
+  if (str === 'urshifu-rapid-strike') return 'Urshifu Rapid Strike';
+  if (str === 'urshifu-single-strike') return 'Urshifu Single Strike';
+  if (str === 'iron-hands') return 'Iron Hands';
+  if (str === 'flutter-mane') return 'Flutter Mane';
+  if (str === 'roaring-moon') return 'Roaring Moon';
+
+  return nameParts.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+async function run() {
+  console.log("Fetching legal items...");
+  const [holdableRes, activeRes] = await Promise.all([
+    fetchWithRetry(`${API_BASE}/item-attribute/holdable`),
+    fetchWithRetry(`${API_BASE}/item-attribute/holdable-active`)
+  ]);
+
+  const uniqueItems = new Set([
+    ...holdableRes.items.map(i => formatName(i.name)),
+    ...activeRes.items.map(i => formatName(i.name))
+  ]);
+  const legal_items = Array.from(uniqueItems).sort();
+  console.log(`Found ${legal_items.length} legal items.`);
+
+  console.log("Fetching Pokémon list from PokeAPI...");
+  const listRes = await fetchWithRetry(`${API_BASE}/pokemon?limit=1300`);
+  const results = listRes.results;
+  
+  const filtered = results.filter(p => 
+    !p.name.includes('-mega') && 
+    !p.name.includes('-gmax') && 
+    !p.name.includes('-totem') &&
+    !p.name.includes('-starter') &&
+    !p.name.includes('-cosplay')
+  );
+  
+  console.log(`Fetching details for ${filtered.length} Pokémon... this may take a moment.`);
+  
+  const compressedPokemon = [];
+  const globalUniqueMoves = new Set();
+  
+  const BATCH_SIZE = 50;
+  for (let i = 0; i < filtered.length; i += BATCH_SIZE) {
+    const batch = filtered.slice(i, i + BATCH_SIZE);
+    const promises = batch.map(async (p) => {
+      try {
+        const details = await fetchWithRetry(p.url);
+        
+        const types = details.types.map(t => formatName(t.type.name));
+        const abilities = details.abilities.map(a => formatName(a.ability.name));
+        
+        const baseStats = {};
+        details.stats.forEach(s => {
+          let statName = s.stat.name;
+          if (statName === 'hp') statName = 'hp';
+          else if (statName === 'attack') statName = 'atk';
+          else if (statName === 'defense') statName = 'def';
+          else if (statName === 'special-attack') statName = 'spa';
+          else if (statName === 'special-defense') statName = 'spd';
+          else if (statName === 'speed') statName = 'spe';
+          baseStats[statName] = s.base_stat;
+        });
+
+        const moves = details.moves.map(m => formatName(m.move.name));
+        moves.forEach(m => globalUniqueMoves.add(m));
+        
+        // Ensure ID is present for internal linking/images
+        const id = p.name;
+
+        compressedPokemon.push({
+          id,
+          name: formatName(p.name),
+          types,
+          baseStats,
+          abilities,
+          moves
+        });
+      } catch (err) {
+        console.error(`\nFailed to fetch details for ${p.name}: ${err.message}`);
+      }
+    });
+    
+    await Promise.all(promises);
+    process.stdout.write(`\rProgress: ${Math.min(i + BATCH_SIZE, filtered.length)} / ${filtered.length}`);
+  }
+  
+  console.log('\nProcessing complete.');
+  
+  compressedPokemon.sort((a, b) => a.name.localeCompare(b.name));
+  const legal_moves = Array.from(globalUniqueMoves).sort();
+  
+  const finalDatabase = {
+    pokemon: compressedPokemon,
+    legal_items,
+    legal_moves
+  };
+  
+  const outDir = path.join(__dirname, '..', 'src', 'data');
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
+  }
+
+  const outPath = path.join(outDir, 'meta_data.json');
+  fs.writeFileSync(outPath, JSON.stringify(finalDatabase, null, 2));
+  
+  console.log(`Saved comprehensive database to src/data/meta_data.json`);
+  console.log(`- ${compressedPokemon.length} Pokémon`);
+  console.log(`- ${legal_items.length} Legal Items`);
+  console.log(`- ${legal_moves.length} Legal Moves`);
+}
+
+run().catch(console.error);
