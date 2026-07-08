@@ -44,15 +44,19 @@ export default function LivePlaybook({
   team, 
   data, 
   onBack, 
-  readOnly = false 
+  readOnly = false,
+  onNextTurn
 }: { 
   team: Pokemon[], 
   data: PlaybookData, 
   onBack: () => void,
-  readOnly?: boolean
+  readOnly?: boolean,
+  onNextTurn?: (context: string) => Promise<void>
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [matchContext, setMatchContext] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Aggregate the primary win condition and contingency plans into a single array for rendering
   const allPaths = useMemo(() => {
@@ -304,6 +308,37 @@ export default function LivePlaybook({
           );
         })}
       </div>
+
+      {/* Mid-Match Terminal */}
+      {onNextTurn && (
+        <div className="p-6 border-t border-zinc-800 bg-zinc-950 sticky bottom-0 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
+            Update Board State (What just happened?)
+          </label>
+          <div className="flex flex-col gap-3">
+            <textarea
+              value={matchContext}
+              onChange={(e) => setMatchContext(e.target.value)}
+              placeholder="e.g. Protect on Urshifu, Amoonguss swapped in for Incineroar. Tailwind is up for 3 more turns."
+              className="w-full bg-zinc-900 border-2 border-zinc-800 rounded-xl px-4 py-3 text-sm text-white font-medium focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all placeholder:text-zinc-600 resize-none min-h-[80px]"
+              disabled={isUpdating}
+            />
+            <button
+              onClick={async () => {
+                if (!matchContext.trim()) return;
+                setIsUpdating(true);
+                await onNextTurn(matchContext);
+                setIsUpdating(false);
+                setMatchContext(""); // clear on success
+              }}
+              disabled={isUpdating || !matchContext.trim()}
+              className="w-full py-3 rounded-xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-600 border-red-500 text-white hover:bg-red-500 hover:border-red-400 shadow-[0_0_20px_rgba(220,38,38,0.3)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
+            >
+              {isUpdating ? "Recalculating..." : "Calculate Next Turn"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,10 +4,10 @@ import staticMetaTeams from '../../../data/meta_teams.json';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { team, opponent, action = "audit" } = body;
+    const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext } = body;
 
-    if (!team && action !== "fetch_meta") {
-      return NextResponse.json({ error: 'Team is required' }, { status: 400 });
+    if (!team && !playerLockedRoster && action !== "fetch_meta") {
+      return NextResponse.json({ error: 'Team data is required' }, { status: 400 });
     }
 
     const auditSystemPrompt = `You are a Pokemon VGC Coach. Perform a findings-first competitive audit and turn the team into real opening plans instead of fake full-game scripts.
@@ -176,9 +176,63 @@ You must output your response STRICTLY as a JSON object matching this schema:
 }
 Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
+    const turn1SystemPrompt = `You are a World Champion VGC Coach sitting in the War Room mid-match. Turn 1 has started.
+
+# REGULATION M-B & 2026 META CONTEXT (CRITICAL)
+- You are evaluating for the VGC 2026 Regulation M-B format. Mega Evolutions are LEGAL.
+
+# The Board State
+- You know exactly which 4 Pokémon the player brought.
+- You know exactly which 2 Pokémon the opponent led with.
+- The opponent has 4 Potential Backline Pokémon (only 2 of them were brought, but you don't know which 2).
+
+# Turn 1 Tactical Recalculation
+1. Analyze the exact 2v2 opening matchup (Player Leads vs Opponent Leads).
+2. Assess immediate threats: who moves first, who threatens OHKOs, who has Fake Out/redirection/speed control.
+3. Recommend the safest and most advantageous Turn 1 play for the player.
+4. Keep the 'Potential Backline' in mind. If the opponent has a safe switch-in to your attacks, warn the player and suggest a read.
+
+# VGC DOUBLES SCHEMA REQUIREMENT
+Every turn MUST have exactly 2 player actions. You MUST explicitly name the 2 Leads and the 2 In The Back for each path.
+
+You must output your response STRICTLY as a JSON object matching this schema:
+{
+  "audit": {
+    "team_identity": "Matchup analysis of the opening board state.",
+    "preserve_targets": ["Crucial Pokemon to keep alive against their backline"],
+    "top_findings": "Immediate Turn 1 tactical threats and positioning advantages."
+  },
+  "primary_win_condition": {
+    "path_name": "Optimal Turn 1 Execution",
+    "leads": ["Player Lead 1", "Player Lead 2"],
+    "in_the_back": ["Player Back 1", "Player Back 2"],
+    "turns": [
+      { 
+        "turn_number": 1, 
+        "player_actions": [
+          { "pokemon": "Player Lead 1", "action": "Move", "target": "Target", "damage_estimation": "...", "mechanic_trigger": "..." },
+          { "pokemon": "Player Lead 2", "action": "Move", "target": "Target", "damage_estimation": "...", "mechanic_trigger": "..." }
+        ],
+        "expected_board_state": "...",
+        "tactical_rationale": "..."
+      }
+    ]
+  },
+  "contingency_plans": [
+    {
+      "path_name": "Conservative Defensive Pivot",
+      "leads": ["Player Lead 1", "Player Lead 2"],
+      "in_the_back": ["Player Back 1", "Player Back 2"],
+      "turns": []
+    }
+  ]
+}
+Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
+
     const systemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "fetch_meta" ? fetchMetaSystemPrompt
+      : action === "turn1" ? turn1SystemPrompt
       : auditSystemPrompt;
     const userPrompt = action === "optimize"
       ? "Calculate the optimal 66-SP distributions for this team.\nTeam: " + JSON.stringify(team, null, 2)
@@ -186,6 +240,8 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
       ? "Analyze this Regulation M-B team for meta weaknesses and suggest strong leads.\nTeam: " + JSON.stringify(team, null, 2)
       : action === "fetch_meta"
       ? "Generate 5 distinct, high-level competitive VGC 2026 Regulation M-B tournament teams. Return ONLY the JSON object."
+      : action === "turn1"
+      ? "Turn 1 has begun. Recalculate tactics.\nPlayer Locked Roster: " + JSON.stringify(playerLockedRoster, null, 2) + "\nOpponent Known Leads: " + JSON.stringify(opponentKnownLeads, null, 2) + "\nOpponent Potential Backline: " + JSON.stringify(opponentPotentialBackline, null, 2) + (currentMatchContext ? `\n\nCRITICAL UPDATE: This is Turn 2+. The user has provided the following context for what just happened:\n"${currentMatchContext}"\nRecalculate all tactics based on this new board state.` : "")
       : "Analyze the following team and provide a VGC Audit and Lead Plan.\nTeam: " + JSON.stringify(team, null, 2) + (opponent ? "\nOpponent: " + JSON.stringify(opponent, null, 2) : "");
 
     const apiKey = process.env.AI_API_KEY;
@@ -221,6 +277,33 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
             { pair: "Incineroar + Amoonguss", reason: "Defensive pivot lead to scout and put threats to sleep." }
           ],
           overall_verdict: "This is a strong Hyper-Offense core that relies on early momentum. However, it requires careful pivoting against hard Trick Room to maintain control."
+        });
+      }
+
+      if (action === "turn1") {
+        return NextResponse.json({
+          audit: {
+            team_identity: "Mid-Match Turn 1 Recalculation",
+            preserve_targets: ["Your primary damage dealer"],
+            top_findings: "The opponent's known leads dictate immediate defensive switching or Fake Out pressure."
+          },
+          primary_win_condition: {
+            path_name: "Optimal Turn 1 Execution",
+            leads: ["Your Lead 1", "Your Lead 2"],
+            in_the_back: ["Your Back 1", "Your Back 2"],
+            turns: [
+              {
+                "turn_number": 1,
+                "player_actions": [
+                  { pokemon: "Your Lead 1", action: "Protect", target: "Self", damage_estimation: "None", mechanic_trigger: "Scout" },
+                  { pokemon: "Your Lead 2", action: "Pivot", target: "Safe Swap", damage_estimation: "None", mechanic_trigger: "Defensive Rotate" }
+                ],
+                expected_board_state: "Surviving the initial onslaught.",
+                tactical_rationale: "They lead aggressively. Mitigate damage."
+              }
+            ]
+          },
+          contingency_plans: []
         });
       }
 
