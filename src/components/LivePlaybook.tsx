@@ -21,6 +21,12 @@ export interface PlaybookData {
   flowcharts?: FlowchartNode[]; // kept for backwards compatibility
 }
 
+export interface DeepDiveData {
+  draft_justification: string;
+  potential_weaknesses: string[];
+  things_to_watch_out_for: string[];
+}
+
 export interface FlowchartNode {
   path_name?: string;
   matchup_condition?: string; // backwards compatibility
@@ -63,6 +69,10 @@ export default function LivePlaybook({
   const [isSaving, setIsSaving] = useState(false);
   const [matchContext, setMatchContext] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Deep Dive state
+  const [deepDiveData, setDeepDiveData] = useState<DeepDiveData | null>(null);
+  const [isDeepDiving, setIsDeepDiving] = useState(false);
 
   // Aggregate the primary win condition and contingency plans into a single array for rendering
   const allPaths = useMemo(() => {
@@ -114,6 +124,32 @@ export default function LivePlaybook({
       console.error("[Supabase] saved_strategies INSERT exception:", err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeepDive = async () => {
+    if (!activeFlowchart) return;
+    setIsDeepDiving(true);
+    setDeepDiveData(null);
+    try {
+      const payload = {
+        action: "deepdive",
+        team, // Opponent team
+        playerLockedRoster: [...(activeFlowchart.leads || []), ...(activeFlowchart.in_the_back || [])]
+      };
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setDeepDiveData(data);
+    } catch (e) {
+      console.error("Deep Dive Error:", e);
+      alert("Failed to fetch Deep Dive. Check console.");
+    } finally {
+      setIsDeepDiving(false);
     }
   };
 
@@ -342,6 +378,58 @@ export default function LivePlaybook({
             </div>
           );
         })}
+      </div>
+
+      {/* Deep Dive Assessment */}
+      <div className="px-6 pb-6 pt-4 flex flex-col gap-6 items-center border-t border-zinc-800/50">
+        {!deepDiveData && (
+          <button
+            onClick={handleDeepDive}
+            disabled={isDeepDiving}
+            className="w-full max-w-sm py-3 rounded-xl font-black text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-slate-800 border-2 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm"
+          >
+            {isDeepDiving ? "Analyzing..." : "🔎 Explain Further (Deep Dive)"}
+          </button>
+        )}
+
+        {deepDiveData && (
+          <div className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-inner space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div>
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                Draft Justification
+              </h4>
+              <p className="text-sm text-slate-300 leading-relaxed font-medium">
+                {deepDiveData.draft_justification}
+              </p>
+            </div>
+            
+            <div className="border-t border-slate-800/80 pt-4">
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                ⚠️ Potential Weaknesses
+              </h4>
+              <ul className="space-y-2">
+                {deepDiveData.potential_weaknesses?.map((weakness, i) => (
+                  <li key={i} className="text-sm text-amber-200/80 flex items-start gap-2 leading-tight">
+                    <span className="text-amber-500/50 mt-0.5">•</span> {weakness}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            <div className="border-t border-slate-800/80 pt-4">
+              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                🎯 Things To Watch Out For
+              </h4>
+              <ul className="space-y-2">
+                {deepDiveData.things_to_watch_out_for?.map((threat, i) => (
+                  <li key={i} className="text-sm text-red-200/80 flex items-start gap-2 leading-tight">
+                    <span className="text-red-500/50 mt-0.5">•</span> {threat}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mid-Match Terminal */}

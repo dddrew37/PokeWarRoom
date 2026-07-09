@@ -301,14 +301,31 @@ You must output your response STRICTLY as a JSON object matching this schema:
 }
 Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
 
+    const deepdiveSystemPrompt = `You are a World Champion VGC Coach. The player has selected a specific 4-Pokémon draft to face the Opponent's 6-man team in Regulation M-B.
+Your task is to analyze this draft and provide a deep dive explanation.
+
+# STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
+1. MEGA EVOLUTION MECHANICS: Mega Evolutions are a core mechanic. When a Pokémon holds a Mega Stone, assume it Mega Evolves on Turn 1 and uses its new stats/typing/ability.
+2. TERASTALLIZATION IS BANNED: It does not exist in this format.
+3. CUSTOM 66-SP MATH: All stat calculations operate on the custom 66-SP (Stat Point) system. 32 SP is the absolute maximum investment per stat. Do not use standard 510 EV math.
+
+You must output your response STRICTLY as a JSON object matching this schema:
+{
+  "draft_justification": "Detailed explanation of why these specific 4 Pokémon are the optimal response to the opponent's roster.",
+  "potential_weaknesses": ["String 1", "String 2", "String 3"],
+  "things_to_watch_out_for": ["Threat 1", "Threat 2", "Threat 3"]
+}
+Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
+
     let finalSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "fetch_meta" ? fetchMetaSystemPrompt
       : action === "turn1" ? turn1SystemPrompt
       : action === "draft_suggestion" ? draftSuggestionSystemPrompt
+      : action === "deepdive" ? deepdiveSystemPrompt
       : auditSystemPrompt;
 
-    if (action === "draft_suggestion" || action === "audit" || action === "turn1") {
+    if (action === "draft_suggestion" || action === "audit" || action === "turn1" || action === "deepdive") {
       let oppArray = opponent || [];
       if (action === "turn1") {
         oppArray = [...(opponentKnownLeads || []), ...(opponentPotentialBackline || [])];
@@ -355,6 +372,8 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
       ? "Turn 1 has begun. Recalculate tactics.\nPlayer Locked Roster: " + JSON.stringify(playerLockedRoster, null, 2) + "\nOpponent Known Leads: " + JSON.stringify(opponentKnownLeads, null, 2) + "\nOpponent Potential Backline: " + JSON.stringify(opponentPotentialBackline, null, 2) + (currentMatchContext ? `\n\nCRITICAL UPDATE: This is Turn 2+. The user has provided the following context for what just happened:\n"${currentMatchContext}"\nRecalculate all tactics based on this new board state.` : "")
       : action === "draft_suggestion"
       ? "Analyze the matchup and suggest 4 Pokémon for the player to bring.\nPlayer Roster: " + JSON.stringify(team, null, 2) + "\nOpponent Roster: " + JSON.stringify(opponent, null, 2)
+      : action === "deepdive"
+      ? "Deep dive on this 4-Pokémon draft against the Opponent's team.\nOpponent Team: " + JSON.stringify(team, null, 2) + "\nPlayer Draft: " + JSON.stringify(playerLockedRoster, null, 2)
       : "Analyze the following team and provide a VGC Audit and Lead Plan.\nTeam: " + JSON.stringify(team, null, 2) + (opponent ? "\nOpponent: " + JSON.stringify(opponent, null, 2) : "");
 
     const apiKey = process.env.AI_API_KEY;
@@ -432,6 +451,14 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
           suggestedDraft: [team[0]?.name, team[1]?.name, team[2]?.name, team[3]?.name].filter(Boolean),
           suggestedLeads: [team[0]?.name, team[1]?.name].filter(Boolean),
           rationale: "Default safe draft prioritizing balanced typing and speed control."
+        });
+      }
+
+      if (action === "deepdive") {
+        return NextResponse.json({
+          draft_justification: "These 4 Pokémon were chosen to create a strong defensive pivot core while maintaining offensive pressure against their primary threats.",
+          potential_weaknesses: ["Vulnerable to fast spread damage", "Relies heavily on speed control"],
+          things_to_watch_out_for: ["Surprise Choice Scarf users", "Opposing Tailwind", "Unexpected Tera-like abilities (if any)"]
         });
       }
 
