@@ -377,8 +377,8 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
       : "Analyze the following team and provide a VGC Audit and Lead Plan.\nTeam: " + JSON.stringify(team, null, 2) + (opponent ? "\nOpponent: " + JSON.stringify(opponent, null, 2) : "");
 
     const apiKey = process.env.AI_API_KEY;
-    const baseUrl = process.env.AI_BASE_URL || "https://api.openai.com/v1/chat/completions";
-    const model = process.env.AI_MODEL || "gpt-4o-mini";
+    const baseUrl = process.env.AI_BASE_URL || "https://api.deepseek.com/v1";
+    const model = process.env.AI_MODEL || "deepseek-chat";
 
     if (!apiKey) {
       console.warn("No AI_API_KEY found, returning mock data");
@@ -546,7 +546,7 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
       });
     }
 
-    const response = await fetch(baseUrl, {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
