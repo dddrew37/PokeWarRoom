@@ -8,6 +8,7 @@ import ManualForge from "./ManualForge";
 import { supabase } from "../lib/supabase";
 import { POKEBALL_FALLBACK } from "../lib/pokemon";
 import metaTeamsData from "../data/meta_teams.json";
+import { exportTeamToPokepaste } from "../utils/exporter";
 
 export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], setTeam: React.Dispatch<React.SetStateAction<ParsedPokemon[]>> }) {
   const [paste, setPaste] = useState("");
@@ -24,6 +25,20 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
   const [showMetaModal, setShowMetaModal] = useState(false);
   const [isFetchingMeta, setIsFetchingMeta] = useState(false);
   const [liveMetaTeams, setLiveMetaTeams] = useState<{ name: string; paste: string; description?: string }[]>(metaTeamsData);
+  const [isExported, setIsExported] = useState(false);
+
+  const handleExport = async () => {
+    if (team.length === 0) return;
+    const formattedStr = exportTeamToPokepaste(team);
+    try {
+      await navigator.clipboard.writeText(formattedStr);
+      setIsExported(true);
+      setTimeout(() => setIsExported(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text:", err);
+      alert("Failed to export to clipboard. Your browser might block clipboard access.");
+    }
+  };
 
   const handleFetchLadderTeams = async () => {
     setIsFetchingMeta(true);
@@ -391,6 +406,13 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-amber-600/20 border border-amber-500/50 text-amber-400 hover:bg-amber-600/30 hover:border-amber-500 uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 {isFetchingMeta ? "Scraping..." : "Load Ladder Team"}
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={team.length === 0}
+                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30 hover:border-emerald-500 uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                {isExported ? "✓ Copied!" : "📋 Export to Clipboard"}
               </button>
             </div>
             
