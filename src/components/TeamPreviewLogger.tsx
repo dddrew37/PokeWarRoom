@@ -6,6 +6,7 @@ import { parsePokePaste, ParsedPokemon } from "../lib/parser";
 import metaTeamsData from "../data/meta_teams.json";
 import LivePlaybook from "./LivePlaybook";
 import SpeedBoard from "./SpeedBoard";
+import DamageCalculator from "./DamageCalculator";
 
 const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -197,8 +198,16 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
     return (
       <div className="w-full flex flex-col items-center">
         {matchPhase === "turn1" && (
-          <div className="w-full max-w-2xl px-6 pt-4">
+          <div className="w-full max-w-2xl px-6 pt-4 flex flex-col gap-2">
             <SpeedBoard 
+              playerMons={
+                draftLeadsIndices.length === 2 
+                  ? draftLeadsIndices.map(i => playerTeam[i])
+                  : playerLockedIndices.slice(0, 2).map(i => playerTeam[i])
+              } 
+              opponentMons={opponentLeadIndices.map(i => selected[i])} 
+            />
+            <DamageCalculator 
               playerMons={
                 draftLeadsIndices.length === 2 
                   ? draftLeadsIndices.map(i => playerTeam[i])

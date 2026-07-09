@@ -18,10 +18,23 @@ export async function POST(request: Request) {
 # REGULATION M-B & 2026 META CONTEXT (CRITICAL)
 
 - You are evaluating teams for the VGC 2026 Regulation M-B format.
-
-- Mega Evolutions are LEGAL and highly centralizing to the meta.
-
 - Factor in standard Regulation M-B threats and updated mechanics. Treat any provided Pokémon, Items, or Moves as fully legal for this format. Do not question their legality; evaluate their tactical viability.
+
+
+
+# STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
+
+1. MEGA EVOLUTION MECHANICS: 
+   - Mega Evolutions are a core mechanic. 
+   - When a Pokémon holds a Mega Stone, assume it Mega Evolves on Turn 1.
+   - You MUST use the Mega form's updated Base Stats, new Typing, and new Ability from the provided meta data for ALL calculations.
+   - GEN 7 SPEED RULE: The Pokémon uses its new Mega Speed stat on the EXACT TURN it Mega Evolves. Do not use its base form speed for Turn 1 calculations.
+2. TERASTALLIZATION IS BANNED: It does not exist in this format. You must NEVER suggest Terastallizing a Pokémon.
+3. CUSTOM 66-SP MATH: All stat calculations operate on the custom 66-SP (Stat Point) system. 32 SP is the absolute maximum investment per stat. Do not use standard 510 EV math.
+4. FAKE OUT & FIRST IMPRESSION: These priority moves ONLY work on the absolute first turn a Pokémon is on the field. You must NEVER suggest these moves if the Pokémon was already active on the previous turn. Covert Cloak, Inner Focus, and Ghost-types (without Scrappy) are immune to Fake Out.
+5. TURN STATE AWARENESS: Before suggesting ANY move, you must check the provided board state/turn history to verify if the Pokémon just switched in, or if it is already active.
+6. PROTECT CHAINING: Protect, Detect, Spiky Shield, and Wide Guard have a massive failure rate (approx. 66%) if used on consecutive turns. Never suggest double-Protecting unless it is a desperate, game-ending contingency.
+7. PRANKSTER IMMUNITY: Dark-type Pokémon are completely immune to opponent moves boosted by the Prankster ability.
 
 
 
@@ -76,10 +89,11 @@ Each flowchart MUST contain between 3 and 6 turns. Do NOT stop after Turn 1. The
 # CHAIN OF THOUGHT: DECISION AUDIT (CRITICAL)
 
 Before mapping the \`turns\`, you MUST evaluate the board state step-by-step.
+You must specifically ask yourself: "Is this move mechanically legal based on the turn history, and have I accounted for Mega Evolution stat/ability changes?"
 Your JSON MUST include a \`decision_audit\` object containing:
 - \`speed_tier_analysis\`: Who goes first based on base stats, Tailwind, or Trick Room.
 - \`primary_threat_identified\`: Which opponent Pokémon poses the immediate highest risk.
-- \`risk_assessment_justification\`: Why you chose the primary strategy instead of pivoting or using an alternative plan.
+- \`risk_assessment_justification\`: Why you chose the primary strategy instead of pivoting or using an alternative plan. Ensure you explicitly verify mechanical legality and Mega Evolution mechanics here.
 This forces you to "show your work" using strict competitive VGC logic.
 
 
@@ -200,7 +214,20 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
     const turn1SystemPrompt = `You are a World Champion VGC Coach sitting in the War Room mid-match. Turn 1 has started.
 
 # REGULATION M-B & 2026 META CONTEXT (CRITICAL)
-- You are evaluating for the VGC 2026 Regulation M-B format. Mega Evolutions are LEGAL.
+- You are evaluating for the VGC 2026 Regulation M-B format.
+
+# STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
+1. MEGA EVOLUTION MECHANICS: 
+   - Mega Evolutions are a core mechanic. 
+   - When a Pokémon holds a Mega Stone, assume it Mega Evolves on Turn 1.
+   - You MUST use the Mega form's updated Base Stats, new Typing, and new Ability from the provided meta data for ALL calculations.
+   - GEN 7 SPEED RULE: The Pokémon uses its new Mega Speed stat on the EXACT TURN it Mega Evolves. Do not use its base form speed for Turn 1 calculations.
+2. TERASTALLIZATION IS BANNED: It does not exist in this format. You must NEVER suggest Terastallizing a Pokémon.
+3. CUSTOM 66-SP MATH: All stat calculations operate on the custom 66-SP (Stat Point) system. 32 SP is the absolute maximum investment per stat. Do not use standard 510 EV math.
+4. FAKE OUT & FIRST IMPRESSION: These priority moves ONLY work on the absolute first turn a Pokémon is on the field. You must NEVER suggest these moves if the Pokémon was already active on the previous turn. Covert Cloak, Inner Focus, and Ghost-types (without Scrappy) are immune to Fake Out.
+5. TURN STATE AWARENESS: Before suggesting ANY move, you must check the provided board state/turn history to verify if the Pokémon just switched in, or if it is already active.
+6. PROTECT CHAINING: Protect, Detect, Spiky Shield, and Wide Guard have a massive failure rate (approx. 66%) if used on consecutive turns. Never suggest double-Protecting unless it is a desperate, game-ending contingency.
+7. PRANKSTER IMMUNITY: Dark-type Pokémon are completely immune to opponent moves boosted by the Prankster ability.
 
 # The Board State
 - You know exactly which 4 Pokémon the player brought.
@@ -217,10 +244,12 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 Every turn MUST have exactly 2 player actions. You MUST explicitly name the 2 Leads and the 2 In The Back for each path.
 
 # CHAIN OF THOUGHT: DECISION AUDIT (CRITICAL)
-Before providing the turn actions, you MUST evaluate the board state step-by-step. Include a \`decision_audit\` object containing:
+Before providing the turn actions, you MUST evaluate the board state step-by-step.
+You must specifically ask yourself: "Is this move mechanically legal based on the turn history, and have I accounted for Mega Evolution stat/ability changes?"
+Include a \`decision_audit\` object containing:
 - \`speed_tier_analysis\`: Who goes first based on base stats, Tailwind, or Trick Room.
 - \`primary_threat_identified\`: Which opponent Pokémon poses the immediate highest risk.
-- \`risk_assessment_justification\`: Why you chose the primary strategy instead of pivoting or using an alternative plan.
+- \`risk_assessment_justification\`: Why you chose the primary strategy instead of pivoting or using an alternative plan. Ensure you explicitly verify mechanical legality and Mega Evolution mechanics here.
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
