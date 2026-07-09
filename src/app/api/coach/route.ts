@@ -317,8 +317,41 @@ You must output your response STRICTLY as a JSON object matching this schema:
 }
 Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
 
+    const assessTeamSystemPrompt = `You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation M-B team.
+Your task is to analyze the team's core identity, primary modes, threat matrix, and optimizations based on their composition.
+
+# STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
+1. MEGA EVOLUTION MECHANICS: Mega Evolutions are a core mechanic. When a Pokémon holds a Mega Stone, assume it Mega Evolves on Turn 1.
+2. TERASTALLIZATION IS BANNED: It does not exist in this format.
+3. CUSTOM 66-SP MATH: All stat calculations operate on the custom 66-SP (Stat Point) system. 32 SP is the absolute maximum investment per stat.
+
+You must output your response STRICTLY as a JSON object matching this schema:
+{
+  "core_identity": "Detailed description of the team's archetype and overall win condition.",
+  "primary_modes": [
+    {
+      "mode_name": "Mode Name (e.g. Tailwind Offense, Hard Trick Room)",
+      "lead_duo": ["Pokemon A", "Pokemon B"],
+      "objective": "Objective of this mode and how to execute it."
+    }
+  ],
+  "threat_matrix": {
+    "favorable_matchups": ["Favorable matchup scenario 1", "Favorable matchup scenario 2"],
+    "critical_vulnerabilities": ["Critical vulnerability 1", "Critical vulnerability 2"]
+  },
+  "optimizations": [
+    {
+      "target_pokemon": "Pokemon Name",
+      "suggested_tweak": "Suggested move, item, or 66-SP point redistribution.",
+      "rationale": "Why this tweak improves the team's synergy and matchups."
+    }
+  ]
+}
+Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
+
     let finalSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
+      : action === "assess_team" ? assessTeamSystemPrompt
       : action === "fetch_meta" ? fetchMetaSystemPrompt
       : action === "turn1" ? turn1SystemPrompt
       : action === "draft_suggestion" ? draftSuggestionSystemPrompt
@@ -374,11 +407,19 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
       ? "Analyze the matchup and suggest 4 Pokémon for the player to bring.\nPlayer Roster: " + JSON.stringify(team, null, 2) + "\nOpponent Roster: " + JSON.stringify(opponent, null, 2)
       : action === "deepdive"
       ? "Deep dive on this 4-Pokémon draft against the Opponent's team.\nOpponent Team: " + JSON.stringify(team, null, 2) + "\nPlayer Draft: " + JSON.stringify(playerLockedRoster, null, 2)
+      : action === "assess_team"
+      ? "Perform a deep-dive study guide assessment on this Regulation M-B team.\nTeam: " + JSON.stringify(team, null, 2)
       : "Analyze the following team and provide a VGC Audit and Lead Plan.\nTeam: " + JSON.stringify(team, null, 2) + (opponent ? "\nOpponent: " + JSON.stringify(opponent, null, 2) : "");
 
     const apiKey = process.env.AI_API_KEY;
     const baseUrl = process.env.AI_BASE_URL || "https://api.deepseek.com/v1";
-    const model = process.env.AI_MODEL || "deepseek-chat";
+    
+    let model = "";
+    if (action === "assess_team") {
+      model = process.env.AI_HEAVY_MODEL || "deepseek-chat";
+    } else {
+      model = process.env.AI_MODEL || "deepseek-v4-flash";
+    }
 
     if (!apiKey) {
       console.warn("No AI_API_KEY found, returning mock data");
@@ -409,6 +450,41 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
               name: "Defensive Pivot",
               pokemon: ["Incineroar", "Amoonguss", "Raging Bolt", "Urshifu"],
               whenToUse: "Best against hard Trick Room or Hyper Offense. Use Fake Out and Spore to mitigate early damage and stall out opponent's conditions."
+            }
+          ]
+        });
+      }
+
+      if (action === "assess_team") {
+        return NextResponse.json({
+          core_identity: "A hybrid speed-control team utilizing Tailwind and hard-hitting physical attackers to establish early-game board control.",
+          primary_modes: [
+            {
+              mode_name: "Tailwind Hyper Offense",
+              lead_duo: [team[0]?.name || "Tornadus", team[1]?.name || "Urshifu"],
+              objective: "Set up priority Tailwind immediately and pressure opponent leads with high-damage attacks."
+            },
+            {
+              mode_name: "Defensive Control",
+              lead_duo: [team[2]?.name || "Incineroar", team[3]?.name || "Amoonguss"],
+              objective: "Rotate Intimidates and use Spore to disrupt fast sweepers and position safely."
+            }
+          ],
+          threat_matrix: {
+            favorable_matchups: [
+              "Balanced teams that cannot match our Tailwind speed control.",
+              "Rain-based weather cores that we can pressure with redirection."
+            ],
+            critical_vulnerabilities: [
+              "Hard Trick Room teams that bypass our speed control.",
+              "Special attackers that bypass Intimidate drops."
+            ]
+          },
+          optimizations: [
+            {
+              target_pokemon: team[0]?.name || "Tornadus",
+              suggested_tweak: "Shift 4 SP from HP to Speed to guarantee outspeeding opposing base 110s.",
+              rationale: "Ensures we get Tailwind up first in mirrors."
             }
           ]
         });

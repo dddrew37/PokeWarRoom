@@ -27,6 +27,34 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
   const [liveMetaTeams, setLiveMetaTeams] = useState<{ name: string; paste: string; description?: string }[]>(metaTeamsData);
   const [isExported, setIsExported] = useState(false);
 
+  // Deep-Dive Dossier States
+  const [isAssessingDeep, setIsAssessingDeep] = useState(false);
+  const [dossierData, setDossierData] = useState<any>(null);
+  const [showDossierModal, setShowDossierModal] = useState(false);
+
+  const handleAssessTeamDeepDive = async () => {
+    if (team.length !== 6) return;
+    setIsAssessingDeep(true);
+    setShowDossierModal(true);
+    setDossierData(null);
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ team, action: "assess_team" })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setDossierData(data);
+    } catch (e) {
+      console.error("[TeamForge] Deep Dive Assess error:", e);
+      alert("Failed to analyze team. Check API config.");
+      setShowDossierModal(false);
+    } finally {
+      setIsAssessingDeep(false);
+    }
+  };
+
   const handleExport = async () => {
     if (team.length === 0) return;
     const formattedStr = exportTeamToPokepaste(team);
@@ -140,7 +168,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
     }
   };
 
-  const handleSaveRoster = async () => {
+  const handleSaveRoster = async (dossierToSave?: any) => {
     console.log("--- SAVE ROSTER TRIGGERED ---");
     console.log("[TeamForge] team.length =", team.length, "| teamName =", JSON.stringify(teamName), "| supabase configured =", !!supabase);
 
@@ -164,16 +192,23 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.from("saved_teams").insert([{
+      const payload: any = {
         team_name: teamName,
         team_data: team
-      }]);
+      };
+      if (dossierToSave) {
+        payload.assessment_data = dossierToSave;
+      } else if (dossierData) {
+        payload.assessment_data = dossierData;
+      }
+
+      const { error } = await supabase.from("saved_teams").insert([payload]);
 
       if (error) {
         console.error("[Supabase] saved_teams INSERT error:", error?.message || "Unknown Network Error", error);
         alert("Failed to save roster: " + error.message);
       } else {
-        alert("Roster saved successfully!");
+        alert("Roster & Assessment saved successfully!");
         // Immediately refresh the saved teams list so the Load modal is up to date
         await refreshSavedTeams();
       }
@@ -263,9 +298,10 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
     };
   };
 
-  const handleLoadTeam = (loadedTeam: any[]) => {
+  const handleLoadTeam = (loadedTeam: any[], assessmentData?: any) => {
     const normalized = loadedTeam.map(normalizeSavedPokemon);
     setTeam(normalized);
+    setDossierData(assessmentData || null);
     setShowLoadModal(false);
     setActiveEditIndex(null);
   };
@@ -380,6 +416,25 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                   className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm font-bold text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
                 />
               </div>
+
+              {/* Assess Team (Deep Dive) Button */}
+              <button
+                onClick={handleAssessTeamDeepDive}
+                disabled={team.length !== 6 || isAssessingDeep}
+                className="col-span-2 py-3.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-indigo-900/60 to-blue-900/60 border border-indigo-500/50 text-indigo-300 hover:from-indigo-900/80 hover:to-blue-900/80 shadow-[0_0_20px_rgba(99,102,241,0.2)] disabled:shadow-none uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                {isAssessingDeep ? "Analyzing Team..." : "🧠 Assess Team (Deep Dive)"}
+              </button>
+
+              {dossierData && (
+                <button
+                  onClick={() => setShowDossierModal(true)}
+                  className="col-span-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-300 bg-indigo-950/40 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-950/60 uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                  📖 Re-Open Saved Assessment Dossier
+                </button>
+              )}
+
               <button
                 onClick={handleAssessTeam}
                 disabled={team.length !== 6 || isAssessing}
@@ -388,7 +443,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 {isAssessing ? "Assessing..." : "Assess Team"}
               </button>
               <button
-                onClick={handleSaveRoster}
+                onClick={() => handleSaveRoster()}
                 disabled={team.length !== 6 || isSaving}
                 className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-purple-600/20 border border-purple-500/50 text-purple-400 hover:bg-purple-600/30 hover:border-purple-500 uppercase tracking-widest"
               >
@@ -410,7 +465,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
               <button
                 onClick={handleExport}
                 disabled={team.length === 0}
-                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30 hover:border-emerald-500 uppercase tracking-widest flex items-center justify-center gap-2"
+                className="col-span-2 py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30 hover:border-emerald-500 uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 {isExported ? "✓ Copied!" : "📋 Export to Clipboard"}
               </button>
@@ -473,12 +528,19 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 {savedTeams.map((strat) => (
                   <div 
                     key={strat.id}
-                    onClick={() => handleLoadTeam(strat.team_data)}
+                    onClick={() => handleLoadTeam(strat.team_data, strat.assessment_data)}
                     className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-blue-500 transition-colors group"
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h4 className="font-black text-white group-hover:text-blue-400 transition-colors">{strat.team_name}</h4>
+                        <h4 className="font-black text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">
+                          {strat.team_name}
+                          {strat.assessment_data && (
+                            <span className="px-1.5 py-0.5 bg-indigo-950 text-indigo-400 border border-indigo-900/50 rounded text-[8px] font-black uppercase tracking-widest">
+                              🧠 Dossier
+                            </span>
+                          )}
+                        </h4>
                         <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
                           {new Date(strat.created_at).toLocaleDateString()}
                         </span>
@@ -610,6 +672,139 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Deep-Dive Assessment Dossier Modal */}
+      {showDossierModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-2xl shadow-2xl my-8 flex flex-col overflow-hidden max-h-[90vh]">
+            
+            {/* Header */}
+            <div className="sticky top-0 z-10 bg-zinc-900/90 backdrop-blur-md px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
+              <h3 className="text-xl font-black text-indigo-400 flex items-center gap-2">
+                <span>🧠 Roster Study Dossier</span>
+              </h3>
+              <button 
+                onClick={() => setShowDossierModal(false)}
+                className="text-zinc-500 hover:text-white transition-colors text-lg animate-fade-in"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="p-6 overflow-y-auto space-y-6 text-zinc-300 leading-relaxed max-h-[70vh]">
+              {isAssessingDeep ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+                  <div className="animate-spin h-10 w-10 rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+                  <p className="text-sm font-bold uppercase tracking-wider text-indigo-400 animate-pulse">Forging Roster Dossier...</p>
+                  <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">Analyzing your 6-man roster with a heavy reasoning model to construct archetype paths, lead combos, and SP adjustments.</p>
+                </div>
+              ) : !dossierData ? (
+                <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">
+                  No data loaded.
+                </div>
+              ) : (
+                <div className="space-y-6 animate-fade-in">
+                  {/* Core Identity */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Core Identity & Strategy</h4>
+                    <p className="text-sm leading-relaxed text-zinc-200 font-medium">
+                      {dossierData.core_identity}
+                    </p>
+                  </div>
+
+                  {/* Primary Modes */}
+                  <div className="space-y-4 pt-6 border-t border-zinc-800/60">
+                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Primary Operational Modes</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {dossierData.primary_modes?.map((mode: any, i: number) => (
+                        <div key={i} className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-5 space-y-3">
+                          <h5 className="text-sm font-black text-white border-b border-zinc-800/40 pb-1.5">{mode.mode_name}</h5>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Leads:</span>
+                            {mode.lead_duo?.map((mon: string, mIdx: number) => (
+                              <span key={mIdx} className="bg-zinc-900 border border-zinc-750 text-zinc-200 font-bold px-2 py-0.5 rounded-lg text-[10px]">
+                                {mon}
+                              </span>
+                            ))}
+                          </div>
+                          <p className="text-xs text-zinc-400 leading-relaxed">{mode.objective}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Threat Matrix */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-zinc-800/60">
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                        <span>Favorable Matchups</span>
+                      </h4>
+                      <ul className="space-y-2">
+                        {dossierData.threat_matrix?.favorable_matchups?.map((matchup: string, i: number) => (
+                          <li key={i} className="text-xs text-zinc-400 flex items-start gap-2">
+                            <span className="text-emerald-500/50 mt-0.5">•</span>
+                            <span>{matchup}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest flex items-center gap-1">
+                        <span>Critical Vulnerabilities</span>
+                      </h4>
+                      <ul className="space-y-2">
+                        {dossierData.threat_matrix?.critical_vulnerabilities?.map((vuln: string, i: number) => (
+                          <li key={i} className="text-xs text-zinc-400 flex items-start gap-2">
+                            <span className="text-red-500/50 mt-0.5">•</span>
+                            <span>{vuln}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Optimizations */}
+                  <div className="space-y-4 pt-6 border-t border-zinc-800/60">
+                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-widest">Roster Tweaks & Optimizations</h4>
+                    <div className="space-y-3">
+                      {dossierData.optimizations?.map((opt: any, i: number) => (
+                        <div key={i} className="bg-amber-950/20 border border-amber-900/30 rounded-2xl p-4 space-y-1.5">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-black text-amber-300 uppercase tracking-wider">{opt.target_pokemon}</span>
+                          </div>
+                          <p className="text-xs text-zinc-200 font-bold">{opt.suggested_tweak}</p>
+                          <p className="text-xs text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            {dossierData && !isAssessingDeep && (
+              <div className="sticky bottom-0 z-10 bg-zinc-900/95 border-t border-zinc-800 px-6 py-4 flex justify-between items-center gap-3">
+                <button
+                  onClick={() => setShowDossierModal(false)}
+                  className="px-4 py-2.5 rounded-xl font-bold text-xs bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 uppercase tracking-wider"
+                >
+                  Close Dossier
+                </button>
+                <button
+                  onClick={() => handleSaveRoster(dossierData)}
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-xl font-black text-xs bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/50 text-white hover:from-purple-500 hover:to-indigo-500 shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-50 uppercase tracking-wider flex items-center gap-2"
+                >
+                  {isSaving ? "Saving..." : "💾 Save Roster & Assessment to Library"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
