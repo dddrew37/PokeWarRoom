@@ -319,6 +319,8 @@ Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
 
     const assessTeamSystemPrompt = `CRITICAL CONTEXT: YOU ARE OPERATING IN VGC REGULATION M-B (2026). Mega Evolutions are fully legal. Factor this into all threat assessments, speed tiers, and damage calculations.
 
+TONE DIRECTIVE: Speak with the absolute authority and extreme tactical depth of a World Champion. DO NOT give generic, beginner-level advice. Be highly opinionated, cite specific meta threats by name, and provide advanced, cutthroat VGC strategies.
+
 You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation M-B team.
 Your task is to analyze the team's core identity, primary modes, threat matrix, and optimizations based on their composition.
 
@@ -668,7 +670,7 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
           { role: "user", content: userPrompt }
         ],
         response_format: { type: "json_object" },
-        temperature: 0.2
+        temperature: action === "assess_team" ? 0.5 : 0.2
       })
     });
 

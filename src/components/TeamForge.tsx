@@ -823,12 +823,21 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
             {/* Footer */}
             {dossierData && !isAssessingDeep && (
               <div className="sticky bottom-0 z-10 bg-zinc-900/95 border-t border-zinc-800 px-6 py-4 flex justify-between items-center gap-3">
-                <button
-                  onClick={() => setShowDossierModal(false)}
-                  className="px-4 py-2.5 rounded-xl font-bold text-xs bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 uppercase tracking-wider"
-                >
-                  Close Dossier
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowDossierModal(false)}
+                    className="px-4 py-2.5 rounded-xl font-bold text-xs bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 uppercase tracking-wider"
+                  >
+                    Close Dossier
+                  </button>
+                  <button
+                    onClick={handleAssessTeamDeepDive}
+                    disabled={isAssessingDeep}
+                    className="px-4 py-2.5 rounded-xl font-bold text-xs bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-red-500 uppercase tracking-wider transition-all"
+                  >
+                    Regenerate Dossier
+                  </button>
+                </div>
                 <div className="flex items-center gap-3 flex-1 justify-end">
                   <input
                     type="text"
