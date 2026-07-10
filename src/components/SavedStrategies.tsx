@@ -58,7 +58,7 @@ export default function SavedStrategies() {
           disabled={isRefreshing}
           className="mt-1 px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isRefreshing ? "Refreshing..." : "↻ Refresh"}
+          {isRefreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
@@ -70,7 +70,7 @@ export default function SavedStrategies() {
 
       {loading && supabase && (
         <div className="flex justify-center py-12">
-          <div className="animate-spin h-8 w-8 rounded-full border-4 border-blue-500 border-t-transparent"></div>
+          <div className="animate-spin h-8 w-8 rounded-full border-4 border-red-500 border-t-transparent"></div>
         </div>
       )}
 
@@ -85,7 +85,7 @@ export default function SavedStrategies() {
           <div 
             key={strat.id} 
             onClick={() => setSelected(strat)}
-            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 cursor-pointer hover:border-blue-500/50 transition-all shadow-lg flex items-center justify-between group"
+            className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 cursor-pointer hover:border-red-600/50 transition-all shadow-lg flex items-center justify-between group"
           >
             <div>
               <h3 className="text-lg font-black text-white">{strat.title}</h3>

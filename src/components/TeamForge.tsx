@@ -346,7 +346,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
               <select 
                 value={format}
                 onChange={(e) => setFormat(e.target.value)}
-                className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-red-500"
               >
                 <option value="reg_mb">Pokémon Champions (Reg M-B)</option>
               </select>
@@ -355,24 +355,23 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
           <p className="text-zinc-400 text-sm font-medium">Build or Import your 66-SP Roster</p>
         </div>
 
-        {/* Mode Toggle */}
-        <div className="flex bg-zinc-900 p-1.5 rounded-2xl border-2 border-zinc-800 shadow-inner w-full max-w-md">
+        <div className="flex bg-black p-1.5 rounded-2xl border-2 border-zinc-800 shadow-inner w-full max-w-md">
           <button
             onClick={() => setMode("manual")}
-            className={`flex-1 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+            className={`flex-1 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
               mode === "manual"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25 border border-blue-500"
-                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                ? "bg-red-950/30 text-red-500 shadow-md border border-red-900/40"
+                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
             }`}
           >
             Manual Builder
           </button>
           <button
             onClick={() => { setMode("paste"); setActiveEditIndex(null); }}
-            className={`flex-1 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+            className={`flex-1 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
               mode === "paste"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25 border border-blue-500"
-                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                ? "bg-red-950/30 text-red-500 shadow-md border border-red-900/40"
+                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900"
             }`}
           >
             Paste Importer
@@ -385,21 +384,21 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
               value={paste}
               onChange={(e) => setPaste(e.target.value)}
               placeholder="Paste your Pokémon Showdown export here..."
-              className="w-full h-48 bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-5 text-sm font-mono text-zinc-300 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all resize-none shadow-inner leading-relaxed"
+              className="w-full h-48 bg-zinc-900 border-2 border-zinc-800 rounded-2xl p-5 text-sm font-mono text-zinc-300 focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/20 transition-all resize-none shadow-inner leading-relaxed"
             />
             
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <button
                 onClick={handleImport}
                 disabled={!paste.trim()}
-                className="col-span-2 py-3 rounded-2xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-blue-600 border-blue-500 text-white hover:bg-blue-500 hover:border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)] disabled:shadow-none uppercase tracking-wide"
+                className="col-span-2 py-3 rounded-2xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-700 border-red-500 text-white hover:bg-red-600 hover:border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:shadow-none uppercase tracking-wide"
               >
                 Import
               </button>
               <button
                 onClick={handleOptimize}
                 disabled={team.length === 0 || isOptimizing}
-                className="col-span-2 py-3 rounded-2xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 hover:border-emerald-400 shadow-[0_0_20px_rgba(5,150,105,0.2)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
+                className="col-span-2 py-3 rounded-2xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-700 border-red-500 text-white hover:bg-red-600 hover:border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
               >
                 {isOptimizing ? "Optimizing..." : "Auto-Optimize"}
               </button>
@@ -413,7 +412,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                   value={teamName}
                   onChange={(e) => setTeamName(e.target.value)}
                   placeholder="Enter Team Name..."
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm font-bold text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm font-bold text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
                 />
               </div>
 
@@ -421,31 +420,31 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
               <button
                 onClick={handleAssessTeamDeepDive}
                 disabled={team.length !== 6 || isAssessingDeep}
-                className="col-span-2 py-3.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-indigo-900/60 to-blue-900/60 border border-indigo-500/50 text-indigo-300 hover:from-indigo-900/80 hover:to-blue-900/80 shadow-[0_0_20px_rgba(99,102,241,0.2)] disabled:shadow-none uppercase tracking-widest flex items-center justify-center gap-2"
+                className="col-span-2 py-3.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] uppercase tracking-widest flex items-center justify-center gap-2"
               >
-                {isAssessingDeep ? "Analyzing Team..." : "🧠 Assess Team (Deep Dive)"}
+                {isAssessingDeep ? "Analyzing Team..." : "Assess Team (Deep Dive)"}
               </button>
 
               {dossierData && (
                 <button
                   onClick={() => setShowDossierModal(true)}
-                  className="col-span-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-300 bg-indigo-950/40 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-950/60 uppercase tracking-widest flex items-center justify-center gap-2"
+                  className="col-span-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-300 bg-red-950/30 border border-red-900/30 text-red-500 hover:bg-red-950/50 uppercase tracking-widest flex items-center justify-center gap-2"
                 >
-                  📖 Re-Open Saved Assessment Dossier
+                  Re-Open Saved Assessment Dossier
                 </button>
               )}
 
               <button
                 onClick={handleAssessTeam}
                 disabled={team.length !== 6 || isAssessing}
-                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-indigo-600/20 border border-indigo-500/50 text-indigo-400 hover:bg-indigo-600/30 hover:border-indigo-500 uppercase tracking-widest"
+                className="py-3 rounded-xl font-black text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white uppercase tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.2)]"
               >
                 {isAssessing ? "Assessing..." : "Assess Team"}
               </button>
               <button
                 onClick={() => handleSaveRoster()}
                 disabled={team.length !== 6 || isSaving}
-                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-purple-600/20 border border-purple-500/50 text-purple-400 hover:bg-purple-600/30 hover:border-purple-500 uppercase tracking-widest"
+                className="py-3 rounded-xl font-black text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white uppercase tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.2)]"
               >
                 {isSaving ? "Saving..." : "Save Roster"}
               </button>
@@ -458,16 +457,16 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
               <button
                 onClick={() => { setShowMetaModal(true); handleFetchLadderTeams(); }}
                 disabled={isFetchingMeta}
-                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-amber-600/20 border border-amber-500/50 text-amber-400 hover:bg-amber-600/30 hover:border-amber-500 uppercase tracking-widest flex items-center justify-center gap-2"
+                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2"
               >
                 {isFetchingMeta ? "Scraping..." : "Load Ladder Team"}
               </button>
               <button
                 onClick={handleExport}
                 disabled={team.length === 0}
-                className="col-span-2 py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600/20 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600/30 hover:border-emerald-500 uppercase tracking-widest flex items-center justify-center gap-2"
+                className="col-span-2 py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 uppercase tracking-widest flex items-center justify-center gap-2"
               >
-                {isExported ? "✓ Copied!" : "📋 Export to Clipboard"}
+                {isExported ? "Copied!" : "Export to Clipboard"}
               </button>
             </div>
             
@@ -517,7 +516,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
 
             {isLoadingTeams ? (
               <div className="flex justify-center py-12">
-                <div className="animate-spin h-8 w-8 rounded-full border-4 border-blue-500 border-t-transparent"></div>
+                <div className="animate-spin h-8 w-8 rounded-full border-4 border-red-500 border-t-transparent"></div>
               </div>
             ) : savedTeams.length === 0 ? (
               <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">
@@ -529,15 +528,15 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                   <div 
                     key={strat.id}
                     onClick={() => handleLoadTeam(strat.team_data, strat.assessment_data)}
-                    className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-blue-500 transition-colors group"
+                    className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-red-600/50 transition-colors group"
                   >
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h4 className="font-black text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">
+                        <h4 className="font-black text-white group-hover:text-red-500 transition-colors flex items-center gap-2">
                           {strat.team_name}
                           {strat.assessment_data && (
-                            <span className="px-1.5 py-0.5 bg-indigo-950 text-indigo-400 border border-indigo-900/50 rounded text-[8px] font-black uppercase tracking-widest">
-                              🧠 Dossier
+                            <span className="px-1.5 py-0.5 bg-red-950/40 text-red-500 border border-red-900/50 rounded text-[9px] font-black uppercase tracking-widest">
+                              Dossier
                             </span>
                           )}
                         </h4>
@@ -579,7 +578,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-amber-500">Ladder Teams (6-Man)</h3>
+              <h3 className="text-xl font-black text-red-500">Ladder Teams (6-Man)</h3>
               <button 
                 onClick={() => setShowMetaModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors"
@@ -601,10 +600,10 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                   <div 
                     key={idx}
                     onClick={() => handleLoadMetaTeam(team.paste)}
-                    className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500/50 transition-colors group"
+                    className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-red-600/50 transition-colors group"
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-black text-white group-hover:text-amber-400 transition-colors">{team.name}</h4>
+                      <h4 className="font-black text-white group-hover:text-red-500 transition-colors">{team.name}</h4>
                     </div>
                     {team.description && <p className="text-xs text-zinc-400">{team.description}</p>}
                   </div>
@@ -626,16 +625,16 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 onClick={() => setAssessmentResult(null)}
                 className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold w-fit"
               >
-                ← Close Assessment & Return to Roster
+                Close Assessment & Return to Roster
               </button>
               <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-black text-indigo-400">Team Assessment</h3>
+                <h3 className="text-2xl font-black text-red-500">Team Assessment</h3>
               </div>
             </div>
             
             {/* Scrollable Content */}
             <div className="p-6 overflow-y-auto space-y-6 text-zinc-300">
-              <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1">Top Team Cores (Modes)</h4>
+              <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-1">Top Team Cores (Modes)</h4>
               <div className="grid grid-cols-1 gap-6">
                 {assessmentResult.modes?.map((mode: any, i: number) => (
                   <div key={i} className="bg-zinc-950 p-6 rounded-2xl border border-zinc-800 flex flex-col gap-4 shadow-sm">
@@ -664,9 +663,9 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                       })}
                     </div>
                     
-                    <div className="bg-indigo-900/20 border border-indigo-900/50 rounded-xl p-4">
-                      <h6 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1.5">When To Use</h6>
-                      <p className="text-sm text-indigo-100/90 leading-relaxed font-medium">{mode.whenToUse}</p>
+                    <div className="bg-zinc-950 border border-red-900/30 rounded-xl p-4">
+                      <h6 className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1.5">When To Use</h6>
+                      <p className="text-sm text-zinc-300 leading-relaxed font-medium">{mode.whenToUse}</p>
                     </div>
                   </div>
                 ))}
@@ -683,8 +682,8 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
             
             {/* Header */}
             <div className="sticky top-0 z-10 bg-zinc-900/90 backdrop-blur-md px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
-              <h3 className="text-xl font-black text-indigo-400 flex items-center gap-2">
-                <span>🧠 Roster Study Dossier</span>
+              <h3 className="text-xl font-black text-red-500 flex items-center gap-2">
+                <span>Roster Study Dossier</span>
               </h3>
               <button 
                 onClick={() => setShowDossierModal(false)}
@@ -698,8 +697,8 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
             <div className="p-6 overflow-y-auto space-y-6 text-zinc-300 leading-relaxed max-h-[70vh]">
               {isAssessingDeep ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-                  <div className="animate-spin h-10 w-10 rounded-full border-4 border-indigo-500 border-t-transparent"></div>
-                  <p className="text-sm font-bold uppercase tracking-wider text-indigo-400 animate-pulse">Forging Roster Dossier...</p>
+                  <div className="animate-spin h-10 w-10 rounded-full border-4 border-red-500 border-t-transparent"></div>
+                  <p className="text-sm font-bold uppercase tracking-wider text-red-500 animate-pulse">Forging Roster Dossier...</p>
                   <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">Analyzing your 6-man roster with a heavy reasoning model to construct archetype paths, lead combos, and SP adjustments.</p>
                 </div>
               ) : !dossierData ? (
@@ -710,7 +709,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 <div className="space-y-6 animate-fade-in">
                   {/* Core Identity */}
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Core Identity & Strategy</h4>
+                    <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest">Core Identity & Strategy</h4>
                     <p className="text-sm leading-relaxed text-zinc-200 font-medium">
                       {dossierData.core_identity}
                     </p>
@@ -718,11 +717,11 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
 
                   {/* Primary Modes */}
                   <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                    <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Primary Operational Modes</h4>
+                    <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest">Primary Operational Modes</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {dossierData.primary_modes?.map((mode: any, i: number) => (
-                        <div key={i} className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-5 space-y-3">
-                          <h5 className="text-sm font-black text-white border-b border-zinc-800/40 pb-1.5">{mode.mode_name}</h5>
+                        <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-3">
+                          <h5 className="text-sm font-black text-white border-b border-zinc-850 pb-1.5">{mode.mode_name}</h5>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Leads:</span>
                             {mode.lead_duo?.map((mon: string, mIdx: number) => (
@@ -739,28 +738,28 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
 
                   {/* Threat Matrix */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-zinc-800/60">
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                    <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
+                      <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest flex items-center gap-1">
                         <span>Favorable Matchups</span>
                       </h4>
                       <ul className="space-y-2">
                         {dossierData.threat_matrix?.favorable_matchups?.map((matchup: string, i: number) => (
                           <li key={i} className="text-xs text-zinc-400 flex items-start gap-2">
-                            <span className="text-emerald-500/50 mt-0.5">•</span>
+                            <span className="text-red-500/40 mt-0.5">•</span>
                             <span>{matchup}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
-                    <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-red-400 uppercase tracking-widest flex items-center gap-1">
+                    <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
+                      <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest flex items-center gap-1">
                         <span>Critical Vulnerabilities</span>
                       </h4>
                       <ul className="space-y-2">
                         {dossierData.threat_matrix?.critical_vulnerabilities?.map((vuln: string, i: number) => (
                           <li key={i} className="text-xs text-zinc-400 flex items-start gap-2">
-                            <span className="text-red-500/50 mt-0.5">•</span>
+                            <span className="text-red-500/40 mt-0.5">•</span>
                             <span>{vuln}</span>
                           </li>
                         ))}
@@ -770,12 +769,12 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
 
                   {/* Optimizations */}
                   <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                    <h4 className="text-xs font-bold text-amber-400 uppercase tracking-widest">Roster Tweaks & Optimizations</h4>
+                    <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest">Roster Tweaks & Optimizations</h4>
                     <div className="space-y-3">
                       {dossierData.optimizations?.map((opt: any, i: number) => (
-                        <div key={i} className="bg-amber-950/20 border border-amber-900/30 rounded-2xl p-4 space-y-1.5">
+                        <div key={i} className="bg-zinc-950 border border-red-900/30 rounded-2xl p-4 space-y-1.5">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs font-black text-amber-300 uppercase tracking-wider">{opt.target_pokemon}</span>
+                            <span className="text-xs font-black text-red-500 uppercase tracking-wider">{opt.target_pokemon}</span>
                           </div>
                           <p className="text-xs text-zinc-200 font-bold">{opt.suggested_tweak}</p>
                           <p className="text-xs text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
@@ -799,9 +798,9 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 <button
                   onClick={() => handleSaveRoster(dossierData)}
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl font-black text-xs bg-gradient-to-r from-purple-600 to-indigo-600 border border-purple-500/50 text-white hover:from-purple-500 hover:to-indigo-500 shadow-[0_0_15px_rgba(139,92,246,0.3)] disabled:opacity-50 uppercase tracking-wider flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl font-black text-xs bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:opacity-50 uppercase tracking-widest transition-all"
                 >
-                  {isSaving ? "Saving..." : "💾 Save Roster & Assessment to Library"}
+                  {isSaving ? "Saving..." : "Save Roster & Assessment to Library"}
                 </button>
               </div>
             )}

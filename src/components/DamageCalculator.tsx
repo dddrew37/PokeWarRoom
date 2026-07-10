@@ -120,8 +120,8 @@ export default function DamageCalculator({ playerMons, opponentMons }: DamageCal
               onClick={() => setCategory(category === "Physical" ? "Special" : "Physical")}
               className={`p-2 rounded-lg text-xs font-black uppercase tracking-wider border-2 transition-all ${
                 category === "Physical" 
-                  ? "bg-red-900/40 border-red-500 text-red-400" 
-                  : "bg-indigo-900/40 border-indigo-500 text-indigo-400"
+                  ? "bg-red-900/20 border-red-500 text-red-400" 
+                  : "bg-zinc-950 border-zinc-800 text-zinc-400"
               }`}
             >
               {category}
@@ -136,7 +136,7 @@ export default function DamageCalculator({ playerMons, opponentMons }: DamageCal
             <button
               onClick={() => setModifiers(prev => ({ ...prev, stab: !prev.stab }))}
               className={`flex-1 p-2 rounded-lg text-xs font-black border-2 transition-all ${
-                modifiers.stab ? "bg-amber-900/40 border-amber-500 text-amber-400" : "bg-zinc-900 border-zinc-700 text-zinc-400"
+                modifiers.stab ? "bg-red-950/20 border-red-600 text-red-500" : "bg-zinc-900 border-zinc-700 text-zinc-400"
               }`}
             >
               STAB
@@ -144,7 +144,7 @@ export default function DamageCalculator({ playerMons, opponentMons }: DamageCal
             <button
               onClick={() => setModifiers(prev => ({ ...prev, spread: !prev.spread }))}
               className={`flex-1 p-2 rounded-lg text-xs font-black border-2 transition-all ${
-                modifiers.spread ? "bg-emerald-900/40 border-emerald-500 text-emerald-400" : "bg-zinc-900 border-zinc-700 text-zinc-400"
+                modifiers.spread ? "bg-red-950/20 border-red-600 text-red-500" : "bg-zinc-900 border-zinc-700 text-zinc-400"
               }`}
             >
               SPREAD
@@ -163,7 +163,7 @@ export default function DamageCalculator({ playerMons, opponentMons }: DamageCal
               onClick={() => handleEffectivenessChange(multiplier)}
               className={`flex-1 py-1.5 rounded-md text-xs font-black transition-all ${
                 modifiers.typeEffectiveness === multiplier 
-                  ? multiplier > 1 ? "bg-emerald-500 text-zinc-950 shadow-md" : multiplier < 1 ? "bg-red-500 text-zinc-950 shadow-md" : "bg-zinc-600 text-white shadow-md"
+                  ? multiplier > 1 ? "bg-red-700 text-white shadow-md border border-red-500" : multiplier < 1 ? "bg-zinc-800 text-zinc-400 border border-zinc-700 shadow-md" : "bg-zinc-600 text-white shadow-md"
                   : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
@@ -176,11 +176,11 @@ export default function DamageCalculator({ playerMons, opponentMons }: DamageCal
       {/* Visual Output Ribbon */}
       {result && (
         <div className={`w-full rounded-xl border p-4 flex flex-col items-center justify-center relative overflow-hidden ${
-          result.minPercent >= 100 ? 'bg-red-950/50 border-red-500/50' :
-          result.maxPercent >= 100 ? 'bg-orange-950/50 border-orange-500/50' :
-          'bg-zinc-900 border-zinc-700'
+          result.minPercent >= 100 ? 'bg-red-950/20 border-red-900/40' :
+          result.maxPercent >= 100 ? 'bg-red-950/10 border-red-900/20' :
+          'bg-zinc-900 border-zinc-750'
         }`}>
-          <div className="text-sm font-black uppercase tracking-widest mb-1" style={{ color: result.minPercent >= 100 ? '#ef4444' : result.maxPercent >= 100 ? '#f97316' : '#a1a1aa' }}>
+          <div className="text-sm font-black uppercase tracking-widest mb-1" style={{ color: result.minPercent >= 100 ? '#ef4444' : result.maxPercent >= 100 ? '#ef4444' : '#a1a1aa' }}>
             {result.koChance}
           </div>
           <div className="text-2xl font-black text-white drop-shadow-sm">

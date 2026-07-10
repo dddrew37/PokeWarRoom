@@ -197,7 +197,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
   return (
     <div className="w-full max-w-2xl bg-zinc-900 border-2 border-zinc-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
       {/* Decorative gradient orb */}
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-700/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="flex flex-col space-y-8 relative z-10">
         <div>
@@ -269,7 +269,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
               <h4 className="text-lg font-bold text-white">Stat Distribution</h4>
               <p className="text-xs text-zinc-500 mt-1">Max 32 SP per stat</p>
             </div>
-            <div className={`px-4 py-2 rounded-xl font-black text-sm tracking-widest ${spRemaining === 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}`}>
+            <div className={`px-4 py-2 rounded-xl font-black text-sm tracking-widest ${spRemaining === 0 ? 'bg-red-950/20 text-red-500 border border-red-900/30' : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800'}`}>
               SP REMAINING: {spRemaining}/66
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
                   max="32"
                   value={sp[stat]}
                   onChange={(e) => handleStatChange(stat, parseInt(e.target.value) || 0)}
-                  className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-600"
                 />
                 <input
                   type="number"
@@ -294,7 +294,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
                   max="32"
                   value={sp[stat]}
                   onChange={(e) => handleStatChange(stat, parseInt(e.target.value) || 0)}
-                  className="w-16 bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-center text-sm font-bold text-white focus:outline-none focus:border-blue-500"
+                  className="w-16 bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-center text-sm font-bold text-white focus:outline-none focus:border-red-500"
                 />
               </div>
             ))}
@@ -315,8 +315,8 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
             onClick={handleAdd}
             className={`flex-1 py-4 rounded-2xl font-black text-lg transition-all duration-300 border-2 uppercase tracking-wide flex items-center justify-center gap-2 ${
               canSubmit
-                ? "bg-blue-600 border-blue-500 text-white hover:bg-blue-500 hover:border-blue-400 shadow-[0_0_30px_rgba(37,99,235,0.2)]"
-                : "bg-zinc-800 border-zinc-700 text-zinc-500 cursor-pointer"
+                ? "bg-red-700 border-red-500 text-white hover:bg-red-600 hover:border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+                : "bg-zinc-850 border-zinc-800 text-zinc-600 cursor-not-allowed"
             }`}
           >
             {canAdd || isEditing ? (
@@ -336,10 +336,10 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
 
         {/* Validation diagnostics — visible when the form is incomplete or has DB mismatches */}
         {validationIssues.length > 0 && (
-          <div className="bg-amber-950/30 border border-amber-700/40 rounded-xl p-3 space-y-1">
-            <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1.5">Database mismatch warnings (Force Update available):</p>
+          <div className="bg-zinc-950 border border-red-950/40 rounded-xl p-3 space-y-1">
+            <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1.5">Database mismatch warnings (Force Update available):</p>
             {validationIssues.map((issue, i) => (
-              <p key={i} className="text-[11px] text-amber-300/80 font-medium">• {issue}</p>
+              <p key={i} className="text-[11px] text-zinc-400 font-medium">• {issue}</p>
             ))}
           </div>
         )}

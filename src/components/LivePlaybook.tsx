@@ -161,11 +161,11 @@ export default function LivePlaybook({
           onClick={onBack} 
           className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold bg-zinc-900 px-4 py-2 rounded-xl border border-zinc-800"
         >
-          ← Return to Roster
+          Return to Roster
         </button>
         <div className="flex items-center gap-3 text-right">
           {!readOnly && (
-            <button onClick={handleSave} disabled={isSaving} className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-black px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(5,150,105,0.3)] border border-emerald-500 transition-colors uppercase tracking-wider disabled:opacity-50">
+            <button onClick={handleSave} disabled={isSaving} className="text-xs bg-red-700 hover:bg-red-600 border border-red-500 text-white font-black px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(220,38,38,0.2)] transition-colors uppercase tracking-widest disabled:opacity-50 transition-all">
               {isSaving ? "Saving..." : "Save"}
             </button>
           )}
@@ -182,7 +182,7 @@ export default function LivePlaybook({
               <span className="text-[10px] text-zinc-500 font-bold">PRESERVE:</span>
               <div className="flex gap-1 flex-wrap">
                 {data.audit.preserve_targets?.map((t, i) => (
-                  <span key={i} className="px-1.5 py-0.5 bg-blue-900/30 text-blue-400 border border-blue-800/50 rounded text-[9px] font-black uppercase tracking-wider">
+                  <span key={i} className="px-1.5 py-0.5 bg-red-950/20 text-red-500 border border-red-900/30 rounded text-[9px] font-black uppercase tracking-wider">
                     {t}
                   </span>
                 ))}
@@ -199,21 +199,21 @@ export default function LivePlaybook({
             onClick={() => setShowAuditLogic(!showAuditLogic)}
             className="flex items-center gap-2 text-[11px] font-black tracking-widest uppercase text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
           >
-            {showAuditLogic ? "▼" : "▶"} ??? Audit AI Logic
+            {showAuditLogic ? "▼" : "▶"} Audit AI Logic
           </button>
           
           {showAuditLogic && (
             <div className="bg-black/80 border border-zinc-800/80 rounded-2xl p-6 font-mono text-xs space-y-6 shadow-inner animate-in fade-in slide-in-from-top-2 duration-300">
               <div>
-                <span className="text-emerald-500 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; speed_tier_analysis</span>
+                <span className="text-red-500 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; speed_tier_analysis</span>
                 <p className="text-zinc-400 leading-relaxed">{data.decision_audit.speed_tier_analysis}</p>
               </div>
               <div className="border-t border-zinc-800/50 pt-4">
-                <span className="text-red-400 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; primary_threat_identified</span>
+                <span className="text-red-500 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; primary_threat_identified</span>
                 <p className="text-zinc-400 leading-relaxed">{data.decision_audit.primary_threat_identified}</p>
               </div>
               <div className="border-t border-zinc-800/50 pt-4">
-                <span className="text-blue-400 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; risk_assessment_justification</span>
+                <span className="text-zinc-500 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; risk_assessment_justification</span>
                 <p className="text-zinc-400 leading-relaxed">{data.decision_audit.risk_assessment_justification}</p>
               </div>
             </div>
@@ -230,17 +230,17 @@ export default function LivePlaybook({
               onClick={() => setActiveIndex(0)}
               className={`w-full py-2.5 px-3 text-left rounded-xl transition-all border flex items-center justify-between ${
                 activeIndex === 0
-                  ? "bg-amber-500/10 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)]"
+                  ? "bg-red-950/20 border-red-800 shadow-[0_0_10px_rgba(220,38,38,0.1)]"
                   : "bg-zinc-900 border-zinc-800 hover:bg-zinc-800"
               }`}
             >
               <div>
-                <div className={`text-[9px] font-bold uppercase tracking-widest ${activeIndex === 0 ? "text-amber-500" : "text-zinc-600"}`}>Primary Win Condition</div>
-                <div className={`text-sm font-black tracking-wide truncate ${activeIndex === 0 ? "text-amber-100" : "text-zinc-400"}`}>
+                <div className={`text-[9px] font-bold uppercase tracking-widest ${activeIndex === 0 ? "text-red-500" : "text-zinc-600"}`}>Primary Win Condition</div>
+                <div className={`text-sm font-black tracking-wide truncate ${activeIndex === 0 ? "text-white" : "text-zinc-400"}`}>
                   {allPaths[0].path_name || allPaths[0].matchup_condition || "Default Matchup"}
                 </div>
               </div>
-              {activeIndex === 0 && <span className="text-amber-500 font-bold text-xs uppercase tracking-widest">Active</span>}
+              {activeIndex === 0 && <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Active</span>}
             </button>
           )}
 
@@ -256,14 +256,14 @@ export default function LivePlaybook({
                     onClick={() => setActiveIndex(actualIndex)}
                     className={`flex-1 min-w-[120px] py-2 px-2 text-center rounded-lg transition-all ${
                       isActive
-                        ? "bg-blue-900/40 border border-blue-700/50 shadow-md"
+                        ? "bg-red-950/20 border border-red-900/30 shadow-md"
                         : "hover:bg-zinc-800"
                     }`}
                   >
-                    <div className={`text-[9px] font-bold uppercase tracking-widest ${isActive ? "text-blue-400/80" : "text-zinc-600"}`}>
+                    <div className={`text-[9px] font-bold uppercase tracking-widest ${isActive ? "text-red-500" : "text-zinc-600"}`}>
                       Contingency {actualIndex}
                     </div>
-                    <div className={`text-xs font-black truncate mt-0.5 ${isActive ? "text-blue-100" : "text-zinc-500"}`}>
+                    <div className={`text-xs font-black truncate mt-0.5 ${isActive ? "text-white" : "text-zinc-500"}`}>
                       {path.path_name || path.matchup_condition || `Path ${actualIndex + 1}`}
                     </div>
                   </button>
@@ -277,11 +277,11 @@ export default function LivePlaybook({
         {activeFlowchart && activeFlowchart.leads && (
           <div className="flex justify-between items-center text-center animate-in fade-in slide-in-from-top-2 duration-300">
             <div className="flex-1 bg-zinc-900/50 border border-zinc-800/80 rounded-lg p-2 mr-2">
-              <p className="text-[9px] font-bold tracking-widest uppercase text-emerald-500 mb-0.5">Leads</p>
+              <p className="text-[9px] font-bold tracking-widest uppercase text-red-500 mb-0.5">Leads</p>
               <p className="text-xs font-black text-white">{activeFlowchart.leads.join(" + ")}</p>
             </div>
             <div className="flex-1 bg-zinc-900/50 border border-zinc-800/80 rounded-lg p-2 ml-2">
-              <p className="text-[9px] font-bold tracking-widest uppercase text-purple-500 mb-0.5">In The Back</p>
+              <p className="text-[9px] font-bold tracking-widest uppercase text-zinc-500 mb-0.5">In The Back</p>
               <p className="text-xs font-black text-white">{(activeFlowchart.in_the_back || []).join(" + ")}</p>
             </div>
           </div>
@@ -310,11 +310,11 @@ export default function LivePlaybook({
                 <div className="absolute top-6 bottom-[-20px] left-[11px] w-0.5 bg-zinc-800" />
               )}
               {/* Timeline Dot */}
-              <div className={`absolute left-0 top-2 w-6 h-6 rounded-full border-4 border-zinc-950 flex items-center justify-center text-[10px] font-black shadow-sm ${activeIndex === 0 ? "bg-amber-500 text-white" : "bg-blue-500 text-white"}`}>
+              <div className="absolute left-0 top-2 w-6 h-6 rounded-full border-4 border-zinc-950 flex items-center justify-center text-[10px] font-black shadow-sm bg-red-750 text-white">
                 {turnNumber}
               </div>
 
-              <div className={`bg-zinc-900/95 backdrop-blur-md border rounded-2xl p-6 shadow-lg hover:border-zinc-700 transition-colors ${activeIndex === 0 ? "border-amber-900/30" : "border-zinc-800"}`}>
+              <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-800 rounded-2xl p-6 shadow-lg hover:border-zinc-750 transition-colors">
                 
                 {/* Fallback for old single-turn schema saves */}
                 {!node.player_actions && (node as any).action && (
@@ -341,20 +341,20 @@ export default function LivePlaybook({
                           </div>
                           <div className="text-right flex flex-col items-end">
                             <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">Target</span>
-                            <span className="text-xs font-bold text-red-400/90">{act.target}</span>
+                            <span className="text-xs font-bold text-red-500">{act.target}</span>
                           </div>
                         </div>
                         {/* Micro-Granularity Badges */}
                         {(act.damage_estimation || act.mechanic_trigger) && (
                           <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-800/50">
                             {act.damage_estimation && act.damage_estimation.toLowerCase() !== "none" && (
-                              <span className="px-1.5 py-0.5 bg-red-950/40 text-red-400 border border-red-900/50 rounded text-[8px] font-bold uppercase tracking-widest">
-                                ⚔️ {act.damage_estimation}
+                              <span className="px-1.5 py-0.5 bg-red-950/40 text-red-500 border border-red-900/50 rounded text-[8px] font-bold uppercase tracking-widest">
+                                {act.damage_estimation}
                               </span>
                             )}
                             {act.mechanic_trigger && act.mechanic_trigger.toLowerCase() !== "none" && (
-                              <span className="px-1.5 py-0.5 bg-indigo-950/40 text-indigo-400 border border-indigo-900/50 rounded text-[8px] font-bold uppercase tracking-widest">
-                                ⚙️ {act.mechanic_trigger}
+                              <span className="px-1.5 py-0.5 bg-zinc-850 text-zinc-400 border border-zinc-800 rounded text-[8px] font-bold uppercase tracking-widest">
+                                {act.mechanic_trigger}
                               </span>
                             )}
                           </div>
@@ -371,7 +371,7 @@ export default function LivePlaybook({
                     <p className="text-xs text-zinc-300 italic mb-2">{node.expected_board_state}</p>
                     
                     <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Tactical Rationale</p>
-                    <p className="text-xs font-medium text-emerald-400/90">{node.tactical_rationale}</p>
+                    <p className="text-xs font-medium text-zinc-400">{node.tactical_rationale}</p>
                   </div>
                 )}
               </div>
@@ -386,44 +386,44 @@ export default function LivePlaybook({
           <button
             onClick={handleDeepDive}
             disabled={isDeepDiving}
-            className="w-full max-w-sm py-3 rounded-xl font-black text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-slate-800 border-2 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm"
+            className="w-full max-w-sm py-3 rounded-xl font-black text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm"
           >
-            {isDeepDiving ? "Analyzing..." : "🔎 Explain Further (Deep Dive)"}
+            {isDeepDiving ? "Analyzing..." : "Explain Further (Deep Dive)"}
           </button>
         )}
 
         {deepDiveData && (
-          <div className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-inner space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="w-full bg-black border border-zinc-850 rounded-2xl p-6 shadow-inner space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+              <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2 flex items-center gap-2">
                 Draft Justification
               </h4>
-              <p className="text-sm text-slate-300 leading-relaxed font-medium">
+              <p className="text-sm text-zinc-300 leading-relaxed font-medium">
                 {deepDiveData.draft_justification}
               </p>
             </div>
             
-            <div className="border-t border-slate-800/80 pt-4">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                ⚠️ Potential Weaknesses
+            <div className="border-t border-zinc-850 pt-4">
+              <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                Potential Weaknesses
               </h4>
               <ul className="space-y-2">
                 {deepDiveData.potential_weaknesses?.map((weakness, i) => (
-                  <li key={i} className="text-sm text-amber-200/80 flex items-start gap-2 leading-tight">
-                    <span className="text-amber-500/50 mt-0.5">•</span> {weakness}
+                  <li key={i} className="text-sm text-zinc-400 flex items-start gap-2 leading-tight">
+                    <span className="text-red-500/40 mt-0.5">•</span> {weakness}
                   </li>
                 ))}
               </ul>
             </div>
             
-            <div className="border-t border-slate-800/80 pt-4">
-              <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                🎯 Things To Watch Out For
+            <div className="border-t border-zinc-850 pt-4">
+              <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                Things To Watch Out For
               </h4>
               <ul className="space-y-2">
                 {deepDiveData.things_to_watch_out_for?.map((threat, i) => (
-                  <li key={i} className="text-sm text-red-200/80 flex items-start gap-2 leading-tight">
-                    <span className="text-red-500/50 mt-0.5">•</span> {threat}
+                  <li key={i} className="text-sm text-zinc-400 flex items-start gap-2 leading-tight">
+                    <span className="text-red-500/40 mt-0.5">•</span> {threat}
                   </li>
                 ))}
               </ul>
@@ -455,7 +455,7 @@ export default function LivePlaybook({
                 setMatchContext(""); // clear on success
               }}
               disabled={isUpdating || !matchContext.trim()}
-              className="w-full py-3 rounded-xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-600 border-red-500 text-white hover:bg-red-500 hover:border-red-400 shadow-[0_0_20px_rgba(220,38,38,0.3)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-700 border-red-500 text-white hover:bg-red-600 hover:border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:shadow-none uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
             >
               {isUpdating ? "Recalculating..." : "Calculate Next Turn"}
             </button>

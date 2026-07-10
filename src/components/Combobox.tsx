@@ -81,7 +81,7 @@ export default function Combobox({ label, value, onChange, options = [], placeho
         }}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="w-full bg-zinc-900 border-2 border-zinc-800 rounded-xl p-3 text-sm font-medium text-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all placeholder-zinc-600"
+        className="w-full bg-zinc-900 border-2 border-zinc-800 rounded-xl p-3 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-4 focus:ring-red-500/20 transition-all placeholder-zinc-600"
       />
       
       {isOpen && filteredOptions.length > 0 && (
@@ -96,7 +96,7 @@ export default function Combobox({ label, value, onChange, options = [], placeho
               onMouseEnter={() => setHighlightedIndex(index)}
               className={`px-4 py-3 cursor-pointer text-sm font-medium transition-colors ${
                 index === highlightedIndex
-                  ? "bg-blue-600 text-white"
+                  ? "bg-red-700 text-white"
                   : "text-zinc-300 hover:bg-zinc-700 hover:text-white"
               }`}
             >

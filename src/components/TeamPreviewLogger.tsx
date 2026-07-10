@@ -234,7 +234,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
         <p className="text-zinc-500 font-medium">Please import or build a team in the Team Forge to begin logging matchups.</p>
         <button 
           onClick={onGoToForge} 
-          className="mt-4 px-8 py-4 bg-zinc-900 hover:bg-blue-600 border border-zinc-800 hover:border-blue-500 text-white rounded-xl font-bold transition-all hover:shadow-[0_0_20px_rgba(37,99,235,0.3)] flex items-center gap-3 uppercase tracking-wider text-sm"
+          className="mt-4 px-8 py-4 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 rounded-xl font-black transition-all flex items-center gap-3 uppercase tracking-wider text-sm"
         >
           <span>Go to Team Forge</span>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -259,13 +259,13 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
               <select 
                 value={format}
                 onChange={(e) => setFormat(e.target.value)}
-                className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-red-500"
               >
                 <option value="reg_mb">Pokémon Champions (Reg M-B)</option>
               </select>
             </div>
           </div>
-          <p className="text-emerald-500 text-sm font-bold tracking-widest uppercase">
+          <p className="text-red-500 text-sm font-bold tracking-widest uppercase">
             {matchPhase === "turn1" ? `Select Brought ( ${playerLockedIndices.length}/4 )` : "Optimized 66-SP Roster"}
           </p>
         </div>
@@ -289,8 +289,8 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
                 className={`aspect-square rounded-2xl border flex flex-col items-center justify-center relative transition-all duration-300 ${
                   isSelectable 
                     ? isSelected 
-                      ? "bg-emerald-900/30 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)] cursor-pointer scale-105 z-10" 
-                      : "bg-zinc-900/50 border-zinc-800 cursor-pointer hover:border-emerald-500/50 opacity-50 hover:opacity-100"
+                      ? "bg-red-950/20 border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.2)] cursor-pointer scale-105 z-10" 
+                      : "bg-zinc-900/50 border-zinc-800 cursor-pointer hover:border-red-500 opacity-50 hover:opacity-100"
                     : "bg-zinc-900 border-zinc-800 pointer-events-none opacity-90 shadow-inner"
                 }`}
               >
@@ -300,16 +300,16 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
                   className="w-20 h-20 object-contain drop-shadow-md" 
                   onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
                 />
-                <span className={`absolute bottom-2 text-[10px] font-bold px-1 text-center leading-tight uppercase tracking-widest ${isSelected ? 'text-emerald-300' : 'text-zinc-400'}`}>
+                <span className={`absolute bottom-2 text-[10px] font-bold px-1 text-center leading-tight uppercase tracking-widest ${isSelected ? 'text-red-400' : 'text-zinc-400'}`}>
                   {p.name}
                 </span>
                 {isDraftLead && (
-                  <div className="absolute top-2 left-2 bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_10px_rgba(245,158,11,0.5)] font-black text-[10px]">
+                  <div className="absolute top-2 left-2 bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_10px_rgba(220,38,38,0.4)] font-black text-[10px]">
                     L
                   </div>
                 )}
                 {isSelected && (
-                  <div className="absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-1 shadow-sm">
+                  <div className="absolute top-2 right-2 bg-red-650 text-white rounded-full p-1 shadow-sm">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                   </div>
                 )}
@@ -324,22 +324,22 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
             <button
               onClick={handleSuggestDraft}
               disabled={isDrafting}
-              className="w-full py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-blue-600/20 border-blue-500/50 text-blue-400 hover:bg-blue-600/30 hover:border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.15)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl font-black text-xs sm:text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
             >
-              {isDrafting ? "Analyzing Matchup..." : "💡 Ask AI Coach: Suggest Draft"}
+              {isDrafting ? "Analyzing Matchup..." : "Ask AI Coach: Suggest Draft"}
             </button>
             
             {coachNotes && (
               <div 
-                className="bg-blue-950/40 border border-blue-900/50 rounded-xl p-4 cursor-pointer hover:border-blue-700/50 transition-colors relative group animate-in fade-in slide-in-from-top-2 duration-300"
+                className="bg-zinc-950 border border-red-950/40 rounded-xl p-4 cursor-pointer hover:border-red-900/40 transition-colors relative group animate-in fade-in slide-in-from-top-2 duration-300"
                 onClick={() => setCoachNotes("")}
               >
-                <div className="absolute top-2 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500 hover:text-blue-400 text-xs font-bold">✕ Dismiss</div>
-                <h4 className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                <div className="absolute top-2 right-3 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-400 text-xs font-bold">✕ Dismiss</div>
+                <h4 className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   Coach's Notes
                 </h4>
-                <p className="text-sm text-blue-100 leading-relaxed font-medium">{coachNotes}</p>
+                <p className="text-sm text-zinc-300 leading-relaxed font-medium">{coachNotes}</p>
               </div>
             )}
           </div>
@@ -519,14 +519,14 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
               <button
                 onClick={() => { setShowMetaModal(true); handleFetchLadderTeams(); }}
                 disabled={isFetchingMeta || selected.length === 6}
-                className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 bg-amber-600/20 border border-amber-500/50 text-amber-400 hover:bg-amber-600/30 hover:border-amber-500 disabled:opacity-60 disabled:cursor-not-allowed uppercase tracking-wide flex items-center justify-center gap-2"
+                className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 disabled:opacity-60 disabled:cursor-not-allowed uppercase tracking-wide flex items-center justify-center gap-2"
               >
                 {isFetchingMeta ? "Scraping..." : "Load Ladder Team"}
               </button>
               <button
                 onClick={() => setMatchPhase("turn1")}
                 disabled={selected.length < 6}
-                className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-emerald-600 border-emerald-500 text-white hover:bg-emerald-500 hover:border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.3)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
+                className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white hover:bg-red-500 hover:border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:shadow-none uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
               >
                 Start Match (Select Leads)
               </button>
@@ -535,14 +535,14 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
             <>
               <button
                 onClick={() => setMatchPhase("pregame")}
-                className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 bg-zinc-800 border-2 border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white uppercase tracking-wide flex items-center justify-center gap-2"
+                className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 bg-zinc-900 border-2 border-zinc-700 text-zinc-300 hover:bg-zinc-750 hover:text-white uppercase tracking-wide flex items-center justify-center gap-2"
               >
-                ← Back to Pre-Game
+                Back to Pre-Game
               </button>
               <button
                 onClick={handleGenerate}
                 disabled={playerLockedIndices.length !== 4 || opponentLeadIndices.length !== 2 || isLoading}
-                className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-600 border-red-500 text-white hover:bg-red-500 hover:border-red-400 shadow-[0_0_30px_rgba(220,38,38,0.3)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
+                className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white hover:bg-red-500 hover:border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:shadow-none uppercase tracking-widest flex items-center justify-center gap-2 transition-all"
               >
                 {isLoading ? "Locking..." : "Lock Leads"}
               </button>
@@ -556,7 +556,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-amber-500">Regulation M-B Ladder Teams</h3>
+              <h3 className="text-xl font-black text-red-500">Regulation M-B Ladder Teams</h3>
               <button 
                 onClick={() => setShowMetaModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors"
@@ -578,10 +578,10 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
                   <div
                     key={idx}
                     onClick={() => handleLoadMetaTeam(team.paste)}
-                    className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-amber-500/50 transition-colors group"
+                    className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 cursor-pointer hover:border-red-600/50 transition-colors group"
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <h4 className="font-black text-white group-hover:text-amber-400 transition-colors">{team.name}</h4>
+                      <h4 className="font-black text-white group-hover:text-red-500 transition-colors">{team.name}</h4>
                     </div>
                     {team.description && <p className="text-xs text-zinc-400">{team.description}</p>}
                   </div>
@@ -598,7 +598,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
         <button
           onClick={handleGenerate}
           disabled={playerTeam.length < 6 || selected.length < 6 || isLoading}
-          className="w-full max-w-xl py-5 rounded-2xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900/50 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-600 border-red-500 hover:bg-red-500 hover:border-red-400 text-white shadow-[0_0_30px_rgba(220,38,38,0.2)] disabled:shadow-none uppercase tracking-widest flex items-center justify-center gap-3"
+          className="w-full max-w-xl py-5 rounded-2xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900/50 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-700 border-red-500 hover:bg-red-600 hover:border-red-400 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:shadow-none uppercase tracking-widest flex items-center justify-center gap-3"
         >
           {isLoading ? (
             <>
