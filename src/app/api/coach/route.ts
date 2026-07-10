@@ -317,7 +317,9 @@ You must output your response STRICTLY as a JSON object matching this schema:
 }
 Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
 
-    const assessTeamSystemPrompt = `You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation M-B team.
+    const assessTeamSystemPrompt = `CRITICAL CONTEXT: YOU ARE OPERATING IN VGC REGULATION M-B (2026). Mega Evolutions are fully legal. Factor this into all threat assessments, speed tiers, and damage calculations.
+
+You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation M-B team.
 Your task is to analyze the team's core identity, primary modes, threat matrix, and optimizations based on their composition.
 
 # STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
@@ -344,6 +346,17 @@ You must output your response STRICTLY as a JSON object matching this schema:
       "target_pokemon": "Pokemon Name",
       "suggested_tweak": "Suggested move, item, or 66-SP point redistribution.",
       "rationale": "Why this tweak improves the team's synergy and matchups."
+    }
+  ],
+  "detailed_tactics": [
+    {
+      "scenario_name": "Scenario name (e.g. Vs. Archaludon Rain, Vs. Hard Trick Room). Create 3-4 distinct scenarios.",
+      "key_interactions": "Details on key Pokemon interactions and type advantages in this matchup.",
+      "execution_steps": [
+        "Turn 1 details...",
+        "Turn 2 details...",
+        "Turn 3 details..."
+      ]
     }
   ]
 }
@@ -485,6 +498,26 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
               target_pokemon: team[0]?.name || "Tornadus",
               suggested_tweak: "Shift 4 SP from HP to Speed to guarantee outspeeding opposing base 110s.",
               rationale: "Ensures we get Tailwind up first in mirrors."
+            }
+          ],
+          detailed_tactics: [
+            {
+              scenario_name: "Vs. Archaludon Rain",
+              key_interactions: "Use Amoonguss and Urshifu to pivot against Pelipper and check Archaludon.",
+              execution_steps: [
+                "Turn 1: Lead with Tornadus to set Tailwind immediately. Use Urshifu to attack Pelipper to deny Tailwind setup.",
+                "Turn 2: Pivot Tornadus to Amoonguss on an expected Electro Shot from Archaludon.",
+                "Turn 3: Utilize Rage Powder redirection to allow Urshifu to land a critical Close Combat on Archaludon."
+              ]
+            },
+            {
+              scenario_name: "Vs. Hard Trick Room",
+              key_interactions: "Mitigate early sweeps using Incineroar Fake Out and Amoonguss Spore.",
+              execution_steps: [
+                "Turn 1: Lead Incineroar. Fake Out the Trick Room setter while Amoonguss uses Spore on the offensive threat.",
+                "Turn 2: Parting Shot with Incineroar to lower stats and bring in Urshifu.",
+                "Turn 3: Use Amoonguss to put the setter to sleep once Trick Room is finally set to stall out TR turns."
+              ]
             }
           ]
         });

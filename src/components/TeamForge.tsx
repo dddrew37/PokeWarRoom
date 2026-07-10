@@ -678,7 +678,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
       {/* Deep-Dive Assessment Dossier Modal */}
       {showDossierModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-2xl shadow-2xl my-8 flex flex-col overflow-hidden max-h-[90vh]">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-4xl shadow-2xl my-8 flex flex-col overflow-hidden max-h-[90vh]">
             
             {/* Header */}
             <div className="sticky top-0 z-10 bg-zinc-900/90 backdrop-blur-md px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
@@ -698,8 +698,8 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
               {isAssessingDeep ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
                   <div className="animate-spin h-10 w-10 rounded-full border-4 border-red-500 border-t-transparent"></div>
-                  <p className="text-sm font-bold uppercase tracking-wider text-red-500 animate-pulse">Forging Roster Dossier...</p>
-                  <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">Analyzing your 6-man roster with a heavy reasoning model to construct archetype paths, lead combos, and SP adjustments.</p>
+                  <p className="text-base font-bold uppercase tracking-wider text-red-500 animate-pulse">Forging Roster Dossier...</p>
+                  <p className="text-sm text-zinc-500 max-w-sm leading-relaxed">Analyzing your 6-man roster with a heavy reasoning model to construct archetype paths, lead combos, and SP adjustments.</p>
                 </div>
               ) : !dossierData ? (
                 <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">
@@ -709,28 +709,28 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 <div className="space-y-6 animate-fade-in">
                   {/* Core Identity */}
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest">Core Identity & Strategy</h4>
-                    <p className="text-sm leading-relaxed text-zinc-200 font-medium">
+                    <h4 className="text-sm font-black text-red-500 uppercase tracking-widest">Core Identity & Strategy</h4>
+                    <p className="text-base leading-relaxed text-zinc-200 font-medium">
                       {dossierData.core_identity}
                     </p>
                   </div>
 
                   {/* Primary Modes */}
                   <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                    <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest">Primary Operational Modes</h4>
+                    <h4 className="text-sm font-black text-red-500 uppercase tracking-widest">Primary Operational Modes</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {dossierData.primary_modes?.map((mode: any, i: number) => (
                         <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-3">
-                          <h5 className="text-sm font-black text-white border-b border-zinc-850 pb-1.5">{mode.mode_name}</h5>
+                          <h5 className="text-base font-black text-white border-b border-zinc-850 pb-1.5">{mode.mode_name}</h5>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Leads:</span>
+                            <span className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Leads:</span>
                             {mode.lead_duo?.map((mon: string, mIdx: number) => (
-                              <span key={mIdx} className="bg-zinc-900 border border-zinc-750 text-zinc-200 font-bold px-2 py-0.5 rounded-lg text-[10px]">
+                              <span key={mIdx} className="bg-zinc-900 border border-zinc-750 text-zinc-200 font-bold px-2 py-0.5 rounded-lg text-xs">
                                 {mon}
                               </span>
                             ))}
                           </div>
-                          <p className="text-xs text-zinc-400 leading-relaxed">{mode.objective}</p>
+                          <p className="text-sm text-zinc-400 leading-relaxed">{mode.objective}</p>
                         </div>
                       ))}
                     </div>
@@ -739,12 +739,12 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                   {/* Threat Matrix */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-zinc-800/60">
                     <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
-                      <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest flex items-center gap-1">
+                      <h4 className="text-sm font-black text-red-500 uppercase tracking-widest flex items-center gap-1">
                         <span>Favorable Matchups</span>
                       </h4>
                       <ul className="space-y-2">
                         {dossierData.threat_matrix?.favorable_matchups?.map((matchup: string, i: number) => (
-                          <li key={i} className="text-xs text-zinc-400 flex items-start gap-2">
+                          <li key={i} className="text-sm text-zinc-400 flex items-start gap-2">
                             <span className="text-red-500/40 mt-0.5">•</span>
                             <span>{matchup}</span>
                           </li>
@@ -753,12 +753,12 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                     </div>
 
                     <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
-                      <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest flex items-center gap-1">
+                      <h4 className="text-sm font-black text-red-500 uppercase tracking-widest flex items-center gap-1">
                         <span>Critical Vulnerabilities</span>
                       </h4>
                       <ul className="space-y-2">
                         {dossierData.threat_matrix?.critical_vulnerabilities?.map((vuln: string, i: number) => (
-                          <li key={i} className="text-xs text-zinc-400 flex items-start gap-2">
+                          <li key={i} className="text-sm text-zinc-400 flex items-start gap-2">
                             <span className="text-red-500/40 mt-0.5">•</span>
                             <span>{vuln}</span>
                           </li>
@@ -767,17 +767,43 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                     </div>
                   </div>
 
+                  {/* Detailed Matchup Tactics */}
+                  {dossierData.detailed_tactics && dossierData.detailed_tactics.length > 0 && (
+                    <div className="space-y-4 pt-6 border-t border-zinc-800/60">
+                      <h4 className="text-sm font-black text-red-500 uppercase tracking-widest">Detailed Matchup Tactics</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {dossierData.detailed_tactics.map((tactic: any, i: number) => (
+                          <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-3">
+                            <h5 className="text-base font-black text-white border-b border-zinc-850 pb-1.5">{tactic.scenario_name}</h5>
+                            <p className="text-xs text-zinc-400 italic leading-relaxed">{tactic.key_interactions}</p>
+                            <div className="space-y-1.5 pt-2">
+                              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">Execution Steps:</span>
+                              <ul className="space-y-1 text-sm text-zinc-300">
+                                {tactic.execution_steps?.map((step: string, sIdx: number) => (
+                                  <li key={sIdx} className="leading-relaxed flex items-start gap-1.5">
+                                    <span className="font-mono text-xs text-red-500 font-extrabold whitespace-nowrap mt-0.5">T{sIdx + 1}:</span>
+                                    <span>{step.replace(/^Turn \d+:\s*/i, "")}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Optimizations */}
                   <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                    <h4 className="text-xs font-bold text-red-500 uppercase tracking-widest">Roster Tweaks & Optimizations</h4>
+                    <h4 className="text-sm font-black text-red-500 uppercase tracking-widest">Roster Tweaks & Optimizations</h4>
                     <div className="space-y-3">
                       {dossierData.optimizations?.map((opt: any, i: number) => (
                         <div key={i} className="bg-zinc-950 border border-red-900/30 rounded-2xl p-4 space-y-1.5">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs font-black text-red-500 uppercase tracking-wider">{opt.target_pokemon}</span>
+                            <span className="text-sm font-black text-red-500 uppercase tracking-wider">{opt.target_pokemon}</span>
                           </div>
-                          <p className="text-xs text-zinc-200 font-bold">{opt.suggested_tweak}</p>
-                          <p className="text-xs text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
+                          <p className="text-sm text-zinc-200 font-bold">{opt.suggested_tweak}</p>
+                          <p className="text-sm text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
                         </div>
                       ))}
                     </div>
@@ -798,7 +824,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 <button
                   onClick={() => handleSaveRoster(dossierData)}
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl font-black text-xs bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:opacity-50 uppercase tracking-widest transition-all"
+                  className="px-5 py-2.5 rounded-xl font-black text-sm bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:opacity-50 uppercase tracking-widest transition-all"
                 >
                   {isSaving ? "Saving..." : "Save Roster & Assessment to Library"}
                 </button>
