@@ -378,6 +378,23 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
           </button>
         </div>
 
+        {/* Load Actions (Persistent) */}
+        <div className="grid grid-cols-2 gap-3 w-full max-w-md mt-2">
+          <button
+            onClick={handleFetchTeams}
+            className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white uppercase tracking-widest"
+          >
+            Load Roster
+          </button>
+          <button
+            onClick={() => { setShowMetaModal(true); handleFetchLadderTeams(); }}
+            disabled={isFetchingMeta}
+            className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2"
+          >
+            {isFetchingMeta ? "Scraping..." : "Load Ladder Team"}
+          </button>
+        </div>
+
         {mode === "paste" ? (
           <div className="w-full space-y-6">
             <textarea
@@ -403,72 +420,6 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 {isOptimizing ? "Optimizing..." : "Auto-Optimize"}
               </button>
             </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-800/50">
-              {/* Team name input — required to save a roster */}
-              <div className="col-span-2">
-                <input
-                  type="text"
-                  value={teamName}
-                  onChange={(e) => setTeamName(e.target.value)}
-                  placeholder="Enter Team Name..."
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm font-bold text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all"
-                />
-              </div>
-
-              {/* Assess Team (Deep Dive) Button */}
-              <button
-                onClick={handleAssessTeamDeepDive}
-                disabled={team.length !== 6 || isAssessingDeep}
-                className="col-span-2 py-3.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] uppercase tracking-widest flex items-center justify-center gap-2"
-              >
-                {isAssessingDeep ? "Analyzing Team..." : "Assess Team (Deep Dive)"}
-              </button>
-
-              {dossierData && (
-                <button
-                  onClick={() => setShowDossierModal(true)}
-                  className="col-span-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-300 bg-red-950/30 border border-red-900/30 text-red-500 hover:bg-red-950/50 uppercase tracking-widest flex items-center justify-center gap-2"
-                >
-                  Re-Open Saved Assessment Dossier
-                </button>
-              )}
-
-              <button
-                onClick={handleAssessTeam}
-                disabled={team.length !== 6 || isAssessing}
-                className="py-3 rounded-xl font-black text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white uppercase tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.2)]"
-              >
-                {isAssessing ? "Assessing..." : "Assess Team"}
-              </button>
-              <button
-                onClick={() => handleSaveRoster()}
-                disabled={team.length !== 6 || isSaving}
-                className="py-3 rounded-xl font-black text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white uppercase tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.2)]"
-              >
-                {isSaving ? "Saving..." : "Save Roster"}
-              </button>
-              <button
-                onClick={handleFetchTeams}
-                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white uppercase tracking-widest"
-              >
-                Load Roster
-              </button>
-              <button
-                onClick={() => { setShowMetaModal(true); handleFetchLadderTeams(); }}
-                disabled={isFetchingMeta}
-                className="py-3 rounded-xl font-bold text-[10px] transition-all duration-300 bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2"
-              >
-                {isFetchingMeta ? "Scraping..." : "Load Ladder Team"}
-              </button>
-              <button
-                onClick={handleExport}
-                disabled={team.length === 0}
-                className="col-span-2 py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 uppercase tracking-widest flex items-center justify-center gap-2"
-              >
-                {isExported ? "Copied!" : "Export to Clipboard"}
-              </button>
-            </div>
             
             {team.length > 0 && (
                <p className="text-zinc-500 text-[10px] text-center font-bold tracking-widest uppercase">
@@ -490,9 +441,66 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
         )}
       </div>
 
-      <div className="mt-12 w-full">
+      <div className="mt-12 w-full animate-fade-in">
         <RosterVisualizer team={team} onEdit={handleEdit} />
       </div>
+
+      {team.length > 0 && (
+        <div className="mt-8 w-full max-w-2xl mx-auto border-t border-zinc-800/50 pt-8 flex flex-col items-center gap-6">
+          <div className="w-full flex flex-col items-center gap-3">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-mono">Team Identifier</label>
+            <input
+              type="text"
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              placeholder="Enter Team Name..."
+              className="bg-zinc-950 border border-zinc-800 text-zinc-200 placeholder:text-zinc-600 rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none w-full max-w-xs text-center"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 w-full max-w-md">
+            {/* Assess Team (Deep Dive) Button */}
+            <button
+              onClick={handleAssessTeamDeepDive}
+              disabled={team.length !== 6 || isAssessingDeep}
+              className="col-span-2 py-3.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] uppercase tracking-widest flex items-center justify-center gap-2"
+            >
+              {isAssessingDeep ? "Analyzing Team..." : "Assess Team (Deep Dive)"}
+            </button>
+
+            {dossierData && (
+              <button
+                onClick={() => setShowDossierModal(true)}
+                className="col-span-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-300 bg-red-950/30 border border-red-900/30 text-red-500 hover:bg-red-950/50 uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                Re-Open Saved Assessment Dossier
+              </button>
+            )}
+
+            <button
+              onClick={handleAssessTeam}
+              disabled={team.length !== 6 || isAssessing}
+              className="py-3 rounded-xl font-black text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white uppercase tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+            >
+              {isAssessing ? "Assessing..." : "Assess Team"}
+            </button>
+            <button
+              onClick={() => handleSaveRoster()}
+              disabled={team.length !== 6 || isSaving}
+              className="py-3 rounded-xl font-black text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white uppercase tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.2)]"
+            >
+              {isSaving ? "Saving..." : "Save Roster"}
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={team.length === 0}
+              className="col-span-2 py-3 rounded-xl font-bold text-[10px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-900 border border-zinc-700 text-zinc-300 hover:text-white hover:border-zinc-500 uppercase tracking-widest flex items-center justify-center gap-2"
+            >
+              {isExported ? "Copied!" : "Export to Clipboard"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {team.length > 0 && (
         <div className="mt-8 w-full max-w-4xl mx-auto">
@@ -821,13 +829,22 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 >
                   Close Dossier
                 </button>
-                <button
-                  onClick={() => handleSaveRoster(dossierData)}
-                  disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl font-black text-sm bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:opacity-50 uppercase tracking-widest transition-all"
-                >
-                  {isSaving ? "Saving..." : "Save Roster & Assessment to Library"}
-                </button>
+                <div className="flex items-center gap-3 flex-1 justify-end">
+                  <input
+                    type="text"
+                    value={teamName}
+                    onChange={(e) => setTeamName(e.target.value)}
+                    placeholder="Enter Team Name..."
+                    className="bg-zinc-950 border border-zinc-800 text-zinc-200 placeholder:text-zinc-600 rounded-xl px-4 py-2.5 text-sm font-black uppercase tracking-widest focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none w-full max-w-xs"
+                  />
+                  <button
+                    onClick={() => handleSaveRoster(dossierData)}
+                    disabled={isSaving}
+                    className="px-5 py-2.5 rounded-xl font-black text-sm bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:opacity-50 uppercase tracking-widest transition-all whitespace-nowrap"
+                  >
+                    {isSaving ? "Saving..." : "Save Roster & Assessment to Library"}
+                  </button>
+                </div>
               </div>
             )}
           </div>
