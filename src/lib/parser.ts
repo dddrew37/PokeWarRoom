@@ -36,9 +36,19 @@ export function parsePokePaste(paste: string): ParsedPokemon[] {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const metaData = require("../data/meta_data.json");
 
+  // 0. Pre-Processor String Normalizer
+  let text = paste.replace(/\t/g, ' ');
+  text = text.replace(/\s*(Ability:)/gi, '\n$1');
+  text = text.replace(/\s*(Level:)/gi, '\n$1');
+  text = text.replace(/\s*(EVs:)/gi, '\n$1');
+  text = text.replace(/\s*(IVs:)/gi, '\n$1');
+  text = text.replace(/\s*([A-Z][a-z]+ Nature)/g, '\n$1');
+  text = text.replace(/\s+(-\s)/g, '\n$1');
+  text = text.replace(/\n{3,}/g, '\n\n');
+
   // 1. Normalize and Chunk
   // Detect whether this is a Limitless (3+ newlines) or Showdown (2 newlines) format
-  const normalizedText = paste.replace(/\r\n/g, '\n').trim();
+  const normalizedText = text.replace(/\r\n/g, '\n').trim();
   const delimiter = /\n{3,}/.test(normalizedText) ? /\n{3,}/ : /\n{2,}/;
   const pokemonBlocks = normalizedText.split(delimiter);
 
