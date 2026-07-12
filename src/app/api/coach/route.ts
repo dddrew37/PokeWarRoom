@@ -5,7 +5,7 @@ import metaData from '../../../data/meta_data.json';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext } = body;
+    const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext, dossier, messages, chatContext } = body;
 
     if (!team && !playerLockedRoster && action !== "fetch_meta") {
       return NextResponse.json({ error: 'Team data is required' }, { status: 400 });
@@ -378,9 +378,14 @@ You must output your response STRICTLY as a JSON object matching this schema:
 }
 Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
+    let finalAssessTeamPrompt = assessTeamSystemPrompt;
+    if (action === "assess_team" && chatContext && chatContext.length > 0) {
+      finalAssessTeamPrompt += `\n\nCRITICAL OVERRIDE: The user has debated this roster with you. You MUST read the provided chat history and strictly update the primary modes, threat matrix, and detailed tactics to reflect the final agreements reached in the chat.\nChat history:\n${JSON.stringify(chatContext, null, 2)}`;
+    }
+
     let finalSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
-      : action === "assess_team" ? assessTeamSystemPrompt
+      : action === "assess_team" ? finalAssessTeamPrompt
       : action === "fetch_meta" ? fetchMetaSystemPrompt
       : action === "turn1" ? turn1SystemPrompt
       : action === "draft_suggestion" ? draftSuggestionSystemPrompt
@@ -444,7 +449,7 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
     const baseUrl = process.env.AI_BASE_URL || "https://api.deepseek.com/v1";
     
     let model = "";
-    if (action === "assess_team") {
+    if (action === "assess_team" || action === "dossier_chat") {
       model = process.env.AI_HEAVY_MODEL || "deepseek-chat";
     } else {
       model = process.env.AI_MODEL || "deepseek-v4-flash";
@@ -452,6 +457,12 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
     if (!apiKey) {
       console.warn("No AI_API_KEY found, returning mock data");
+
+      if (action === "dossier_chat") {
+        return NextResponse.json({
+          message: "Mock Coach: Intimidate Incineroar is indeed a threat, but Froslass's base speed is significantly higher. If we run Protect, we can stall the Fake Out safely before executing a pivot."
+        });
+      }
 
       if (action === "fetch_meta") {
         // Graceful fallback: serve the static JSON so the UI never breaks
@@ -671,6 +682,25 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
       });
     }
 
+    const dossierChatSystemPrompt = `You are a World Champion VGC Coach engaging in a tactical debate/chat with a user about their Regulation M-B team.
+The team's current roster: ${JSON.stringify(team, null, 2)}
+The current Roster Study Dossier: ${JSON.stringify(dossier, null, 2)}
+
+Provide advanced, highly opinionated, cutthroat tactical insights. Defend your logic, explain your thoughts, or agree to adjust the strategies. Speak with extreme competitive authority.`;
+
+    let finalMessages = [];
+    if (action === "dossier_chat") {
+      finalMessages = [
+        { role: "system", content: dossierChatSystemPrompt },
+        ...(messages || []).map((msg: any) => ({ role: msg.role, content: msg.content }))
+      ];
+    } else {
+      finalMessages = [
+        { role: "system", content: finalSystemPrompt },
+        { role: "user", content: userPrompt }
+      ];
+    }
+
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
@@ -679,12 +709,9 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
       },
       body: JSON.stringify({
         model: model,
-        messages: [
-          { role: "system", content: finalSystemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        response_format: { type: "json_object" },
-        temperature: action === "assess_team" ? 0.5 : 0.2
+        messages: finalMessages,
+        response_format: action === "dossier_chat" ? undefined : { type: "json_object" },
+        temperature: (action === "assess_team" || action === "dossier_chat") ? 0.5 : 0.2
       })
     });
 
@@ -694,6 +721,10 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
     const data = await response.json();
     let content = data.choices[0].message.content;
+
+    if (action === "dossier_chat") {
+      return NextResponse.json({ message: content });
+    }
 
     content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
     

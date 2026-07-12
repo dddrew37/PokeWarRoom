@@ -32,26 +32,71 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
   const [dossierData, setDossierData] = useState<any>(null);
   const [showDossierModal, setShowDossierModal] = useState(false);
 
-  const handleAssessTeamDeepDive = async () => {
+  // Dossier Sparring Chat States
+  const [dossierChat, setDossierChat] = useState<{ role: string; content: string }[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatting, setIsChatting] = useState(false);
+
+  const handleAssessTeamDeepDive = async (chatContextPayload?: any[] | React.MouseEvent) => {
     if (team.length !== 6) return;
     setIsAssessingDeep(true);
     setShowDossierModal(true);
     setDossierData(null);
     try {
+      const chatContext = Array.isArray(chatContextPayload) ? chatContextPayload : undefined;
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ team, action: "assess_team" })
+        body: JSON.stringify({ 
+          team, 
+          action: "assess_team", 
+          chatContext 
+        })
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setDossierData(data);
+      if (chatContext) {
+        setDossierChat([]); // Wiping chat clean upon successful regeneration
+      }
     } catch (e) {
       console.error("[TeamForge] Deep Dive Assess error:", e);
       alert("Failed to analyze team. Check API config.");
       setShowDossierModal(false);
     } finally {
       setIsAssessingDeep(false);
+    }
+  };
+
+  const handleSendChatMessage = async () => {
+    if (!chatInput.trim() || isChatting || !dossierData) return;
+    const userMessage = { role: "user", content: chatInput };
+    const updatedChat = [...dossierChat, userMessage];
+    setDossierChat(updatedChat);
+    setChatInput("");
+    setIsChatting(true);
+
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          team,
+          action: "dossier_chat",
+          dossier: dossierData,
+          messages: updatedChat
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.message) {
+        setDossierChat(prev => [...prev, { role: "assistant", content: data.message }]);
+      }
+    } catch (e) {
+      console.error("[TeamForge] Dossier chat error:", e);
+      alert("Failed to send chat message.");
+    } finally {
+      setIsChatting(false);
     }
   };
 
@@ -701,123 +746,202 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
               </button>
             </div>
 
-            {/* Scrollable Content */}
-            <div className="p-6 overflow-y-auto space-y-6 text-zinc-300 leading-relaxed max-h-[70vh]">
-              {isAssessingDeep ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-                  <div className="animate-spin h-10 w-10 rounded-full border-4 border-red-500 border-t-transparent"></div>
-                  <p className="text-base font-bold uppercase tracking-wider text-red-500 animate-pulse">Forging Roster Dossier...</p>
-                  <p className="text-sm text-zinc-500 max-w-sm leading-relaxed">Analyzing your 6-man roster with a heavy reasoning model to construct archetype paths, lead combos, and SP adjustments.</p>
-                </div>
-              ) : !dossierData ? (
-                <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">
-                  No data loaded.
-                </div>
-              ) : (
-                <div className="space-y-6 animate-fade-in">
-                  {/* Core Identity */}
-                  <div className="space-y-2">
-                    <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Core Identity & Strategy</h4>
-                    <p className="text-lg leading-relaxed text-zinc-200 font-medium">
-                      {dossierData.core_identity}
-                    </p>
+            {/* Split Grid Layout Container */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-zinc-800 min-h-0 overflow-hidden">
+              
+              {/* Left Side (col-span-2): Scrollable Dossier JSON UI */}
+              <div className="lg:col-span-2 p-6 overflow-y-auto space-y-6 text-zinc-300 leading-relaxed max-h-[70vh]">
+                {isAssessingDeep ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
+                    <div className="animate-spin h-10 w-10 rounded-full border-4 border-red-500 border-t-transparent"></div>
+                    <p className="text-base font-bold uppercase tracking-wider text-red-500 animate-pulse">Forging Roster Dossier...</p>
+                    <p className="text-sm text-zinc-500 max-w-sm leading-relaxed">Analyzing your 6-man roster with a heavy reasoning model to construct archetype paths, lead combos, and SP adjustments.</p>
                   </div>
-
-                  {/* Primary Modes */}
-                  <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                    <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Primary Operational Modes</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {dossierData.primary_modes?.map((mode: any, i: number) => (
-                        <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-3">
-                          <h5 className="text-lg font-black text-white border-b border-zinc-850 pb-2 tracking-wide">{mode.mode_name}</h5>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-xs text-zinc-500 font-extrabold uppercase tracking-widest">Leads:</span>
-                            {mode.lead_duo?.map((mon: string, mIdx: number) => (
-                              <span key={mIdx} className="bg-zinc-900 border border-zinc-750 text-zinc-200 font-bold px-2 py-0.5 rounded-lg text-xs">
-                                {mon}
-                              </span>
-                            ))}
-                          </div>
-                          <p className="text-base text-zinc-400 leading-relaxed">{mode.objective}</p>
-                        </div>
-                      ))}
-                    </div>
+                ) : !dossierData ? (
+                  <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">
+                    No data loaded.
                   </div>
-
-                  {/* Threat Matrix */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-zinc-800/60">
-                    <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
-                      <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3 flex items-center gap-1">
-                        <span>Favorable Matchups</span>
-                      </h4>
-                      <ul className="space-y-2">
-                        {dossierData.threat_matrix?.favorable_matchups?.map((matchup: string, i: number) => (
-                          <li key={i} className="text-base text-zinc-300 flex items-start gap-2 leading-relaxed">
-                            <span className="text-red-500/40 mt-0.5">•</span>
-                            <span>{matchup}</span>
-                          </li>
-                        ))}
-                      </ul>
+                ) : (
+                  <div className="space-y-6 animate-fade-in">
+                    {/* Core Identity */}
+                    <div className="space-y-2">
+                      <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Core Identity & Strategy</h4>
+                      <p className="text-lg leading-relaxed text-zinc-200 font-medium">
+                        {dossierData.core_identity}
+                      </p>
                     </div>
 
-                    <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
-                      <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3 flex items-center gap-1">
-                        <span>Critical Vulnerabilities</span>
-                      </h4>
-                      <ul className="space-y-2">
-                        {dossierData.threat_matrix?.critical_vulnerabilities?.map((vuln: string, i: number) => (
-                          <li key={i} className="text-base text-zinc-300 flex items-start gap-2 leading-relaxed">
-                            <span className="text-red-500/40 mt-0.5">•</span>
-                            <span>{vuln}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Detailed Matchup Tactics */}
-                  {dossierData.detailed_tactics && dossierData.detailed_tactics.length > 0 && (
+                    {/* Primary Modes */}
                     <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                      <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Detailed Matchup Tactics</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {dossierData.detailed_tactics.map((tactic: any, i: number) => (
+                      <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Primary Operational Modes</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {dossierData.primary_modes?.map((mode: any, i: number) => (
                           <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-3">
-                            <h5 className="text-lg font-black text-white border-b border-zinc-850 pb-2 tracking-wide">{tactic.scenario_name}</h5>
-                            <p className="text-sm text-zinc-400 italic leading-relaxed">{tactic.key_interactions}</p>
-                            <div className="space-y-1.5 pt-2">
-                              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">Execution Steps:</span>
-                              <ul className="space-y-2 text-base text-zinc-350">
-                                {tactic.execution_steps?.map((step: string, sIdx: number) => (
-                                  <li key={sIdx} className="leading-relaxed flex items-start gap-1.5">
-                                    <span className="font-mono text-sm text-red-500 font-black whitespace-nowrap mt-0.5">TURN {sIdx + 1}:</span>
-                                    <span>{step.replace(/^Turn \d+:\s*/i, "")}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                            <h5 className="text-lg font-black text-white border-b border-zinc-850 pb-2 tracking-wide">{mode.mode_name}</h5>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs text-zinc-500 font-extrabold uppercase tracking-widest">Leads:</span>
+                              {mode.lead_duo?.map((mon: string, mIdx: number) => (
+                                <span key={mIdx} className="bg-zinc-900 border border-zinc-750 text-zinc-200 font-bold px-2 py-0.5 rounded-lg text-xs">
+                                  {mon}
+                                </span>
+                              ))}
                             </div>
+                            <p className="text-base text-zinc-400 leading-relaxed">{mode.objective}</p>
                           </div>
                         ))}
                       </div>
                     </div>
-                  )}
 
-                  {/* Optimizations */}
-                  <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                    <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Roster Tweaks & Optimizations</h4>
-                    <div className="space-y-3">
-                      {dossierData.optimizations?.map((opt: any, i: number) => (
-                        <div key={i} className="bg-zinc-950 border border-red-900/30 rounded-2xl p-4 space-y-1.5">
-                          <div className="flex justify-between items-center">
-                            <span className="text-base font-black text-red-500 uppercase tracking-widest">{opt.target_pokemon}</span>
-                          </div>
-                          <p className="text-base text-zinc-200 font-extrabold">{opt.suggested_tweak}</p>
-                          <p className="text-base text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
+                    {/* Threat Matrix */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-zinc-800/60">
+                      <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
+                        <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3 flex items-center gap-1">
+                          <span>Favorable Matchups</span>
+                        </h4>
+                        <ul className="space-y-2">
+                          {dossierData.threat_matrix?.favorable_matchups?.map((matchup: string, i: number) => (
+                            <li key={i} className="text-base text-zinc-300 flex items-start gap-2 leading-relaxed">
+                              <span className="text-red-500/40 mt-0.5">•</span>
+                              <span>{matchup}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
+                        <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3 flex items-center gap-1">
+                          <span>Critical Vulnerabilities</span>
+                        </h4>
+                        <ul className="space-y-2">
+                          {dossierData.threat_matrix?.critical_vulnerabilities?.map((vuln: string, i: number) => (
+                            <li key={i} className="text-base text-zinc-300 flex items-start gap-2 leading-relaxed">
+                              <span className="text-red-500/40 mt-0.5">•</span>
+                              <span>{vuln}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Detailed Matchup Tactics */}
+                    {dossierData.detailed_tactics && dossierData.detailed_tactics.length > 0 && (
+                      <div className="space-y-4 pt-6 border-t border-zinc-800/60">
+                        <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Detailed Matchup Tactics</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {dossierData.detailed_tactics.map((tactic: any, i: number) => (
+                            <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-3">
+                              <h5 className="text-lg font-black text-white border-b border-zinc-850 pb-2 tracking-wide">{tactic.scenario_name}</h5>
+                              <p className="text-sm text-zinc-400 italic leading-relaxed">{tactic.key_interactions}</p>
+                              <div className="space-y-1.5 pt-2">
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">Execution Steps:</span>
+                                <ul className="space-y-2 text-base text-zinc-350">
+                                  {tactic.execution_steps?.map((step: string, sIdx: number) => (
+                                    <li key={sIdx} className="leading-relaxed flex items-start gap-1.5">
+                                      <span className="font-mono text-sm text-red-500 font-black whitespace-nowrap mt-0.5">TURN {sIdx + 1}:</span>
+                                      <span>{step.replace(/^Turn \d+:\s*/i, "")}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    )}
+
+                    {/* Optimizations */}
+                    <div className="space-y-4 pt-6 border-t border-zinc-800/60">
+                      <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Roster Tweaks & Optimizations</h4>
+                      <div className="space-y-3">
+                        {dossierData.optimizations?.map((opt: any, i: number) => (
+                          <div key={i} className="bg-zinc-950 border border-red-900/30 rounded-2xl p-4 space-y-1.5">
+                            <div className="flex justify-between items-center">
+                              <span className="text-base font-black text-red-500 uppercase tracking-widest">{opt.target_pokemon}</span>
+                            </div>
+                            <p className="text-base text-zinc-200 font-extrabold">{opt.suggested_tweak}</p>
+                            <p className="text-base text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* Right Side (col-span-1): Sleek eSports Chat Interface */}
+              <div className="lg:col-span-1 flex flex-col max-h-[70vh] overflow-hidden bg-zinc-950/30">
+                
+                {/* Reforge Action Header */}
+                <div className="p-4 border-b border-zinc-800 flex flex-col gap-2 bg-zinc-900/40">
+                  <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Sparring Engine</span>
+                  <button
+                    onClick={() => handleAssessTeamDeepDive(dossierChat)}
+                    disabled={isAssessingDeep || dossierChat.length === 0}
+                    className="w-full py-2.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-950/30 border border-red-900/40 text-red-500 hover:bg-red-950/50 hover:text-red-400 uppercase tracking-widest text-center"
+                  >
+                    Reforge Dossier from Chat
+                  </button>
                 </div>
-              )}
+
+                {/* Scrollable Message History */}
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col">
+                  {dossierChat.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center text-center p-6 text-zinc-500">
+                      <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">
+                        Challenge the Coach here.<br/>
+                        Ask for contingencies or dispute threat matchups.
+                      </p>
+                    </div>
+                  ) : (
+                    dossierChat.map((msg, idx) => (
+                      <div
+                        key={idx}
+                        className={`max-w-[85%] rounded-2xl p-3.5 text-sm font-medium ${
+                          msg.role === "user"
+                            ? "bg-red-700/10 border border-red-900/30 text-zinc-200 self-end rounded-tr-none"
+                            : "bg-zinc-900 border border-zinc-800 text-zinc-300 self-start rounded-tl-none"
+                        }`}
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-wider block mb-1 opacity-60">
+                          {msg.role === "user" ? "Challenger" : "VGC Coach"}
+                        </span>
+                        <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      </div>
+                    ))
+                  )}
+                  {isChatting && (
+                    <div className="bg-zinc-900 border border-zinc-800 text-zinc-300 self-start rounded-2xl rounded-tl-none p-3.5 max-w-[85%] flex items-center gap-2">
+                      <div className="animate-pulse flex space-x-1">
+                        <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
+                        <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
+                        <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
+                      </div>
+                      <span className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Coach is writing...</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Input Fixed at Bottom */}
+                <div className="p-4 border-t border-zinc-800 bg-zinc-950/60 flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleSendChatMessage(); }}
+                    disabled={isChatting}
+                    placeholder="Ask the coach to pivot..."
+                    className="flex-1 bg-zinc-950 border border-zinc-800 text-zinc-200 placeholder:text-zinc-600 rounded-xl px-4 py-2.5 text-xs font-bold focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none"
+                  />
+                  <button
+                    onClick={handleSendChatMessage}
+                    disabled={isChatting || !chatInput.trim()}
+                    className="px-4 py-2 bg-red-700 hover:bg-red-600 border border-red-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+
             </div>
 
             {/* Footer */}
