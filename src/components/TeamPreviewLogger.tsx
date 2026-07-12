@@ -32,6 +32,31 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
   const [playerLockedIndices, setPlayerLockedIndices] = useState<number[]>([]);
   const [opponentLeadIndices, setOpponentLeadIndices] = useState<number[]>([]);
   
+  // Live Modifier States for Active Match
+  const [isTrickRoom, setIsTrickRoom] = useState(false);
+  const [playerTailwind, setPlayerTailwind] = useState(false);
+  const [opponentTailwind, setOpponentTailwind] = useState(false);
+  const [weather, setWeather] = useState("none");
+  const [speedStages, setSpeedStages] = useState<Record<string, number>>({
+    "p-0": 0, "p-1": 0, "o-0": 0, "o-1": 0
+  });
+  const [choiceScarfs, setChoiceScarfs] = useState<Record<string, boolean>>({
+    "p-0": false, "p-1": false, "o-0": false, "o-1": false
+  });
+  const [opponentMaxSpeeds, setOpponentMaxSpeeds] = useState<Record<string, boolean>>({
+    "o-0": false, "o-1": false
+  });
+
+  const handleResetMatchModifiers = () => {
+    setIsTrickRoom(false);
+    setPlayerTailwind(false);
+    setOpponentTailwind(false);
+    setWeather("none");
+    setSpeedStages({ "p-0": 0, "p-1": 0, "o-0": 0, "o-1": 0 });
+    setChoiceScarfs({ "p-0": false, "p-1": false, "o-0": false, "o-1": false });
+    setOpponentMaxSpeeds({ "o-0": false, "o-1": false });
+  };
+  
   // AI Draft Assistant
   const [isDrafting, setIsDrafting] = useState(false);
   const [coachNotes, setCoachNotes] = useState("");
@@ -198,7 +223,91 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
     return (
       <div className="w-full flex flex-col items-center">
         {matchPhase === "turn1" && (
-          <div className="w-full max-w-2xl px-6 pt-4 flex flex-col gap-2">
+          <div className="w-full max-w-2xl px-6 pt-4 flex flex-col gap-4">
+            {/* Field Conditions Toggle Bar */}
+            <div className="w-full bg-zinc-950 border border-red-950/40 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-full bg-red-700/5 blur-3xl pointer-events-none" />
+              <div className="flex flex-col items-start gap-0.5 z-10">
+                <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5 font-mono">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                  Field Conditions
+                </h3>
+                <span className="text-[8px] font-bold text-zinc-650 uppercase tracking-widest font-mono">Live Modifier Control Panel</span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 z-10 font-mono">
+                {/* Trick Room Toggle */}
+                <button
+                  onClick={() => setIsTrickRoom(!isTrickRoom)}
+                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
+                    isTrickRoom
+                      ? "bg-purple-950/40 border-purple-800 text-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                      : "bg-zinc-900 border-zinc-800 text-zinc-450 hover:border-zinc-700 hover:text-zinc-300"
+                  }`}
+                >
+                  Trick Room
+                </button>
+
+                {/* Player Tailwind Toggle */}
+                <button
+                  onClick={() => setPlayerTailwind(!playerTailwind)}
+                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
+                    playerTailwind
+                      ? "bg-cyan-950/40 border-cyan-800 text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)]"
+                      : "bg-zinc-900 border-zinc-800 text-zinc-450 hover:border-zinc-700 hover:text-zinc-300"
+                  }`}
+                >
+                  Player Tailwind
+                </button>
+
+                {/* Opponent Tailwind Toggle */}
+                <button
+                  onClick={() => setOpponentTailwind(!opponentTailwind)}
+                  className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
+                    opponentTailwind
+                      ? "bg-red-950/40 border-red-900 text-red-450 shadow-[0_0_12px_rgba(220,38,38,0.2)]"
+                      : "bg-zinc-900 border-zinc-800 text-zinc-450 hover:border-zinc-750 hover:text-zinc-300"
+                  }`}
+                >
+                  Opponent Tailwind
+                </button>
+
+                {/* Weather Selectors */}
+                <div className="flex bg-zinc-900 border border-zinc-850 rounded-xl p-0.5">
+                  <button
+                    onClick={() => setWeather(weather === "rain" ? "none" : "rain")}
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      weather === "rain"
+                        ? "bg-blue-950/40 text-blue-400 border border-blue-900/40"
+                        : "text-zinc-550 hover:text-zinc-350"
+                    }`}
+                  >
+                    Rain
+                  </button>
+                  <button
+                    onClick={() => setWeather(weather === "sun" ? "none" : "sun")}
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      weather === "sun"
+                        ? "bg-amber-950/40 text-amber-500 border border-amber-900/40"
+                        : "text-zinc-550 hover:text-zinc-350"
+                    }`}
+                  >
+                    Sun
+                  </button>
+                  <button
+                    onClick={() => setWeather("none")}
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      weather === "none"
+                        ? "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                        : "text-zinc-650 hover:text-zinc-450"
+                    }`}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <SpeedBoard 
               playerMons={
                 draftLeadsIndices.length === 2 
@@ -206,7 +315,18 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
                   : playerLockedIndices.slice(0, 2).map(i => playerTeam[i])
               } 
               opponentMons={opponentLeadIndices.map(i => selected[i])} 
+              isTrickRoom={isTrickRoom}
+              playerTailwind={playerTailwind}
+              opponentTailwind={opponentTailwind}
+              weather={weather}
+              speedStages={speedStages}
+              choiceScarfs={choiceScarfs}
+              opponentMaxSpeeds={opponentMaxSpeeds}
+              onUpdateSpeedStage={(key, stage) => setSpeedStages(prev => ({ ...prev, [key]: stage }))}
+              onUpdateChoiceScarf={(key, val) => setChoiceScarfs(prev => ({ ...prev, [key]: val }))}
+              onUpdateMaxSpeed={(key, val) => setOpponentMaxSpeeds(prev => ({ ...prev, [key]: val }))}
             />
+
             <DamageCalculator 
               playerMons={
                 draftLeadsIndices.length === 2 
@@ -220,7 +340,10 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
         <LivePlaybook 
           team={selected} 
           data={playbookData} 
-          onBack={() => setPlaybookData(null)} 
+          onBack={() => {
+            setPlaybookData(null);
+            handleResetMatchModifiers();
+          }} 
           onNextTurn={matchPhase === "turn1" ? handleNextTurn : undefined}
         />
       </div>
@@ -534,7 +657,10 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
           ) : (
             <>
               <button
-                onClick={() => setMatchPhase("pregame")}
+                onClick={() => {
+                  setMatchPhase("pregame");
+                  handleResetMatchModifiers();
+                }}
                 className="py-4 rounded-2xl font-black text-xs sm:text-sm transition-all duration-300 bg-zinc-900 border-2 border-zinc-700 text-zinc-300 hover:bg-zinc-750 hover:text-white uppercase tracking-wide flex items-center justify-center gap-2"
               >
                 Back to Pre-Game

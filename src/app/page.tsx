@@ -4,10 +4,11 @@ import { useState } from "react";
 import TeamForge from "@/components/TeamForge";
 import TeamPreviewLogger from "@/components/TeamPreviewLogger";
 import SavedStrategies from "@/components/SavedStrategies";
+import RosterDossier from "@/components/RosterDossier";
 import { ParsedPokemon } from "@/lib/parser";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"forge" | "logger" | "saved">("forge");
+  const [activeTab, setActiveTab] = useState<"forge" | "logger" | "saved" | "dossier">("forge");
   const [teamState, setTeamState] = useState<ParsedPokemon[]>([]);
 
   return (
@@ -69,6 +70,16 @@ export default function Home() {
           Live Logger
         </button>
         <button
+          onClick={() => setActiveTab("dossier")}
+          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+            activeTab === "dossier" 
+              ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40" 
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Roster Dossier
+        </button>
+        <button
           onClick={() => setActiveTab("saved")}
           className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
             activeTab === "saved" 
@@ -84,6 +95,7 @@ export default function Home() {
         {activeTab === "forge" && <TeamForge team={teamState} setTeam={setTeamState} />}
         {activeTab === "logger" && <TeamPreviewLogger playerTeam={teamState} onGoToForge={() => setActiveTab("forge")} />}
         {activeTab === "saved" && <SavedStrategies />}
+        {activeTab === "dossier" && <RosterDossier />}
       </div>
     </main>
   );

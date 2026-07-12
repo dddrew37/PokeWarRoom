@@ -1,183 +1,282 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { Pokemon, POKEBALL_FALLBACK } from "../lib/pokemon";
 import { ParsedPokemon } from "../lib/parser";
-import metaData from "../data/meta_data.json";
-
-interface Modifiers {
-  tailwind: boolean;
-  choiceScarf: boolean;
-  statStage: number;
-  isMaxSpeed: boolean;
-}
+import { determineTurnOrder, BattleFieldState, lookupBaseSpeed } from "../lib/speed";
 
 interface SpeedBoardProps {
   playerMons: ParsedPokemon[];
   opponentMons: Pokemon[];
+  isTrickRoom: boolean;
+  playerTailwind: boolean;
+  opponentTailwind: boolean;
+  weather: string;
+  speedStages: Record<string, number>;
+  choiceScarfs: Record<string, boolean>;
+  opponentMaxSpeeds: Record<string, boolean>;
+  onUpdateSpeedStage: (key: string, newStage: number) => void;
+  onUpdateChoiceScarf: (key: string, value: boolean) => void;
+  onUpdateMaxSpeed?: (key: string, value: boolean) => void;
 }
 
-export default function SpeedBoard({ playerMons, opponentMons }: SpeedBoardProps) {
-  const [isTrickRoom, setIsTrickRoom] = useState(false);
-  const [mods, setMods] = useState<Record<string, Modifiers>>({});
+export default function SpeedBoard({
+  playerMons,
+  opponentMons,
+  isTrickRoom,
+  playerTailwind,
+  opponentTailwind,
+  weather,
+  speedStages,
+  choiceScarfs,
+  opponentMaxSpeeds,
+  onUpdateSpeedStage,
+  onUpdateChoiceScarf,
+  onUpdateMaxSpeed,
+}: SpeedBoardProps) {
 
-  const getMod = (key: string) => mods[key] || { tailwind: false, choiceScarf: false, statStage: 0, isMaxSpeed: false };
-  const updateMod = (key: string, updates: Partial<Modifiers>) => {
-    setMods(prev => ({ ...prev, [key]: { ...getMod(key), ...updates } }));
-  };
-
+  // Map slot positions to BattleFieldState and calculate final speeds using our typescript engine
   const activeSlots = useMemo(() => {
-    const slots = [
-      ...playerMons.map((p, i) => ({ ...p, side: 'player' as const, key: `p-${i}` })),
-      ...opponentMons.map((p, i) => ({ ...p, side: 'opponent' as const, key: `o-${i}` }))
-    ];
-
-    const withSpeeds = slots.map(slot => {
-      const normalizedInput = slot.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-      const metaMon = (metaData.pokemon as any[]).find((m: any) => 
-        m.id === normalizedInput || m.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() === normalizedInput
-      );
-      const baseSpeed = metaMon?.baseStats?.spe || 100;
+    const pSlots = playerMons.slice(0, 2).map((p, i) => {
+      const key = `p-${i}`;
+      const baseSpeed = lookupBaseSpeed(p.name);
       
-      let evs = 0;
+      // Calculate EVs from 66-SP math structure
+      const speEvs = p.sp?.spe !== undefined ? p.sp.spe * 8 : 0;
+      
+      // Parse Nature multiplier
       let natureMod = 1.0;
-      const m = getMod(slot.key);
-
-      if (slot.side === 'player') {
-        const parsed = slot as ParsedPokemon;
-        evs = (parsed.sp?.spe || 0) * 8;
-        const n = (parsed.nature || '').toLowerCase();
-        if (['jolly', 'timid', 'naive', 'hasty'].includes(n)) natureMod = 1.1;
-        if (['brave', 'relaxed', 'quiet', 'sassy'].includes(n)) natureMod = 0.9;
-      } else {
-        if (m.isMaxSpeed) {
-          evs = 252;
-          natureMod = 1.1; // assumes beneficial nature for max speed toggle
-        }
+      if (p.nature) {
+        const n = p.nature.toLowerCase().trim();
+        if (["jolly", "timid", "naive", "hasty"].includes(n)) natureMod = 1.1;
+        if (["brave", "relaxed", "quiet", "sassy"].includes(n)) natureMod = 0.9;
       }
 
-      let rawStat = Math.floor((((2 * baseSpeed + 31 + Math.floor(evs / 4)) * 50) / 100) + 5);
-      let stat = Math.floor(rawStat * natureMod);
-
-      if (m.choiceScarf) stat = Math.floor(stat * 1.5);
-      if (m.tailwind) stat = Math.floor(stat * 2);
-
-      const stage = m.statStage;
-      let stageMod = 1;
-      if (stage > 0) stageMod = (2 + stage) / 2;
-      else if (stage < 0) stageMod = 2 / (2 - stage);
-
-      stat = Math.floor(stat * stageMod);
-
       return {
-        ...slot,
+        name: p.name,
+        id: p.id,
         baseSpeed,
-        speed: stat,
-        modState: m
+        evs: speEvs,
+        natureModifier: natureMod,
+        item: p.item,
+        ability: p.ability,
+        side: "player" as const,
+        key,
+        // Environment details
+        isTrickRoom,
+        weather,
+        isTurn1: true,
+        modifiers: {
+          tailwind: playerTailwind,
+          choiceScarf: choiceScarfs[key] || false,
+          statStage: speedStages[key] || 0,
+          weather,
+          pokemonName: p.name,
+          item: p.item,
+          ability: p.ability,
+        }
       };
     });
 
-    // Sort by effective speed
-    withSpeeds.sort((a, b) => isTrickRoom ? a.speed - b.speed : b.speed - a.speed);
+    const oSlots = opponentMons.slice(0, 2).map((p, i) => {
+      const key = `o-${i}`;
+      const baseSpeed = lookupBaseSpeed(p.name);
+      const isMax = opponentMaxSpeeds[key] || false;
+      const isScarf = choiceScarfs[key] || false;
+
+      return {
+        name: p.name,
+        id: p.id,
+        baseSpeed,
+        evs: isMax ? 252 : 0,
+        natureModifier: isMax ? 1.1 : 1.0, // Assuming speed boosting nature for Max Speed
+        side: "opponent" as const,
+        key,
+        // Environment details
+        isTrickRoom,
+        weather,
+        isTurn1: true,
+        modifiers: {
+          tailwind: opponentTailwind,
+          choiceScarf: isScarf,
+          statStage: speedStages[key] || 0,
+          weather,
+          pokemonName: p.name,
+        }
+      };
+    });
+
+    const merged = [...pSlots, ...oSlots];
     
-    // Assign horizontal position indices
-    return withSpeeds.map((s, index) => ({ ...s, positionIndex: index }));
-  }, [playerMons, opponentMons, isTrickRoom, mods]);
+    // Sort slots by turn order using our core math engine
+    const sorted = determineTurnOrder({
+      activePokemon: merged as any[],
+      isTrickRoom,
+      weather,
+      isTurn1: true
+    });
+
+    // Map sorted order back to their positions for animations
+    return sorted.map((slot: any, index) => ({
+      ...slot,
+      positionIndex: index,
+    }));
+  }, [
+    playerMons,
+    opponentMons,
+    isTrickRoom,
+    playerTailwind,
+    opponentTailwind,
+    weather,
+    speedStages,
+    choiceScarfs,
+    opponentMaxSpeeds,
+  ]);
 
   return (
-    <div className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-6 shadow-inner mt-8 mb-4">
-      <div className="flex justify-between items-center mb-6">
+    <div className="w-full bg-zinc-950 border border-red-950/40 rounded-2xl p-6 shadow-inner relative overflow-hidden">
+      {/* Visual background elements */}
+      <div className="absolute top-0 right-0 w-32 h-full bg-red-700/5 blur-3xl pointer-events-none" />
+      
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
-            <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            Dynamic Speed Board
+          <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+            <span className={`h-2 w-2 rounded-full ${isTrickRoom ? "bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" : "bg-red-500 animate-pulse"}`} />
+            Live Speed Timeline
           </h3>
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Live Turn Order Calculation</p>
+          <p className="text-[9px] font-bold text-zinc-550 uppercase tracking-widest font-mono mt-1">Real-Time Turn Order Simulation</p>
         </div>
-        <button 
-          onClick={() => setIsTrickRoom(!isTrickRoom)}
-          className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border-2 ${
-            isTrickRoom 
-              ? 'bg-purple-900/40 border-purple-500 text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]' 
-              : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
-          }`}
-        >
-          {isTrickRoom ? "Trick Room Active" : "Normal Gravity"}
-        </button>
+        
+        {/* Environmental Indicators */}
+        <div className="flex items-center gap-2">
+          {isTrickRoom && (
+            <span className="px-2 py-0.5 bg-purple-950/30 text-purple-400 border border-purple-900/50 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(168,85,247,0.2)]">
+              TR ACTIVE
+            </span>
+          )}
+          {(playerTailwind || opponentTailwind) && (
+            <span className="px-2 py-0.5 bg-cyan-950/30 text-cyan-400 border border-cyan-900/50 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(6,182,212,0.2)]">
+              TAILWIND ACTIVE
+            </span>
+          )}
+          {weather !== "none" && (
+            <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md ${
+              weather === "rain" 
+                ? "bg-blue-950/30 text-blue-450 border border-blue-900/50" 
+                : "bg-amber-950/30 text-amber-500 border border-amber-900/50"
+            }`}>
+              WEATHER: {weather}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div className="relative h-48 w-full">
+      <div className="relative h-56 w-full mt-2">
         {activeSlots.map((slot) => {
-          // Calculate left percentage to glide avatars
-          const leftPos = `calc(${(slot.positionIndex / (activeSlots.length - 1 || 1)) * 100}% - ${(slot.positionIndex / (activeSlots.length - 1 || 1)) * 140}px)`;
-          
+          // Calculate left position for sliding transition
+          const leftPos = `calc(${(slot.positionIndex / (activeSlots.length - 1 || 1)) * 100}% - ${(slot.positionIndex / (activeSlots.length - 1 || 1)) * 130}px)`;
+          const isPlayer = slot.side === "player";
+          const isTWActive = isPlayer ? playerTailwind : opponentTailwind;
+          const stageVal = speedStages[slot.key] || 0;
+
           return (
-            <div 
+            <div
               key={slot.key}
-              className="absolute top-0 w-[140px] transition-all duration-500 ease-in-out flex flex-col items-center"
+              className="absolute top-0 w-[130px] transition-all duration-500 ease-in-out flex flex-col items-center"
               style={{ left: leftPos }}
             >
-              <div className="w-full bg-zinc-900 border-2 border-zinc-800 rounded-xl p-2 flex flex-col items-center gap-2 shadow-lg relative group">
+              <div className={`w-full bg-zinc-950 border-2 rounded-xl p-2.5 flex flex-col items-center gap-1.5 shadow-xl relative group transition-all duration-300 ${
+                isTrickRoom 
+                  ? "border-purple-900/60 shadow-[0_0_12px_rgba(168,85,247,0.1)] hover:border-purple-500/80" 
+                  : isPlayer
+                    ? "border-zinc-900 hover:border-red-900/60"
+                    : "border-zinc-900 hover:border-red-950"
+              }`}>
                 {/* Speed Badge */}
-                <div className={`absolute -top-3 px-2 py-0.5 rounded text-[10px] font-black shadow-sm ${
-                  slot.side === 'player' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+                <div className={`absolute -top-3.5 px-2.5 py-0.5 rounded-lg text-[10px] font-black border tracking-wider shadow-md transition-all ${
+                  isPlayer
+                    ? "bg-red-950/90 border-red-900 text-red-500 shadow-[0_0_8px_rgba(220,38,38,0.15)]"
+                    : "bg-zinc-900 border-zinc-800 text-zinc-350"
                 }`}>
-                  {slot.speed}
+                  {slot.modifiedSpeed || 0}
                 </div>
-                
-                <img 
-                  src={(slot as any).spriteUrl || `https://play.pokemonshowdown.com/sprites/gen5/${slot.id}.png`} 
-                  alt={slot.name} 
-                  className="w-16 h-16 object-contain drop-shadow-md mt-1"
-                  onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
+
+                {/* Tailwind Indicator */}
+                {isTWActive && (
+                  <div className="absolute top-2 left-2 bg-cyan-950/60 border border-cyan-900 text-cyan-400 p-0.5 rounded-md text-[8px] font-black flex items-center gap-0.5 shadow-sm" title="Tailwind Boosted">
+                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                )}
+
+                {/* Pokemon Sprite */}
+                <img
+                  src={slot.spriteUrl || `https://play.pokemonshowdown.com/sprites/gen5/${slot.id}.png`}
+                  alt={slot.name}
+                  className="w-14 h-14 object-contain drop-shadow-md mt-1 transition-transform group-hover:scale-110"
+                  onError={(e) => {
+                    e.currentTarget.src = POKEBALL_FALLBACK;
+                  }}
                 />
-                
-                <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest truncate w-full text-center px-1">
+
+                {/* Name */}
+                <span className="text-[9px] font-black text-zinc-450 uppercase tracking-widest truncate w-full text-center px-1 font-mono">
                   {slot.name}
                 </span>
 
+                {/* Speed Stages Adjusters */}
+                <div className="flex items-center gap-[1px] mt-1">
+                  <button
+                    onClick={() => onUpdateSpeedStage(slot.key, Math.max(-6, stageVal - 1))}
+                    className="bg-zinc-900 hover:bg-red-950/30 border border-zinc-800 hover:border-red-900 text-zinc-550 hover:text-red-500 px-1.5 py-0.5 rounded-l text-[9px] font-black transition-colors"
+                  >
+                    -
+                  </button>
+                  <span className={`bg-zinc-950 border-y border-zinc-800 text-[8px] font-bold px-1.5 py-0.5 min-w-[22px] text-center font-mono ${
+                    stageVal > 0 
+                      ? "text-emerald-500" 
+                      : stageVal < 0 
+                        ? "text-red-500" 
+                        : "text-zinc-400"
+                  }`}>
+                    {stageVal > 0 ? `+${stageVal}` : stageVal}
+                  </span>
+                  <button
+                    onClick={() => onUpdateSpeedStage(slot.key, Math.min(6, stageVal + 1))}
+                    className="bg-zinc-900 hover:bg-red-950/30 border border-zinc-800 hover:border-red-900 text-zinc-550 hover:text-red-500 px-1.5 py-0.5 rounded-r text-[9px] font-black transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+
                 {/* Micro Toggles */}
-                <div className="flex flex-wrap justify-center gap-1 mt-1 w-full opacity-60 hover:opacity-100 transition-opacity">
-                  {slot.side === 'opponent' && (
-                    <button 
-                      onClick={() => updateMod(slot.key, { isMaxSpeed: !slot.modState.isMaxSpeed })}
-                      className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${slot.modState.isMaxSpeed ? 'bg-amber-900/50 border-amber-500 text-amber-400' : 'bg-zinc-950 border-zinc-700 text-zinc-500'}`}
-                      title="Max Speed"
+                <div className="flex gap-1 mt-1.5 w-full justify-center">
+                  <button
+                    onClick={() => onUpdateChoiceScarf(slot.key, !(choiceScarfs[slot.key] || false))}
+                    className={`text-[7px] font-black px-1.5 py-0.5 rounded border transition-colors tracking-widest font-mono ${
+                      choiceScarfs[slot.key]
+                        ? "bg-red-950/40 border-red-900 text-red-500 shadow-[0_0_8px_rgba(220,38,38,0.2)]"
+                        : "bg-zinc-950 border-zinc-900 text-zinc-600 hover:text-zinc-400 hover:border-zinc-800"
+                    }`}
+                    title="Toggle Choice Scarf"
+                  >
+                    SCARF
+                  </button>
+
+                  {slot.side === "opponent" && onUpdateMaxSpeed && (
+                    <button
+                      onClick={() => onUpdateMaxSpeed(slot.key, !(opponentMaxSpeeds[slot.key] || false))}
+                      className={`text-[7px] font-black px-1.5 py-0.5 rounded border transition-colors tracking-widest font-mono ${
+                        opponentMaxSpeeds[slot.key]
+                          ? "bg-amber-950/40 border-amber-900 text-amber-500"
+                          : "bg-zinc-950 border-zinc-900 text-zinc-650 hover:text-zinc-400 hover:border-zinc-800"
+                      }`}
+                      title="Toggle Max Speed"
                     >
                       MAX
                     </button>
                   )}
-                  <button 
-                    onClick={() => updateMod(slot.key, { choiceScarf: !slot.modState.choiceScarf })}
-                    className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${slot.modState.choiceScarf ? 'bg-blue-900/50 border-blue-500 text-blue-400' : 'bg-zinc-950 border-zinc-700 text-zinc-500'}`}
-                    title="Choice Scarf"
-                  >
-                    SCF
-                  </button>
-                  <button 
-                    onClick={() => updateMod(slot.key, { tailwind: !slot.modState.tailwind })}
-                    className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${slot.modState.tailwind ? 'bg-cyan-900/50 border-cyan-500 text-cyan-400' : 'bg-zinc-950 border-zinc-700 text-zinc-500'}`}
-                    title="Tailwind"
-                  >
-                    TW
-                  </button>
-                  <div className="flex items-center gap-[1px]">
-                    <button 
-                      onClick={() => updateMod(slot.key, { statStage: Math.max(-6, slot.modState.statStage - 1) })}
-                      className="bg-zinc-950 border border-zinc-700 text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-l text-[9px] font-black"
-                    >
-                      -
-                    </button>
-                    <span className="bg-zinc-900 border-y border-zinc-700 text-zinc-300 px-1 py-0.5 text-[9px] font-black min-w-[20px] text-center">
-                      {slot.modState.statStage > 0 ? `+${slot.modState.statStage}` : slot.modState.statStage}
-                    </span>
-                    <button 
-                      onClick={() => updateMod(slot.key, { statStage: Math.min(6, slot.modState.statStage + 1) })}
-                      className="bg-zinc-950 border border-zinc-700 text-zinc-400 hover:text-white px-1.5 py-0.5 rounded-r text-[9px] font-black"
-                    >
-                      +
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
