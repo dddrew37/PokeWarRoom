@@ -39,12 +39,30 @@ async function run() {
   const listRes = await fetchWithRetry(`${API_BASE}/pokemon?limit=1500`);
   const results = listRes.results;
   
-  const filtered = results.filter(p => 
-    !p.name.includes('-mega') && 
-    !p.name.includes('-gmax') && 
-    !p.name.includes('-totem') &&
-    !p.name.includes('-starter')
-  );
+  const BANNED_KEYWORDS = [
+    'articuno', 'zapdos', 'moltres', 'mewtwo', 'mew',
+    'raikou', 'entei', 'suicune', 'lugia', 'ho-oh', 'celebi',
+    'regirock', 'regice', 'registeel', 'latias', 'latios', 'kyogre', 'groudon', 'rayquaza', 'jirachi', 'deoxys',
+    'uxie', 'mesprit', 'azelf', 'dialga', 'palkia', 'heatran', 'regigigas', 'giratina', 'cresselia', 'phione', 'manaphy', 'darkrai', 'shaymin', 'arceus',
+    'victini', 'cobalion', 'terrakion', 'virizion', 'tornadus', 'thundurus', 'reshiram', 'zekrom', 'landorus', 'kyurem', 'keldeo', 'meloetta', 'genesect',
+    'xerneas', 'yveltal', 'zygarde', 'diancie', 'hoopa', 'volcanion',
+    'type-null', 'silvally', 'tapu',
+    'cosmog', 'cosmoem', 'solgaleo', 'lunala', 'nihilego', 'buzzwole', 'pheromosa', 'xurkitree', 'celesteela', 'kartana', 'guzzlord', 'necrozma', 'magearna', 'marshadow', 'poipole', 'naganadel', 'stakataka', 'blacephalon', 'zeraora', 'meltan', 'melmetal',
+    'zacian', 'zamazenta', 'eternatus', 'kubfu', 'urshifu', 'zarude', 'regieleki', 'regidrago', 'glastrier', 'spectrier', 'calyrex',
+    'enamorus', 'wo-chien', 'chien-pao', 'ting-lu', 'chi-yu', 'okidogi', 'munkidori', 'fezandipiti', 'ogerpon', 'terapagos', 'pecharunt',
+    'gholdengo',
+    // Paradoxes
+    'great-tusk', 'scream-tail', 'brute-bonnet', 'flutter-mane', 'slither-wing', 'sandy-shocks', 'roaring-moon', 'walking-wake', 'gouging-fire', 'raging-bolt',
+    'iron-'
+  ];
+
+  const filtered = results.filter(p => {
+    if (p.name.includes('-mega') || p.name.includes('-gmax') || p.name.includes('-totem') || p.name.includes('-starter')) {
+      return false;
+    }
+    const nameLower = p.name.toLowerCase();
+    return !BANNED_KEYWORDS.some(k => nameLower.includes(k));
+  });
   
   console.log(`Fetching details for ${filtered.length} Pokémon... this may take a moment.`);
   
