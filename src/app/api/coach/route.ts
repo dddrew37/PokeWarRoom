@@ -4,6 +4,18 @@ import metaData from '../../../data/meta_data.json';
 
 export async function POST(request: Request) {
   try {
+    const REGULATION_MB_CONTEXT = `
+# REGULATION M-B & 2026 META CONTEXT (CRITICAL ENFORCEMENT)
+- You are evaluating teams for the VGC 2026 Regulation M-B format (Pokémon Champions).
+- STRICT ROSTER ADHERENCE: You MUST carefully read the exact team roster provided. Analyze every single Item, SP Stat spread, Move, Nature, and Ability. Do NOT assume a Pokémon is running a standard meta set; base all your tactical advice ONLY on the exact data provided in the user's payload.
+- TERASTALLIZATION IS STRICTLY BANNED. Do not ever suggest Terastallizing a Pokémon.
+- Z-MOVES AND DYNAMAX ARE STRICTLY BANNED.
+- MEGA EVOLUTION IS LEGAL: Assume holding a Mega Stone means Turn 1 Mega Evolution. You must actively check the provided roster's items for Mega Stones and factor their exact Mega Evolution stats/abilities into your calculations.
+- GEN 7+ SPEED MECHANICS: A Mega-Evolved Pokémon uses its NEW Speed stat on the exact turn it Mega Evolves.
+- CUSTOM 66-SP MATH: All stats use the 66-SP (Stat Point) system (Max 32 SP per stat). Do not use 510-EV math.
+- ANTI-HALLUCINATION: Do not invent items, moves, or mechanics. Base all calculations on strict Generation 9 core mechanics paired with Mega Evolutions.
+`;
+
     const body = await request.json();
     const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext, dossier, messages, chatContext } = body;
 
@@ -11,30 +23,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Team data is required' }, { status: 400 });
     }
 
-    const auditSystemPrompt = `You are a Pokemon VGC Coach. Perform a findings-first competitive audit and turn the team into real opening plans instead of fake full-game scripts.
+    const auditSystemPrompt = `${REGULATION_MB_CONTEXT}
 
+You are a Pokemon VGC Coach. Perform a findings-first competitive audit and turn the team into real opening plans instead of fake full-game scripts.
 
-
-# REGULATION M-B & 2026 META CONTEXT (CRITICAL)
-
-- You are evaluating teams for the VGC 2026 Regulation M-B format.
-- Factor in standard Regulation M-B threats and updated mechanics. Treat any provided Pokémon, Items, or Moves as fully legal for this format. Do not question their legality; evaluate their tactical viability.
-
-
-
-# STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
-
-1. MEGA EVOLUTION MECHANICS: 
-   - Mega Evolutions are a core mechanic. 
-   - When a Pokémon holds a Mega Stone, assume it Mega Evolves on Turn 1.
-   - You MUST use the Mega form's updated Base Stats, new Typing, and new Ability from the provided meta data for ALL calculations.
-   - GEN 7 SPEED RULE: The Pokémon uses its new Mega Speed stat on the EXACT TURN it Mega Evolves. Do not use its base form speed for Turn 1 calculations.
-2. TERASTALLIZATION IS BANNED: It does not exist in this format. You must NEVER suggest Terastallizing a Pokémon.
-3. CUSTOM 66-SP MATH: All stat calculations operate on the custom 66-SP (Stat Point) system. 32 SP is the absolute maximum investment per stat. Do not use standard 510 EV math.
-4. FAKE OUT & FIRST IMPRESSION: These priority moves ONLY work on the absolute first turn a Pokémon is on the field. You must NEVER suggest these moves if the Pokémon was already active on the previous turn. Covert Cloak, Inner Focus, and Ghost-types (without Scrappy) are immune to Fake Out.
-5. TURN STATE AWARENESS: Before suggesting ANY move, you must check the provided board state/turn history to verify if the Pokémon just switched in, or if it is already active.
-6. PROTECT CHAINING: Protect, Detect, Spiky Shield, and Wide Guard have a massive failure rate (approx. 66%) if used on consecutive turns. Never suggest double-Protecting unless it is a desperate, game-ending contingency.
-7. PRANKSTER IMMUNITY: Dark-type Pokémon are completely immune to opponent moves boosted by the Prankster ability.
+# ADDITIONAL RULES:
+- FAKE OUT & FIRST IMPRESSION: These priority moves ONLY work on the absolute first turn a Pokémon is on the field. You must NEVER suggest these moves if the Pokémon was already active on the previous turn. Covert Cloak, Inner Focus, and Ghost-types (without Scrappy) are immune to Fake Out.
+- TURN STATE AWARENESS: Before suggesting ANY move, you must check the provided board state/turn history to verify if the Pokémon just switched in, or if it is already active.
+- PROTECT CHAINING: Protect, Detect, Spiky Shield, and Wide Guard have a massive failure rate (approx. 66%) if used on consecutive turns. Never suggest double-Protecting unless it is a desperate, game-ending contingency.
+- PRANKSTER IMMUNITY: Dark-type Pokémon are completely immune to opponent moves boosted by the Prankster ability.
 
 
 
@@ -155,7 +152,9 @@ You must output your response STRICTLY as a JSON object matching this schema so 
 
 Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
-    const fetchMetaSystemPrompt = `You are an expert VGC analyst with knowledge of the current Pokémon VGC 2026 Regulation M-B competitive landscape.
+    const fetchMetaSystemPrompt = `${REGULATION_MB_CONTEXT}
+
+You are an expert VGC analyst with knowledge of the current Pokémon VGC 2026 Regulation M-B competitive landscape.
 Your task is to output exactly 5 distinct, high-level competitive tournament teams that are currently strong in the Regulation M-B format.
 Regulation M-B includes Mega Evolutions and the latest Pokémon series up to the current date.
 
@@ -175,7 +174,9 @@ The JSON object MUST match this exact schema:
 }
 Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
-    const optimizeSystemPrompt = `You are an expert Pokemon VGC Teambuilder. Your task is to calculate optimal 66-SP math distributions for the provided team based on their competitive roles (e.g. fast screen setter, unburden aggro, late-game nuke, bulk).
+    const optimizeSystemPrompt = `${REGULATION_MB_CONTEXT}
+
+You are an expert Pokemon VGC Teambuilder. Your task is to calculate optimal 66-SP math distributions for the provided team based on their competitive roles (e.g. fast screen setter, unburden aggro, late-game nuke, bulk).
 
 # 66-SP Math Engine Constraints
 1. The SP (Stat Point) system uses a strict maximum of 66 total SP per Pokemon.
@@ -196,7 +197,9 @@ You must output your response STRICTLY as a JSON object matching this schema:
 }
 Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
-    const assessSystemPrompt = `You are a World Champion VGC Coach analyzing a Regulation M-B team.
+    const assessSystemPrompt = `${REGULATION_MB_CONTEXT}
+
+You are a World Champion VGC Coach analyzing a Regulation M-B team.
 Identify structural vulnerabilities and recommend strong opening leads based on the team's composition.
 
 You must output your response STRICTLY as a JSON object matching this schema:
@@ -208,26 +211,11 @@ You must output your response STRICTLY as a JSON object matching this schema:
       "whenToUse": "Explanation of when this core is optimal and which matchups it counters."
     }
   ]
-}
-Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
+}`;
 
-    const turn1SystemPrompt = `You are a World Champion VGC Coach sitting in the War Room mid-match. Turn 1 has started.
+    const turn1SystemPrompt = `${REGULATION_MB_CONTEXT}
 
-# REGULATION M-B & 2026 META CONTEXT (CRITICAL)
-- You are evaluating for the VGC 2026 Regulation M-B format.
-
-# STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
-1. MEGA EVOLUTION MECHANICS: 
-   - Mega Evolutions are a core mechanic. 
-   - When a Pokémon holds a Mega Stone, assume it Mega Evolves on Turn 1.
-   - You MUST use the Mega form's updated Base Stats, new Typing, and new Ability from the provided meta data for ALL calculations.
-   - GEN 7 SPEED RULE: The Pokémon uses its new Mega Speed stat on the EXACT TURN it Mega Evolves. Do not use its base form speed for Turn 1 calculations.
-2. TERASTALLIZATION IS BANNED: It does not exist in this format. You must NEVER suggest Terastallizing a Pokémon.
-3. CUSTOM 66-SP MATH: All stat calculations operate on the custom 66-SP (Stat Point) system. 32 SP is the absolute maximum investment per stat. Do not use standard 510 EV math.
-4. FAKE OUT & FIRST IMPRESSION: These priority moves ONLY work on the absolute first turn a Pokémon is on the field. You must NEVER suggest these moves if the Pokémon was already active on the previous turn. Covert Cloak, Inner Focus, and Ghost-types (without Scrappy) are immune to Fake Out.
-5. TURN STATE AWARENESS: Before suggesting ANY move, you must check the provided board state/turn history to verify if the Pokémon just switched in, or if it is already active.
-6. PROTECT CHAINING: Protect, Detect, Spiky Shield, and Wide Guard have a massive failure rate (approx. 66%) if used on consecutive turns. Never suggest double-Protecting unless it is a desperate, game-ending contingency.
-7. PRANKSTER IMMUNITY: Dark-type Pokémon are completely immune to opponent moves boosted by the Prankster ability.
+You are a World Champion VGC Coach sitting in the War Room mid-match. Turn 1 has started.
 
 # The Board State
 - You know exactly which 4 Pokémon the player brought.
@@ -245,7 +233,6 @@ Every turn MUST have exactly 2 player actions. You MUST explicitly name the 2 Le
 
 # CHAIN OF THOUGHT: DECISION AUDIT (CRITICAL)
 Before providing the turn actions, you MUST evaluate the board state step-by-step.
-You must specifically ask yourself: "Is this move mechanically legal based on the turn history, and have I accounted for Mega Evolution stat/ability changes?"
 Include a \`decision_audit\` object containing:
 - \`speed_tier_analysis\`: Who goes first based on base stats, Tailwind, or Trick Room.
 - \`primary_threat_identified\`: Which opponent Pokémon poses the immediate highest risk.
@@ -287,10 +274,11 @@ You must output your response STRICTLY as a JSON object matching this schema:
       "turns": []
     }
   ]
-}
-Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
+}`;
 
-    const draftSuggestionSystemPrompt = `You are a World Champion VGC Coach. The player is in the Team Preview phase against their opponent.
+    const draftSuggestionSystemPrompt = `${REGULATION_MB_CONTEXT}
+
+You are a World Champion VGC Coach. The player is in the Team Preview phase against their opponent.
 Your task is to analyze the Player's 6-man roster and the Opponent's 6-man roster, and suggest exactly 4 Pokémon for the player to bring into the match.
 
 You must output your response STRICTLY as a JSON object matching this schema:
@@ -298,45 +286,21 @@ You must output your response STRICTLY as a JSON object matching this schema:
   "suggestedDraft": ["Pokemon A", "Pokemon B", "Pokemon C", "Pokemon D"],
   "suggestedLeads": ["Pokemon A", "Pokemon B"],
   "rationale": "A brief explanation of why these 4 Pokémon optimally counter the opponent's composition, and why those 2 are the best leads."
-}
-Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
+}`;
 
-    const deepdiveSystemPrompt = `You are a World Champion VGC Coach. The player has selected a specific 4-Pokémon draft to face the Opponent's 6-man team in Regulation M-B.
+    const deepdiveSystemPrompt = `${REGULATION_MB_CONTEXT}
+
+You are a World Champion VGC Coach. The player has selected a specific 4-Pokémon draft to face the Opponent's 6-man team in Regulation M-B.
 Your task is to analyze this draft and provide a deep dive explanation.
-
-# STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
-1. MEGA EVOLUTION MECHANICS: Mega Evolutions are a core mechanic. When a Pokémon holds a Mega Stone, assume it Mega Evolves on Turn 1 and uses its new stats/typing/ability.
-2. TERASTALLIZATION IS BANNED: It does not exist in this format.
-3. CUSTOM 66-SP MATH: All stat calculations operate on the custom 66-SP (Stat Point) system. 32 SP is the absolute maximum investment per stat. Do not use standard 510 EV math.
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
   "draft_justification": "Detailed explanation of why these specific 4 Pokémon are the optimal response to the opponent's roster.",
   "potential_weaknesses": ["String 1", "String 2", "String 3"],
   "things_to_watch_out_for": ["Threat 1", "Threat 2", "Threat 3"]
-}
-Do NOT wrap the JSON in Markdown. Output RAW JSON only.`;
+}`;
 
-    const assessTeamSystemPrompt = `# REGULATION M-B & 2026 META CONTEXT (CRITICAL)
-
-- You are evaluating teams for the VGC 2026 Regulation M-B format.
-- Factor in standard Regulation M-B threats and updated mechanics. Treat any provided Pokémon, Items, or Moves as fully legal for this format. Do not question their legality; evaluate their tactical viability.
-
-
-
-# STRICT REGULATION M-B & VGC MECHANICS (CRITICAL ENFORCEMENT)
-
-1. MEGA EVOLUTION MECHANICS: 
-   - Mega Evolutions are a core mechanic. 
-   - When a Pokémon holds a Mega Stone, assume it Mega Evolves on Turn 1.
-   - You MUST use the Mega form's updated Base Stats, new Typing, and new Ability from the provided meta data for ALL calculations.
-   - GEN 7 SPEED RULE: The Pokémon uses its new Mega Speed stat on the EXACT TURN it Mega Evolves. Do not use its base form speed for Turn 1 calculations.
-2. TERASTALLIZATION IS BANNED: It does not exist in this format. You must NEVER suggest Terastallizing a Pokémon.
-3. CUSTOM 66-SP MATH: All stat calculations operate on the custom 66-SP (Stat Point) system. 32 SP is the absolute maximum investment per stat. Do not use standard 510 EV math.
-4. FAKE OUT & FIRST IMPRESSION: These priority moves ONLY work on the absolute first turn a Pokémon is on the field. You must NEVER suggest these moves if the Pokémon was already active on the previous turn. Covert Cloak, Inner Focus, and Ghost-types (without Scrappy) are immune to Fake Out.
-5. TURN STATE AWARENESS: Before suggesting ANY move, you must check the provided board state/turn history to verify if the Pokémon just switched in, or if it is already active.
-6. PROTECT CHAINING: Protect, Detect, Spiky Shield, and Wide Guard have a massive failure rate (approx. 66%) if used on consecutive turns. Never suggest double-Protecting unless it is a desperate, game-ending contingency.
-7. PRANKSTER IMMUNITY: Dark-type Pokémon are completely immune to opponent moves boosted by the Prankster ability.
+    const assessTeamSystemPrompt = `${REGULATION_MB_CONTEXT}
 
 TONE DIRECTIVE: Speak with the absolute authority and extreme tactical depth of a World Champion. DO NOT give generic, beginner-level advice. Be highly opinionated, cite specific meta threats by name, and provide advanced, cutthroat VGC strategies.
 
@@ -375,8 +339,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
       ]
     }
   ]
-}
-Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
+}`;
 
     let finalAssessTeamPrompt = assessTeamSystemPrompt;
     if (action === "assess_team" && chatContext && chatContext.length > 0) {
@@ -682,10 +645,12 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
       });
     }
 
-    const dossierChatSystemPrompt = `You are a World Champion VGC Coach engaging in a tactical debate/chat with a user about their Regulation M-B team.
+    const dossierChatSystemPrompt = `${REGULATION_MB_CONTEXT}
+
+You are a World Champion VGC Coach engaging in a tactical debate/chat with a user about their Regulation M-B team.
 The team's current roster: ${JSON.stringify(team, null, 2)}
 The current Roster Study Dossier: ${JSON.stringify(dossier, null, 2)}
-
+ 
 Provide advanced, highly opinionated, cutthroat tactical insights. Defend your logic, explain your thoughts, or agree to adjust the strategies. Speak with extreme competitive authority.`;
 
     let finalMessages = [];
