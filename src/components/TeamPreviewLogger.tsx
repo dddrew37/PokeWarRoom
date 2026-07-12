@@ -328,12 +328,8 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
             />
 
             <DamageCalculator 
-              playerMons={
-                draftLeadsIndices.length === 2 
-                  ? draftLeadsIndices.map(i => playerTeam[i])
-                  : playerLockedIndices.slice(0, 2).map(i => playerTeam[i])
-              } 
-              opponentMons={opponentLeadIndices.map(i => selected[i])} 
+              playerMons={playerLockedIndices.map(i => playerTeam[i])} 
+              opponentMons={selected} 
             />
           </div>
         )}

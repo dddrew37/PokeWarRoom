@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ParsedPokemon } from "../lib/parser";
 import { Pokemon, POKEBALL_FALLBACK } from "../lib/pokemon";
-import { calculateStats, calculateDamage, DamageModifiers } from "../utils/damageCalc";
+import { calculateDamage, lookupBaseStats, DamageModifiers } from "../lib/damage";
 
 interface DamageCalculatorProps {
   playerMons: ParsedPokemon[];
@@ -11,117 +11,167 @@ interface DamageCalculatorProps {
 }
 
 export default function DamageCalculator({ playerMons, opponentMons }: DamageCalculatorProps) {
-  const activeSlots = useMemo(() => {
-    return [
-      ...playerMons.map((p, i) => ({ ...p, side: 'player' as const, key: `p-${i}` })),
-      ...opponentMons.map((p, i) => ({ ...p, side: 'opponent' as const, key: `o-${i}` }))
-    ];
-  }, [playerMons, opponentMons]);
+  // Attacker selections (filtered from Player brought Pokémon)
+  const [attackerIndex, setAttackerIndex] = useState<number>(0);
+  // Defender selections (filtered from Opponent roster)
+  const [defenderIndex, setDefenderIndex] = useState<number>(0);
 
-  const [attackerKey, setAttackerKey] = useState<string>(activeSlots[0]?.key || "");
-  const [defenderKey, setDefenderKey] = useState<string>(activeSlots.find(s => s.side !== activeSlots[0]?.side)?.key || "");
   const [basePower, setBasePower] = useState<number>(80);
   const [category, setCategory] = useState<"Physical" | "Special">("Physical");
-  const [modifiers, setModifiers] = useState<DamageModifiers>({
-    stab: false,
-    spread: false,
-    typeEffectiveness: 1,
-  });
+  const [effectiveness, setEffectiveness] = useState<number>(1.0);
+  const [isStab, setIsStab] = useState<boolean>(true);
+  const [heldItem, setHeldItem] = useState<string>("None");
+  const [defenderMaxStats, setDefenderMaxStats] = useState<boolean>(true);
+  
+  // Stat stages for attacker/defender
+  const [attackerStage, setAttackerStage] = useState<number>(0);
+  const [defenderStage, setDefenderStage] = useState<number>(0);
 
-  const attacker = activeSlots.find(s => s.key === attackerKey);
-  const defender = activeSlots.find(s => s.key === defenderKey);
+  const attacker = playerMons[attackerIndex];
+  const defender = opponentMons[defenderIndex];
 
+  // Auto-correct indexes if team sizes change
+  useEffect(() => {
+    if (attackerIndex >= playerMons.length && playerMons.length > 0) {
+      setAttackerIndex(0);
+    }
+  }, [playerMons, attackerIndex]);
+
+  useEffect(() => {
+    if (defenderIndex >= opponentMons.length && opponentMons.length > 0) {
+      setDefenderIndex(0);
+    }
+  }, [opponentMons, defenderIndex]);
+
+  // Perform Gen 9 damage math
   const result = useMemo(() => {
     if (!attacker || !defender) return null;
-    
-    // Assume max offensive stat for opponent if they are attacking
-    const attackerStats = calculateStats(attacker, attacker.side, true);
-    // Assume max defensive stat for opponent if they are defending
-    const defenderStats = calculateStats(defender, defender.side, true);
 
-    return calculateDamage(attackerStats, defenderStats, basePower, category, modifiers);
-  }, [attacker, defender, basePower, category, modifiers]);
+    const baseAttacker = {
+      name: attacker.name,
+      id: attacker.id,
+      sp: attacker.sp,
+      nature: attacker.nature,
+      item: attacker.item,
+      ability: attacker.ability,
+    };
 
-  const handleEffectivenessChange = (val: number) => {
-    setModifiers(prev => ({ ...prev, typeEffectiveness: val }));
-  };
+    const baseDefender = {
+      name: defender.name,
+      id: defender.id,
+    };
+
+    const mods: DamageModifiers = {
+      stab: isStab,
+      typeEffectiveness: effectiveness,
+      item: heldItem !== "None" ? heldItem : undefined,
+      defenderMaxStats,
+      attackerStatStage: attackerStage,
+      defenderStatStage: defenderStage,
+    };
+
+    return calculateDamage(baseAttacker, baseDefender, basePower, category, mods);
+  }, [
+    attacker,
+    defender,
+    basePower,
+    category,
+    effectiveness,
+    isStab,
+    heldItem,
+    defenderMaxStats,
+    attackerStage,
+    defenderStage,
+  ]);
+
+  if (playerMons.length === 0 || opponentMons.length === 0) {
+    return null;
+  }
 
   return (
-    <div className="w-full bg-zinc-950 border border-zinc-800 rounded-2xl p-6 shadow-inner mt-4 mb-4 flex flex-col gap-6">
+    <div className="w-full bg-zinc-950 border border-red-950/40 rounded-2xl p-5 shadow-inner relative overflow-hidden flex flex-col gap-5">
+      <div className="absolute top-0 left-0 w-32 h-full bg-red-700/5 blur-3xl pointer-events-none" />
+
+      {/* Header */}
       <div>
-        <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
-          <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2 font-mono">
+          <svg className="w-4 h-4 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
           </svg>
-          Rapid-Fire Damage Calc
+          Damage Calculator
         </h3>
+        <p className="text-[9px] font-bold text-zinc-550 uppercase tracking-widest font-mono mt-1">Zero-Latency Local Damage Sim</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* Attacker Selection */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Attacker</label>
-          <div className="flex items-center gap-3">
+      {/* Attacker & Defender Selectors */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Attacker Select */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest font-mono">Attacker (Player)</label>
+          <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-850 p-2 rounded-xl">
             <img 
-              src={(attacker as any)?.spriteUrl || `https://play.pokemonshowdown.com/sprites/gen5/${attacker?.id}.png`} 
-              className="w-12 h-12 object-contain bg-zinc-900 border border-zinc-700 rounded-lg"
+              src={attacker ? `https://play.pokemonshowdown.com/sprites/gen5/${attacker.id}.png` : POKEBALL_FALLBACK} 
+              className="w-10 h-10 object-contain bg-zinc-950 border border-zinc-800 rounded-lg shrink-0"
               onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
             />
             <select 
-              value={attackerKey} 
-              onChange={(e) => setAttackerKey(e.target.value)}
-              className="bg-zinc-900 border border-zinc-700 text-white text-sm font-bold p-2 rounded-lg w-full focus:outline-none focus:border-red-500"
+              value={attackerIndex} 
+              onChange={(e) => setAttackerIndex(parseInt(e.target.value))}
+              className="bg-transparent text-xs font-black text-white focus:outline-none w-full cursor-pointer uppercase tracking-wider font-mono"
             >
-              {activeSlots.map(slot => (
-                <option key={`atk-${slot.key}`} value={slot.key}>{slot.name} ({slot.side})</option>
+              {playerMons.map((mon, i) => (
+                <option key={`atk-${i}`} value={i} className="bg-zinc-900 text-zinc-300 font-bold">{mon.name}</option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Defender Selection */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Defender</label>
-          <div className="flex items-center gap-3">
+        {/* Defender Select */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest font-mono">Defender (Opponent)</label>
+          <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-850 p-2 rounded-xl">
             <img 
-              src={(defender as any)?.spriteUrl || `https://play.pokemonshowdown.com/sprites/gen5/${defender?.id}.png`} 
-              className="w-12 h-12 object-contain bg-zinc-900 border border-zinc-700 rounded-lg"
+              src={defender ? `https://play.pokemonshowdown.com/sprites/gen5/${defender.id}.png` : POKEBALL_FALLBACK} 
+              className="w-10 h-10 object-contain bg-zinc-950 border border-zinc-800 rounded-lg shrink-0"
               onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
             />
             <select 
-              value={defenderKey} 
-              onChange={(e) => setDefenderKey(e.target.value)}
-              className="bg-zinc-900 border border-zinc-700 text-white text-sm font-bold p-2 rounded-lg w-full focus:outline-none focus:border-blue-500"
+              value={defenderIndex} 
+              onChange={(e) => setDefenderIndex(parseInt(e.target.value))}
+              className="bg-transparent text-xs font-black text-white focus:outline-none w-full cursor-pointer uppercase tracking-wider font-mono"
             >
-              {activeSlots.map(slot => (
-                <option key={`def-${slot.key}`} value={slot.key}>{slot.name} ({slot.side})</option>
+              {opponentMons.map((mon, i) => (
+                <option key={`def-${i}`} value={i} className="bg-zinc-900 text-zinc-300 font-bold">{mon.name}</option>
               ))}
             </select>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 items-end">
-        {/* Move Stats */}
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-2 flex-1">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Base Power</label>
+      {/* Move power and category */}
+      <div className="grid grid-cols-2 gap-4 items-end font-mono">
+        <div className="flex gap-2">
+          {/* Base Power input */}
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Base Power</label>
             <input 
               type="number" 
               value={basePower}
-              onChange={(e) => setBasePower(parseInt(e.target.value) || 0)}
-              className="bg-zinc-900 border border-zinc-700 text-white text-sm font-black p-2 rounded-lg w-full text-center focus:outline-none focus:border-red-500"
+              onChange={(e) => setBasePower(Math.max(0, parseInt(e.target.value) || 0))}
+              className="bg-zinc-900 border border-zinc-850 text-white text-xs font-black p-2 rounded-xl w-full text-center focus:outline-none focus:border-red-900"
             />
           </div>
-          <div className="flex flex-col gap-2 flex-1">
-            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-center">Category</label>
+
+          {/* Category Selector */}
+          <div className="flex flex-col gap-1.5 flex-1">
+            <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest text-center">Category</label>
             <button
               onClick={() => setCategory(category === "Physical" ? "Special" : "Physical")}
-              className={`p-2 rounded-lg text-xs font-black uppercase tracking-wider border-2 transition-all ${
+              className={`p-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer ${
                 category === "Physical" 
-                  ? "bg-red-900/20 border-red-500 text-red-400" 
-                  : "bg-zinc-950 border-zinc-800 text-zinc-400"
+                  ? "bg-red-950/20 border-red-800 text-red-500" 
+                  : "bg-zinc-900 border-zinc-800 text-zinc-400"
               }`}
             >
               {category}
@@ -129,78 +179,155 @@ export default function DamageCalculator({ playerMons, opponentMons }: DamageCal
           </div>
         </div>
 
-        {/* Modifiers */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Modifiers</label>
-          <div className="flex gap-2">
+        {/* Item Selector */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Attacker Item Boost</label>
+          <select 
+            value={heldItem} 
+            onChange={(e) => setHeldItem(e.target.value)}
+            className="bg-zinc-900 border border-zinc-850 text-xs font-black text-zinc-300 p-2 rounded-xl focus:outline-none cursor-pointer uppercase tracking-wider"
+          >
+            <option value="None">None</option>
+            <option value="Life Orb">Life Orb (1.3x)</option>
+            <option value="Choice Band">Choice Band (1.5x Phys)</option>
+            <option value="Choice Specs">Choice Specs (1.5x Spec)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Stat stages adjusters */}
+      <div className="grid grid-cols-2 gap-4 font-mono">
+        {/* Attacker Attack Stage */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest text-center">Atk/SpA Stage</label>
+          <div className="flex items-center justify-center gap-1.5">
             <button
-              onClick={() => setModifiers(prev => ({ ...prev, stab: !prev.stab }))}
-              className={`flex-1 p-2 rounded-lg text-xs font-black border-2 transition-all ${
-                modifiers.stab ? "bg-red-950/20 border-red-600 text-red-500" : "bg-zinc-900 border-zinc-700 text-zinc-400"
-              }`}
+              onClick={() => setAttackerStage(prev => Math.max(-6, prev - 1))}
+              className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 px-2.5 py-1.5 rounded-lg text-xs font-black text-zinc-400"
             >
-              STAB
+              -
             </button>
+            <span className={`text-[10px] font-bold min-w-[24px] text-center ${attackerStage > 0 ? "text-emerald-500" : attackerStage < 0 ? "text-red-500" : "text-zinc-400"}`}>
+              {attackerStage > 0 ? `+${attackerStage}` : attackerStage}
+            </span>
             <button
-              onClick={() => setModifiers(prev => ({ ...prev, spread: !prev.spread }))}
-              className={`flex-1 p-2 rounded-lg text-xs font-black border-2 transition-all ${
-                modifiers.spread ? "bg-red-950/20 border-red-600 text-red-500" : "bg-zinc-900 border-zinc-700 text-zinc-400"
-              }`}
+              onClick={() => setAttackerStage(prev => Math.min(6, prev + 1))}
+              className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 px-2.5 py-1.5 rounded-lg text-xs font-black text-zinc-400"
             >
-              SPREAD
+              +
+            </button>
+          </div>
+        </div>
+
+        {/* Defender Defense Stage */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest text-center">Def/SpD Stage</label>
+          <div className="flex items-center justify-center gap-1.5">
+            <button
+              onClick={() => setDefenderStage(prev => Math.max(-6, prev - 1))}
+              className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 px-2.5 py-1.5 rounded-lg text-xs font-black text-zinc-400"
+            >
+              -
+            </button>
+            <span className={`text-[10px] font-bold min-w-[24px] text-center ${defenderStage > 0 ? "text-emerald-500" : defenderStage < 0 ? "text-red-500" : "text-zinc-400"}`}>
+              {defenderStage > 0 ? `+${defenderStage}` : defenderStage}
+            </span>
+            <button
+              onClick={() => setDefenderStage(prev => Math.min(6, prev + 1))}
+              className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-850 px-2.5 py-1.5 rounded-lg text-xs font-black text-zinc-400"
+            >
+              +
             </button>
           </div>
         </div>
       </div>
 
-      {/* Type Effectiveness Pills */}
-      <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-center">Type Effectiveness</label>
-        <div className="flex bg-zinc-900 border border-zinc-800 rounded-lg p-1">
-          {[0.25, 0.5, 1, 2, 4].map((multiplier) => (
+      {/* Modifiers row */}
+      <div className="flex items-center justify-between gap-4 font-mono">
+        {/* STAB checkbox */}
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input 
+            type="checkbox" 
+            checked={isStab}
+            onChange={(e) => setIsStab(e.target.checked)}
+            className="w-3.5 h-3.5 accent-red-650 bg-zinc-900 border border-zinc-800 rounded focus:ring-0 cursor-pointer"
+          />
+          <span className="text-[9px] font-black text-zinc-450 uppercase tracking-widest">STAB Bonus</span>
+        </label>
+
+        {/* Max defense checkbox */}
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input 
+            type="checkbox" 
+            checked={defenderMaxStats}
+            onChange={(e) => setDefenderMaxStats(e.target.checked)}
+            className="w-3.5 h-3.5 accent-red-650 bg-zinc-900 border border-zinc-800 rounded focus:ring-0 cursor-pointer"
+          />
+          <span className="text-[9px] font-black text-zinc-450 uppercase tracking-widest">Def Max Stats</span>
+        </label>
+      </div>
+
+      {/* Type Effectiveness row */}
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[9px] font-black text-zinc-500 uppercase tracking-widest text-center font-mono">Type Effectiveness</label>
+        <div className="flex bg-zinc-900 border border-zinc-850 rounded-xl p-0.5 font-mono">
+          {[0, 0.25, 0.5, 1, 2, 4].map((mult) => (
             <button
-              key={multiplier}
-              onClick={() => handleEffectivenessChange(multiplier)}
-              className={`flex-1 py-1.5 rounded-md text-xs font-black transition-all ${
-                modifiers.typeEffectiveness === multiplier 
-                  ? multiplier > 1 ? "bg-red-700 text-white shadow-md border border-red-500" : multiplier < 1 ? "bg-zinc-800 text-zinc-400 border border-zinc-700 shadow-md" : "bg-zinc-600 text-white shadow-md"
-                  : "text-zinc-500 hover:text-zinc-300"
+              key={mult}
+              onClick={() => setEffectiveness(mult)}
+              className={`flex-1 py-1 rounded-lg text-[9px] font-black transition-all cursor-pointer ${
+                effectiveness === mult 
+                  ? mult > 1 
+                    ? "bg-red-750 text-white shadow-md border border-red-500" 
+                    : mult < 1 
+                      ? "bg-zinc-850 text-zinc-400 border border-zinc-750 shadow-md" 
+                      : "bg-zinc-700 text-white shadow-md"
+                  : "text-zinc-600 hover:text-zinc-400"
               }`}
             >
-              x{multiplier}
+              x{mult}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Visual Output Ribbon */}
+      {/* Output Display Ribbon */}
       {result && (
-        <div className={`w-full rounded-xl border p-4 flex flex-col items-center justify-center relative overflow-hidden ${
-          result.minPercent >= 100 ? 'bg-red-950/20 border-red-900/40' :
-          result.maxPercent >= 100 ? 'bg-red-950/10 border-red-900/20' :
-          'bg-zinc-900 border-zinc-750'
+        <div className={`w-full rounded-2xl border p-4 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 ${
+          result.isGuaranteedOHKO 
+            ? 'bg-red-950/20 border-red-900/60 shadow-[inset_0_1px_1px_rgba(220,38,38,0.05)]' 
+            : 'bg-zinc-900/60 border-zinc-850'
         }`}>
-          <div className="text-sm font-black uppercase tracking-widest mb-1" style={{ color: result.minPercent >= 100 ? '#ef4444' : result.maxPercent >= 100 ? '#ef4444' : '#a1a1aa' }}>
-            {result.koChance}
+          <div className="text-2xl font-black tracking-tighter text-white drop-shadow-sm flex items-center gap-1">
+            <span className="text-red-500 font-black text-2xl">{result.minPercent}% - {result.maxPercent}%</span>
           </div>
-          <div className="text-2xl font-black text-white drop-shadow-sm">
-            {result.minPercent}% - {result.maxPercent}%
+
+          <div className="text-[8px] font-bold text-zinc-550 uppercase tracking-widest mt-1 font-mono">
+            {result.minDamage} - {result.maxDamage} HP (Def HP: {result.defenderMaxHP})
           </div>
-          <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
-            {result.minDamage} - {result.maxDamage} HP
+
+          <div className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest mt-0.5 font-mono">
+            Atk: {result.attackerStat} | Def: {result.defenderStat}
           </div>
-          
-          {/* Progress Bar Background */}
-          <div className="w-full bg-zinc-950 h-2 mt-4 rounded-full overflow-hidden relative">
+
+          {/* Progress Bar Visual */}
+          <div className="w-full bg-zinc-950 h-2 mt-3.5 rounded-full overflow-hidden relative border border-zinc-900">
             <div 
-              className="absolute top-0 left-0 h-full bg-red-500/30" 
+              className="absolute top-0 left-0 h-full bg-red-500/35 transition-all duration-500" 
               style={{ width: `${Math.min(100, result.maxPercent)}%` }} 
             />
             <div 
-              className="absolute top-0 left-0 h-full bg-red-500" 
+              className="absolute top-0 left-0 h-full bg-red-500 transition-all duration-500" 
               style={{ width: `${Math.min(100, result.minPercent)}%` }} 
             />
           </div>
+
+          {/* OHKO Status Badge */}
+          {result.isGuaranteedOHKO && (
+            <div className="mt-3.5 w-full bg-red-750 border border-red-500 text-white px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest text-center shadow-[0_0_12px_rgba(220,38,38,0.35)] animate-pulse font-mono">
+              Guaranteed OHKO
+            </div>
+          )}
         </div>
       )}
     </div>
