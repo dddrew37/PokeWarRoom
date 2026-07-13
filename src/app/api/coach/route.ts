@@ -14,6 +14,7 @@ export async function POST(request: Request) {
 - GEN 7+ SPEED MECHANICS: A Mega-Evolved Pokémon uses its NEW Speed stat on the exact turn it Mega Evolves.
 - CUSTOM 66-SP MATH: All stats use the 66-SP (Stat Point) system (Max 32 SP per stat). Do not use 510-EV math.
 - ANTI-HALLUCINATION: Do not invent items, moves, or mechanics. Base all calculations on strict Generation 9 core mechanics paired with Mega Evolutions.
+- FORMATTING RESTRICTION: You must keep your text formatting extremely clean. DO NOT use markdown bolding (**text**) to emphasize words. Do not use excessive headers. Use plain text paragraphs, clean spacing, and simple bullet points only. Let your words carry the weight, not the formatting.
 `;
 
     const body = await request.json();
