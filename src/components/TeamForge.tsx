@@ -36,6 +36,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
   const [dossierChat, setDossierChat] = useState<{ role: string; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatting, setIsChatting] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
 
   const handleAssessTeamDeepDive = async (chatContextPayload?: any[] | React.MouseEvent) => {
     if (team.length !== 6) return;
@@ -97,6 +98,46 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
       alert("Failed to send chat message.");
     } finally {
       setIsChatting(false);
+    }
+  };
+
+  const handleExtractLesson = async () => {
+    if (dossierChat.length === 0 || isExtracting) return;
+    setIsExtracting(true);
+    try {
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "extract_lesson",
+          messages: dossierChat
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const ruleText: string = (data.message || "").trim();
+
+      if (!ruleText || ruleText === "NO_RULE") {
+        alert("No definitive rule detected in the chat.");
+        return;
+      }
+
+      // Persist rule to memory bank
+      const saveRes = await fetch("/api/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rule_text: ruleText })
+      });
+      const saveData = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saveData.error || "Failed to save to Memory Bank.");
+
+      alert("Lesson saved to Memory Bank: " + ruleText);
+    } catch (e) {
+      console.error("[TeamForge] Extract lesson error:", e);
+      alert("Failed to extract lesson. Check the console for details.");
+    } finally {
+      setIsExtracting(false);
     }
   };
 
@@ -880,6 +921,13 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                     className="w-full py-2.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-950/30 border border-red-900/40 text-red-500 hover:bg-red-950/50 hover:text-red-400 uppercase tracking-widest text-center"
                   >
                     Reforge Dossier from Chat
+                  </button>
+                  <button
+                    onClick={handleExtractLesson}
+                    disabled={isExtracting || isChatting || dossierChat.length === 0}
+                    className="w-full py-2.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-900 border border-zinc-700 text-zinc-300 hover:border-red-800 hover:text-red-400 uppercase tracking-widest text-center"
+                  >
+                    {isExtracting ? "Extracting..." : "Extract Lesson to Memory"}
                   </button>
                 </div>
 

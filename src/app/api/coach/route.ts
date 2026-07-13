@@ -1,10 +1,45 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import staticMetaTeams from '../../../data/meta_teams.json';
 import metaData from '../../../data/meta_data.json';
 
 export async function POST(request: Request) {
   try {
-    const REGULATION_MB_CONTEXT = `
+    const body = await request.json();
+    const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext, dossier, messages, chatContext } = body;
+
+    if (!team && !playerLockedRoster && action !== "fetch_meta" && action !== "extract_lesson") {
+      return NextResponse.json({ error: 'Team data is required' }, { status: 400 });
+    }
+
+    // ── RAG: Fetch active user-defined directives from Supabase ─────────────────
+    // Only injected into actions that produce tactical playbook/planning output.
+    let userDirectivesContext = "";
+    const RAG_ACTIONS = ["turn1", "deepdive", "assess_team", "draft_suggestion"];
+    if (RAG_ACTIONS.includes(action)) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (supabaseUrl && supabaseKey) {
+        try {
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          const { data: tactics, error: tacticsError } = await supabase
+            .from('ai_learned_tactics')
+            .select('rule_text')
+            .eq('is_active', true);
+          if (!tacticsError && tactics && tactics.length > 0) {
+            userDirectivesContext = tactics
+              .map((t: { rule_text: string }, i: number) => `${i + 1}. ${t.rule_text}`)
+              .join('\n');
+          }
+        } catch (ragErr) {
+          // Non-fatal — a failed directive fetch must never block the main AI call.
+          console.warn('[Coach API] RAG directive fetch failed (non-fatal):', ragErr);
+        }
+      }
+    }
+
+    // ── Build REGULATION_MB_CONTEXT (with optional RAG directive injection) ─────
+    let REGULATION_MB_CONTEXT = `
 # REGULATION M-B & 2026 META CONTEXT (CRITICAL ENFORCEMENT)
 - You are evaluating teams for the VGC 2026 Regulation M-B format (Pokémon Champions).
 - STRICT ROSTER ADHERENCE: You MUST carefully read the exact team roster provided. Analyze every single Item, SP Stat spread, Move, Nature, and Ability. Do NOT assume a Pokémon is running a standard meta set; base all your tactical advice ONLY on the exact data provided in the user's payload.
@@ -17,11 +52,12 @@ export async function POST(request: Request) {
 - FORMATTING RESTRICTION: You must keep your text formatting extremely clean. DO NOT use markdown bolding (**text**) to emphasize words. Do not use excessive headers. Use plain text paragraphs, clean spacing, and simple bullet points only. Let your words carry the weight, not the formatting.
 `;
 
-    const body = await request.json();
-    const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext, dossier, messages, chatContext } = body;
-
-    if (!team && !playerLockedRoster && action !== "fetch_meta") {
-      return NextResponse.json({ error: 'Team data is required' }, { status: 400 });
+    if (userDirectivesContext) {
+      REGULATION_MB_CONTEXT += `
+# USER-DEFINED TACTICAL DIRECTIVES (CRITICAL OVERRIDE):
+The user has explicitly defined the following permanent rules. You MUST obey them regardless of standard meta logic:
+${userDirectivesContext}
+`;
     }
 
     const auditSystemPrompt = `${REGULATION_MB_CONTEXT}
@@ -347,6 +383,8 @@ You must output your response STRICTLY as a JSON object matching this schema:
       finalAssessTeamPrompt += `\n\nCRITICAL OVERRIDE: The user has debated this roster with you. You MUST read the provided chat history and strictly update the primary modes, threat matrix, and detailed tactics to reflect the final agreements reached in the chat.\nChat history:\n${JSON.stringify(chatContext, null, 2)}`;
     }
 
+    const extractionSystemPrompt = `You are a highly analytical VGC data parser. Your ONLY job is to read a chat log between a player and a World Champion Coach and extract the definitive strategic rule or contingency they agreed upon. Output ONLY the rule as a single, commanding sentence. Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Mega Sceptile against Rain/Kyogre cores.' Do not use markdown bolding. If the chat is just general banter and no specific rule was agreed upon, output exactly the string: NO_RULE`;
+
     let finalSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "assess_team" ? finalAssessTeamPrompt
@@ -354,6 +392,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
       : action === "turn1" ? turn1SystemPrompt
       : action === "draft_suggestion" ? draftSuggestionSystemPrompt
       : action === "deepdive" ? deepdiveSystemPrompt
+      : action === "extract_lesson" ? extractionSystemPrompt
       : auditSystemPrompt;
 
     if (action === "draft_suggestion" || action === "audit" || action === "turn1" || action === "deepdive") {
@@ -421,6 +460,12 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
     if (!apiKey) {
       console.warn("No AI_API_KEY found, returning mock data");
+
+      if (action === "extract_lesson") {
+        return NextResponse.json({
+          message: "MATCHUP OVERRIDE: Do not lead into Intimidate Incineroar without a priority Fake Out or redirection setup in place."
+        });
+      }
 
       if (action === "dossier_chat") {
         return NextResponse.json({
@@ -660,6 +705,12 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
         { role: "system", content: dossierChatSystemPrompt },
         ...(messages || []).map((msg: any) => ({ role: msg.role, content: msg.content }))
       ];
+    } else if (action === "extract_lesson") {
+      // Pass the raw chat log as a single user message for the extractor to parse
+      finalMessages = [
+        { role: "system", content: extractionSystemPrompt },
+        { role: "user", content: "Extract the strategic rule from this coaching chat log:\n\n" + JSON.stringify(messages || [], null, 2) }
+      ];
     } else {
       finalMessages = [
         { role: "system", content: finalSystemPrompt },
@@ -676,8 +727,8 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
       body: JSON.stringify({
         model: model,
         messages: finalMessages,
-        response_format: action === "dossier_chat" ? undefined : { type: "json_object" },
-        temperature: (action === "assess_team" || action === "dossier_chat") ? 0.5 : 0.2
+        response_format: (action === "dossier_chat" || action === "extract_lesson") ? undefined : { type: "json_object" },
+        temperature: (action === "assess_team" || action === "dossier_chat") ? 0.5 : action === "extract_lesson" ? 0.1 : 0.2
       })
     });
 
@@ -688,7 +739,7 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
     const data = await response.json();
     let content = data.choices[0].message.content;
 
-    if (action === "dossier_chat") {
+    if (action === "dossier_chat" || action === "extract_lesson") {
       return NextResponse.json({ message: content });
     }
 

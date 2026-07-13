@@ -5,10 +5,11 @@ import TeamForge from "@/components/TeamForge";
 import TeamPreviewLogger from "@/components/TeamPreviewLogger";
 import SavedStrategies from "@/components/SavedStrategies";
 import RosterDossier from "@/components/RosterDossier";
+import MemoryDashboard from "@/components/MemoryDashboard";
 import { ParsedPokemon } from "@/lib/parser";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"forge" | "logger" | "saved" | "dossier">("forge");
+  const [activeTab, setActiveTab] = useState<"forge" | "logger" | "saved" | "dossier" | "memory">("forge");
   const [teamState, setTeamState] = useState<ParsedPokemon[]>([]);
 
   return (
@@ -48,7 +49,7 @@ export default function Home() {
       </div>
 
       {/* Tabs Menu */}
-      <div className="w-full max-w-md flex bg-black/40 backdrop-blur-md rounded-2xl p-1.5 mb-10 border border-zinc-850 shadow-2xl relative z-10">
+      <div className="w-full max-w-2xl flex bg-black/40 backdrop-blur-md rounded-2xl p-1.5 mb-10 border border-zinc-850 shadow-2xl relative z-10">
         <button
           onClick={() => setActiveTab("forge")}
           className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
@@ -89,6 +90,16 @@ export default function Home() {
         >
           Saved Books
         </button>
+        <button
+          onClick={() => setActiveTab("memory")}
+          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+            activeTab === "memory"
+              ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40"
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Coach Memory
+        </button>
       </div>
 
       <div className="w-full relative z-10">
@@ -96,6 +107,7 @@ export default function Home() {
         {activeTab === "logger" && <TeamPreviewLogger playerTeam={teamState} onGoToForge={() => setActiveTab("forge")} />}
         {activeTab === "saved" && <SavedStrategies />}
         {activeTab === "dossier" && <RosterDossier />}
+        {activeTab === "memory" && <MemoryDashboard />}
       </div>
     </main>
   );
