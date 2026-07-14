@@ -385,6 +385,36 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
     const extractionSystemPrompt = `You are a highly analytical VGC data parser. Your ONLY job is to read a chat log between a player and a World Champion Coach and extract the definitive strategic rule or contingency they agreed upon. Output ONLY the rule as a single, commanding sentence. Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Mega Sceptile against Rain/Kyogre cores.' Do not use markdown bolding. If the chat is just general banter and no specific rule was agreed upon, output exactly the string: NO_RULE`;
 
+    const criticSystemPrompt = `
+# CRITIC PERSONA:
+You are a cynical, mathematically flawless VGC World Champion. Your only job is to review the Primary Draft VGC strategy/playbook and aggressively correct any game-losing mechanical errors, rule violations, or illegal plays under Regulation M-B.
+
+${REGULATION_MB_CONTEXT}
+
+# CRITICAL VGC MECHANICS GUARDRAILS:
+1. PRIORITY FAILURES:
+   - Fake Out and Prankster-boosted moves fail completely against active Psychic Terrain.
+   - Fake Out and Prankster-boosted moves fail completely against targets with Armor Tail or Queenly Majesty.
+   - Fake Out fails against Inner Focus targets (they do not flinch).
+   - Fake Out and First Impression ONLY work on the absolute first turn a Pokémon is on the field.
+
+2. TYPE & ITEM IMMUNITIES:
+   - Spore, Rage Powder, and other powder-based moves have zero effect against Grass-type Pokémon or Pokémon holding Safety Goggles.
+   - Prankster Taunt and other Prankster-boosted status moves fail completely against Dark-type Pokémon.
+   - Thunder Wave fails completely against Ground-type or Electric-type Pokémon.
+
+3. REDIRECTION & SPREAD FAILURES:
+   - Rage Powder fails to redirect Grass-type opponents.
+   - Protect-type moves (Protect, Detect, Spiky Shield, Wide Guard) fail if chained consecutively.
+   - Wide Guard reduces damage of all incoming spread moves to zero. Be aware of Wide Guard active status.
+
+# MANDATORY INSTRUCTIONS:
+- Review the provided Primary Draft JSON against the original VGC user request/board state.
+- If you find any mechanical error, rule violation, or illegal play (such as the failures/immunities listed above), rewrite the affected sections of the JSON to use legal, optimal plays.
+- If the draft is mechanically flawless, approve it as is.
+- The output MUST be a JSON object conforming EXACTLY to the same JSON schema requested by the action. Do not add any markdown bolding, explanation, or text outside the JSON.
+`;
+
     let finalSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "assess_team" ? finalAssessTeamPrompt
@@ -718,6 +748,7 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
       ];
     }
 
+    // Step 1: The Primary Draft
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
@@ -742,6 +773,51 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
     if (action === "dossier_chat" || action === "extract_lesson") {
       return NextResponse.json({ message: content });
     }
+
+    // Step 2: The Red Team Critic
+    const primaryDraft = content;
+    let finalContent = primaryDraft;
+
+    try {
+      const criticUserPrompt = `Here is the original user request / board state:\n${userPrompt}\n\nHere is the Primary Draft playbook generated:\n${primaryDraft}\n\nAnalyze this draft, correct any mechanical errors, and output the final validated JSON object matching the requested schema.`;
+      
+      const criticMessages = [
+        { role: "system", content: criticSystemPrompt },
+        { role: "user", content: criticUserPrompt }
+      ];
+
+      const criticResponse = await fetch(`${baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiKey
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: criticMessages,
+          response_format: { type: "json_object" },
+          temperature: 0.1
+        })
+      });
+
+      if (criticResponse.ok) {
+        const criticData = await criticResponse.json();
+        const criticContent = criticData.choices[0].message.content;
+        
+        // Sanity check: verify the Critic's output is parseable JSON
+        const cleanedCriticContent = criticContent.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
+        const sanitizedCritic = cleanedCriticContent.replace(/,\s*([\]}])/g, '$1');
+        JSON.parse(sanitizedCritic); // If invalid JSON, throws and triggers catch
+        
+        finalContent = criticContent;
+      } else {
+        console.warn(`[Critic AI] Failed with status ${criticResponse.status}. Falling back to primary draft.`);
+      }
+    } catch (criticError) {
+      console.error("[Critic AI] Error during validation/correction loop. Falling back to primary draft:", criticError);
+    }
+
+    content = finalContent;
 
     content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
     
