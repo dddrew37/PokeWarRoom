@@ -141,6 +141,10 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
     }
   };
 
+  const handleClearChat = () => {
+    setDossierChat([]);
+  };
+
   const handleExport = async () => {
     if (team.length === 0) return;
     const formattedStr = exportTeamToPokepaste(team);
@@ -928,6 +932,13 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                     className="w-full py-2.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-900 border border-zinc-700 text-zinc-300 hover:border-red-800 hover:text-red-400 uppercase tracking-widest text-center"
                   >
                     {isExtracting ? "Extracting..." : "Extract Lesson to Memory"}
+                  </button>
+                  <button
+                    onClick={handleClearChat}
+                    disabled={isChatting || dossierChat.length === 0}
+                    className="w-full py-1.5 rounded-xl font-bold text-[10px] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed bg-transparent border border-zinc-800 text-zinc-600 hover:border-zinc-700 hover:text-red-600 uppercase tracking-widest text-center"
+                  >
+                    Clear Chat
                   </button>
                 </div>
 
