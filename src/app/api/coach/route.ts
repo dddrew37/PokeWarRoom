@@ -3,6 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 import staticMetaTeams from '../../../data/meta_teams.json';
 import metaData from '../../../data/meta_data.json';
 
+const PRO_PERSONA = `[ROLE: VGC WORLD CHAMPION STRATEGIST]\nYou are a ruthless, elite VGC analyst. Provide concise, high-level tactical analysis. Prioritize speed-tier math, exact damage thresholds, and meta-game hard counters. Assume the user fully understands complex terminology like 'Pivoting', 'Speed Control', 'STAB', and 'Redirection'. Do not waste time defining basic terms. Focus strictly on optimal execution and winning the matchup.`;
+
+const BEGINNER_PERSONA = `[ROLE: PATIENT VGC ACADEMY COACH]\nYou are coaching a brand new VGC player. Provide detailed, step-by-step educational guidance. You MUST explain your strategy without assuming they know competitive jargon. If you use terms like 'Speed Control', 'Pivoting', 'STAB', 'Check', 'Counter', 'Redirection', or 'Stat Drops', you MUST briefly define what they mean and why they are important in plain English.`;
+
+function injectSystemRole(basePrompt: string, isBeginner: boolean): string {
+  const persona = isBeginner ? BEGINNER_PERSONA : PRO_PERSONA;
+  return `${persona}\n\n${basePrompt}\n\n[CRITICAL REQUIREMENT]: You must return ONLY valid JSON matching the exact schema requested. Do not include markdown formatting like \`\`\`json around your output.`;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -444,7 +453,7 @@ Extract a single, hard-hitting VGC tactical rule/instruction (under 30 words) th
 Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Tornadus against Regieleki if they have tailwind pressure.'
 Do not use markdown bolding. If the notes are too general or useless to extract a concrete rule, output exactly: NO_RULE`;
 
-    let finalSystemPrompt = action === "optimize" ? optimizeSystemPrompt
+    let baseSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "assess_team" ? finalAssessTeamPrompt
       : action === "fetch_meta" ? fetchMetaSystemPrompt
@@ -488,13 +497,11 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
         });
 
         const metaContextInjection = `\n\n# OPPONENT META DATA (CRITICAL)\n- Archetype Detected: ${detectedArchetype}\n\n${metaProfiles}\nCRITICAL INSTRUCTION: Base your tactical flowchart and damage assessments on the OPPONENT META DATA provided above. Do not guess their items or roles.`;
-        finalSystemPrompt += metaContextInjection;
+        baseSystemPrompt += metaContextInjection;
       }
     }
 
-    if (isBeginnerMode === true) {
-      finalSystemPrompt += `\n\nBEGINNER MODE ACTIVE: You are coaching a brand new VGC player. You MUST explain your strategy without assuming they know competitive jargon. If you use terms like 'Speed Control', 'Pivoting', 'STAB', 'Check', 'Counter', 'Redirection', or 'Stat Drops', you MUST briefly define what they mean and why they are important in plain English. Example: Instead of saying 'Use Parting Shot to pivot,' say 'Use Parting Shot to safely switch out your Pokémon while lowering the opponent's attacking stats (a strategy called pivoting).'`;
-    }
+    const finalSystemPrompt = injectSystemRole(baseSystemPrompt, isBeginnerMode === true);
 
     const userPrompt = action === "optimize"
       ? "Calculate the optimal 66-SP distributions for this team.\nTeam: " + JSON.stringify(team, null, 2)
@@ -515,12 +522,7 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
     const apiKey = process.env.AI_API_KEY;
     const baseUrl = process.env.AI_BASE_URL || "https://api.deepseek.com/v1";
     
-    let model = "";
-    if (action === "assess_team" || action === "dossier_chat") {
-      model = process.env.AI_HEAVY_MODEL || "deepseek-chat";
-    } else {
-      model = process.env.AI_MODEL || "deepseek-v4-flash";
-    }
+    const model = process.env.AI_MODEL || process.env.AI_HEAVY_MODEL || "deepseek-chat";
 
     if (!apiKey) {
       console.warn("No AI_API_KEY found, returning mock data");
