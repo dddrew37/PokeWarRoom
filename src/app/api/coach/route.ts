@@ -344,8 +344,11 @@ TONE DIRECTIVE: Speak with the absolute authority and extreme tactical depth of 
 You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation M-B team.
 Your task is to analyze the team's core identity, primary modes, threat matrix, and optimizations based on their composition.
 
+If the user is in Beginner Mode, you must scan the team for glaring structural weaknesses (e.g., '4 Pokémon are weak to Ground', 'Zero Protects on the team', 'No Speed Control'). Output 1 to 3 severe warnings in the red_flags array. If the team is structurally sound, or if Beginner Mode is disabled, leave the array empty.
+
 You must output your response STRICTLY as a JSON object matching this schema:
 {
+  "red_flags": ["Glaring teambuilding warning 1", "Glaring teambuilding warning 2"],
   "core_identity": "Detailed description of the team's archetype and overall win condition.",
   "primary_modes": [
     {
@@ -557,6 +560,7 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
 
       if (action === "assess_team") {
         return NextResponse.json({
+          red_flags: ["3 Pokémon are weak to Electric", "Zero Protects detected on Amoonguss"],
           core_identity: "A hybrid speed-control team utilizing Tailwind and hard-hitting physical attackers to establish early-game board control.",
           primary_modes: [
             {

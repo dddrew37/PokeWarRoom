@@ -19,6 +19,7 @@ export interface PlaybookData {
   contingency_plans?: FlowchartNode[];
   default_leads?: string[]; // kept for backwards compatibility with old saves
   flowcharts?: FlowchartNode[]; // kept for backwards compatibility
+  red_flags?: string[];
 }
 
 export interface DeepDiveData {

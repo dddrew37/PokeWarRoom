@@ -808,6 +808,25 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                   </div>
                 ) : (
                   <div className="space-y-6 animate-fade-in">
+                    {/* Red Flags / Glaring Weaknesses */}
+                    {dossierData.red_flags && dossierData.red_flags.length > 0 && (
+                      <div className="bg-red-950/20 border-2 border-red-650 rounded-2xl p-5 flex flex-col gap-3 shadow-[0_0_15px_rgba(220,38,38,0.15)] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-full bg-red-700/5 blur-3xl pointer-events-none" />
+                        <div className="flex items-center gap-2 text-red-500 font-black uppercase tracking-widest text-xs font-mono">
+                          <span>⚠️</span>
+                          <span>Glaring Weakness Alert</span>
+                        </div>
+                        <ul className="space-y-2 font-mono text-[11px] font-semibold text-zinc-200">
+                          {dossierData.red_flags.map((flag: string, i: number) => (
+                            <li key={i} className="flex items-start gap-2 leading-relaxed">
+                              <span className="text-red-500 font-bold">•</span>
+                              <span>{flag}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     {/* Core Identity */}
                     <div className="space-y-2">
                       <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Core Identity & Strategy</h4>
