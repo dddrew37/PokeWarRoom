@@ -62,6 +62,14 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
   const [coachNotes, setCoachNotes] = useState("");
   const [draftLeadsIndices, setDraftLeadsIndices] = useState<number[]>([]);
 
+  // Keyboard navigation for dropdown
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // Reset activeIndex when search query changes
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [query]);
+
   // Auto-focus on mount
   useEffect(() => {
     if (playerTeam.length > 0) {
@@ -84,9 +92,19 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && filtered.length > 0) {
+    if (filtered.length === 0) return;
+
+    if (e.key === "ArrowDown") {
       e.preventDefault();
-      handleSelect(filtered[0]);
+      setActiveIndex(prev => (prev < filtered.length - 1 ? prev + 1 : prev));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex(prev => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIndex >= 0 && activeIndex < filtered.length) {
+        handleSelect(filtered[activeIndex]);
+      }
     }
   };
 
@@ -614,7 +632,12 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
                   <div 
                     key={p.id}
                     onClick={() => handleSelect(p)}
-                    className={`flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-zinc-700 transition-colors ${i === 0 ? 'bg-zinc-700/50' : ''}`}
+                    onMouseEnter={() => setActiveIndex(i)}
+                    className={`flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors ${
+                      i === activeIndex 
+                        ? 'bg-red-700 text-white' 
+                        : 'text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                    }`}
                   >
                     <img 
                       src={p.spriteUrl} 
@@ -622,8 +645,12 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
                       className="w-12 h-12 object-contain drop-shadow-md" 
                       onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
                     />
-                    <span className="font-bold text-zinc-100">{p.name}</span>
-                    {i === 0 && <span className="ml-auto text-xs font-semibold text-zinc-400 uppercase tracking-wider">Press Enter ↵</span>}
+                    <span className="font-bold">{p.name}</span>
+                    {i === activeIndex && (
+                      <span className="ml-auto text-[10px] font-black text-white/80 bg-red-950/40 border border-red-500/30 rounded px-1.5 py-0.5 uppercase tracking-widest font-mono">
+                        Press Enter ↵
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

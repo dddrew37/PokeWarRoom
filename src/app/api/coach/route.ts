@@ -774,6 +774,13 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
       return NextResponse.json({ message: content });
     }
 
+    if (action === "draft_suggestion") {
+      content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
+      const sanitizedResponse = content.replace(/,\s*([\]}])/g, '$1');
+      const parsed = JSON.parse(sanitizedResponse);
+      return NextResponse.json(parsed);
+    }
+
     // Step 2: The Red Team Critic
     const primaryDraft = content;
     let finalContent = primaryDraft;
