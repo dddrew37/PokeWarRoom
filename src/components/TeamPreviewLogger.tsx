@@ -70,6 +70,11 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
     setActiveIndex(0);
   }, [query]);
 
+  // DOM Scroll tracking to keep highlighted item in view
+  useEffect(() => {
+    document.getElementById(`suggestion-${activeIndex}`)?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex]);
+
   // Auto-focus on mount
   useEffect(() => {
     if (playerTeam.length > 0) {
@@ -79,8 +84,11 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
 
   const filtered = useMemo(() => {
     if (query.trim() === "") return [];
-    const searchVal = normalize(query);
-    return metaPokemon.filter(p => normalize(p.name).includes(searchVal)).slice(0, 50);
+    const cleanQuery = query.toLowerCase().replace(/[\s\-.\']/g, '');
+    return metaPokemon.filter(p => {
+      const cleanName = p.name.toLowerCase().replace(/[\s\-.\']/g, '');
+      return cleanName.includes(cleanQuery);
+    }).slice(0, 50);
   }, [query]);
 
   const handleSelect = (pokemon: Pokemon) => {
@@ -631,6 +639,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
                 {filtered.map((p, i) => (
                   <div 
                     key={p.id}
+                    id={`suggestion-${i}`}
                     onClick={() => handleSelect(p)}
                     onMouseEnter={() => setActiveIndex(i)}
                     className={`flex items-center gap-4 px-4 py-3 cursor-pointer transition-colors ${
