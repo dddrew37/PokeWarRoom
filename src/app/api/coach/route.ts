@@ -6,9 +6,9 @@ import metaData from '../../../data/meta_data.json';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext, dossier, messages, chatContext } = body;
+    const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext, dossier, messages, chatContext, isBeginnerMode } = body;
 
-    if (!team && !playerLockedRoster && action !== "fetch_meta" && action !== "extract_lesson") {
+    if (!team && !playerLockedRoster && action !== "fetch_meta" && action !== "extract_lesson" && action !== "match_debrief") {
       return NextResponse.json({ error: 'Team data is required' }, { status: 400 });
     }
 
@@ -415,6 +415,16 @@ ${REGULATION_MB_CONTEXT}
 - The output MUST be a JSON object conforming EXACTLY to the same JSON schema requested by the action. Do not add any markdown bolding, explanation, or text outside the JSON.
 `;
 
+    const matchDebriefSystemPrompt = `You are a cynical, highly analytical VGC World Champion Coach.
+Your ONLY job is to analyze why a match was won or lost based on:
+1. The planned playbook we designed.
+2. The final match outcome (Won/Lost).
+3. The player's post-match observations.
+
+Extract a single, hard-hitting VGC tactical rule/instruction (under 30 words) that we must remember for future matches.
+Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Tornadus against Regieleki if they have tailwind pressure.'
+Do not use markdown bolding. If the notes are too general or useless to extract a concrete rule, output exactly: NO_RULE`;
+
     let finalSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "assess_team" ? finalAssessTeamPrompt
@@ -423,6 +433,7 @@ ${REGULATION_MB_CONTEXT}
       : action === "draft_suggestion" ? draftSuggestionSystemPrompt
       : action === "deepdive" ? deepdiveSystemPrompt
       : action === "extract_lesson" ? extractionSystemPrompt
+      : action === "match_debrief" ? matchDebriefSystemPrompt
       : auditSystemPrompt;
 
     if (action === "draft_suggestion" || action === "audit" || action === "turn1" || action === "deepdive") {
@@ -462,6 +473,10 @@ ${REGULATION_MB_CONTEXT}
       }
     }
 
+    if (isBeginnerMode === true) {
+      finalSystemPrompt += `\n\nBEGINNER MODE ACTIVE: You are coaching a brand new VGC player. You MUST explain your strategy without assuming they know competitive jargon. If you use terms like 'Speed Control', 'Pivoting', 'STAB', 'Check', 'Counter', 'Redirection', or 'Stat Drops', you MUST briefly define what they mean and why they are important in plain English. Example: Instead of saying 'Use Parting Shot to pivot,' say 'Use Parting Shot to safely switch out your Pokémon while lowering the opponent's attacking stats (a strategy called pivoting).'`;
+    }
+
     const userPrompt = action === "optimize"
       ? "Calculate the optimal 66-SP distributions for this team.\nTeam: " + JSON.stringify(team, null, 2)
       : action === "assess"
@@ -494,6 +509,12 @@ ${REGULATION_MB_CONTEXT}
       if (action === "extract_lesson") {
         return NextResponse.json({
           message: "MATCHUP OVERRIDE: Do not lead into Intimidate Incineroar without a priority Fake Out or redirection setup in place."
+        });
+      }
+
+      if (action === "match_debrief") {
+        return NextResponse.json({
+          message: "MATCHUP OVERRIDE: Do not lead Tornadus when opponents have active Trick Room setters and redirection."
         });
       }
 
@@ -741,6 +762,16 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
         { role: "system", content: extractionSystemPrompt },
         { role: "user", content: "Extract the strategic rule from this coaching chat log:\n\n" + JSON.stringify(messages || [], null, 2) }
       ];
+    } else if (action === "match_debrief") {
+      finalMessages = [
+        { role: "system", content: matchDebriefSystemPrompt },
+        { role: "user", content: `Review this match outcome and observations:
+Playbook Designed: ${JSON.stringify(body.playbook || {}, null, 2)}
+Match Outcome: ${body.outcome}
+Player Observations: ${body.notes}
+
+Extract the single tactical rule.` }
+      ];
     } else {
       finalMessages = [
         { role: "system", content: finalSystemPrompt },
@@ -758,8 +789,8 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
       body: JSON.stringify({
         model: model,
         messages: finalMessages,
-        response_format: (action === "dossier_chat" || action === "extract_lesson") ? undefined : { type: "json_object" },
-        temperature: (action === "assess_team" || action === "dossier_chat") ? 0.5 : action === "extract_lesson" ? 0.1 : 0.2
+        response_format: (action === "dossier_chat" || action === "extract_lesson" || action === "match_debrief") ? undefined : { type: "json_object" },
+        temperature: (action === "assess_team" || action === "dossier_chat") ? 0.5 : (action === "extract_lesson" || action === "match_debrief") ? 0.1 : 0.2
       })
     });
 
@@ -770,11 +801,11 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
     const data = await response.json();
     let content = data.choices[0].message.content;
 
-    if (action === "dossier_chat" || action === "extract_lesson") {
+    if (action === "dossier_chat" || action === "extract_lesson" || action === "match_debrief") {
       return NextResponse.json({ message: content });
     }
 
-    if (action === "draft_suggestion") {
+    if (action === "draft_suggestion" || action === "turn1" || action === "deepdive") {
       content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
       const sanitizedResponse = content.replace(/,\s*([\]}])/g, '$1');
       const parsed = JSON.parse(sanitizedResponse);

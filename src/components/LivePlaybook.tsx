@@ -74,6 +74,12 @@ export default function LivePlaybook({
   const [deepDiveData, setDeepDiveData] = useState<DeepDiveData | null>(null);
   const [isDeepDiving, setIsDeepDiving] = useState(false);
 
+  // Match Debrief States
+  const [showDebriefModal, setShowDebriefModal] = useState(false);
+  const [debriefOutcome, setDebriefOutcome] = useState<"won" | "lost">("won");
+  const [debriefNotes, setDebriefNotes] = useState("");
+  const [isSubmittingDebrief, setIsSubmittingDebrief] = useState(false);
+
   // Aggregate the primary win condition and contingency plans into a single array for rendering
   const allPaths = useMemo(() => {
     let paths: FlowchartNode[] = [];
@@ -153,6 +159,53 @@ export default function LivePlaybook({
     }
   };
 
+  const handleDebriefSubmit = async () => {
+    if (isSubmittingDebrief || !debriefNotes.trim()) return;
+    setIsSubmittingDebrief(true);
+    try {
+      // Step 1: Request match_debrief to extract tactic rule
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "match_debrief",
+          playbook: data,
+          outcome: debriefOutcome,
+          notes: debriefNotes
+        })
+      });
+      const resData = await res.json();
+      if (resData.error) throw new Error(resData.error);
+
+      const ruleText: string = (resData.message || "").trim();
+
+      if (!ruleText || ruleText === "NO_RULE") {
+        alert("No definitive rule detected from your debrief notes.");
+        return;
+      }
+
+      // Step 2: Post to memory database
+      const saveRes = await fetch("/api/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rule_text: ruleText })
+      });
+      const saveData = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saveData.error || "Failed to save to Memory Bank.");
+
+      alert(`Match debrief logged. Saved tactical override to Memory Bank:\n\n${ruleText}`);
+      
+      // Reset state and close modal
+      setDebriefNotes("");
+      setShowDebriefModal(false);
+    } catch (e) {
+      console.error("[LivePlaybook] Debrief submission failed:", e);
+      alert("Failed to submit debrief. Check browser console for logs.");
+    } finally {
+      setIsSubmittingDebrief(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col min-h-screen h-fit overflow-y-auto bg-zinc-950 -mt-4 pt-6">
       {/* Header */}
@@ -165,9 +218,17 @@ export default function LivePlaybook({
         </button>
         <div className="flex items-center gap-3 text-right">
           {!readOnly && (
-            <button onClick={handleSave} disabled={isSaving} className="text-xs bg-red-700 hover:bg-red-600 border border-red-500 text-white font-black px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(220,38,38,0.2)] transition-colors uppercase tracking-widest disabled:opacity-50 transition-all">
-              {isSaving ? "Saving..." : "Save"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDebriefModal(true)}
+                className="text-xs bg-zinc-900 border border-zinc-850 hover:border-zinc-700 text-zinc-300 hover:text-white font-black px-3 py-1.5 rounded-lg transition-colors uppercase tracking-widest cursor-pointer"
+              >
+                Log Match Debrief
+              </button>
+              <button onClick={handleSave} disabled={isSaving} className="text-xs bg-red-700 hover:bg-red-600 border border-red-500 text-white font-black px-3 py-1.5 rounded-lg shadow-[0_0_15px_rgba(220,38,38,0.2)] transition-colors uppercase tracking-widest disabled:opacity-50 transition-all">
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -459,6 +520,81 @@ export default function LivePlaybook({
             >
               {isUpdating ? "Recalculating..." : "Calculate Next Turn"}
             </button>
+          </div>
+        </div>
+      )}
+      {/* Debrief Modal Overlay */}
+      {showDebriefModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-250">
+            <div>
+              <h3 className="text-lg font-black text-red-500 uppercase tracking-widest font-mono">Log Match Debrief</h3>
+              <p className="text-[10px] font-bold text-zinc-550 uppercase tracking-widest font-mono mt-1">Post-match analytical learning pipeline</p>
+            </div>
+
+            {/* Outcome toggle button group */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-mono">Match Outcome</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDebriefOutcome("won")}
+                  className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest border transition-all cursor-pointer ${
+                    debriefOutcome === "won"
+                      ? "bg-green-950/45 border-green-700 text-green-400 shadow-[0_0_12px_rgba(34,197,94,0.15)]"
+                      : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-350"
+                  }`}
+                >
+                  Won Match
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDebriefOutcome("lost")}
+                  className={`py-3 rounded-xl text-xs font-black uppercase tracking-widest border transition-all cursor-pointer ${
+                    debriefOutcome === "lost"
+                      ? "bg-red-950/45 border-red-700 text-red-400 shadow-[0_0_12px_rgba(220,38,38,0.15)]"
+                      : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-350"
+                  }`}
+                >
+                  Lost Match
+                </button>
+              </div>
+            </div>
+
+            {/* Observations text area */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-mono">What Happened?</label>
+              <textarea
+                value={debriefNotes}
+                onChange={(e) => setDebriefNotes(e.target.value)}
+                placeholder="E.g., Turn 1 Tailwind got countered by opponent's Trick Room setup."
+                className="w-full bg-zinc-950 border-2 border-zinc-800 rounded-xl px-4 py-3 text-sm text-white font-medium focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 transition-all placeholder:text-zinc-600 resize-none min-h-[100px]"
+                disabled={isSubmittingDebrief}
+              />
+            </div>
+
+            {/* Modal Actions */}
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDebriefNotes("");
+                  setShowDebriefModal(false);
+                }}
+                disabled={isSubmittingDebrief}
+                className="py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-zinc-950 border border-zinc-800 text-zinc-450 hover:text-white hover:border-zinc-650 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDebriefSubmit}
+                disabled={isSubmittingDebrief || !debriefNotes.trim()}
+                className="py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-red-700 border border-red-500 text-white hover:bg-red-650 shadow-[0_0_15px_rgba(220,38,38,0.25)] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isSubmittingDebrief ? "Analyzing..." : "Submit Debrief"}
+              </button>
+            </div>
           </div>
         </div>
       )}

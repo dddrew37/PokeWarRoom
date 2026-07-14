@@ -62,6 +62,9 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
   const [coachNotes, setCoachNotes] = useState("");
   const [draftLeadsIndices, setDraftLeadsIndices] = useState<number[]>([]);
 
+  // Beginner Academy Mode Toggle
+  const [isBeginnerMode, setIsBeginnerMode] = useState(true);
+
   // Keyboard navigation for dropdown
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -129,12 +132,14 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
             action: "turn1",
             playerLockedRoster: playerLockedIndices.map(i => playerTeam[i]),
             opponentKnownLeads: opponentLeadIndices.map(i => selected[i]),
-            opponentPotentialBackline: selected.filter((_, i) => !opponentLeadIndices.includes(i))
+            opponentPotentialBackline: selected.filter((_, i) => !opponentLeadIndices.includes(i)),
+            isBeginnerMode
           }
         : {
             action: "audit",
             team: playerTeam, 
-            opponent: selected 
+            opponent: selected,
+            isBeginnerMode
           };
 
       const res = await fetch("/api/coach", {
@@ -158,7 +163,8 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
         playerLockedRoster: playerLockedIndices.map(i => playerTeam[i]),
         opponentKnownLeads: opponentLeadIndices.map(i => selected[i]),
         opponentPotentialBackline: selected.filter((_, i) => !opponentLeadIndices.includes(i)),
-        currentMatchContext: matchContext
+        currentMatchContext: matchContext,
+        isBeginnerMode
       };
 
       const res = await fetch("/api/coach", {
@@ -180,7 +186,8 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
       const payload = {
         action: "draft_suggestion",
         team: playerTeam,
-        opponent: selected
+        opponent: selected,
+        isBeginnerMode
       };
       const res = await fetch("/api/coach", {
         method: "POST",
@@ -666,6 +673,43 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
             )}
           </div>
         )}
+
+        {/* Beginner Academy Mode Toggle */}
+        <div className="flex items-center justify-between bg-zinc-900/40 border border-zinc-850 rounded-2xl p-4 mt-6">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest font-mono">
+              Beginner Academy Mode
+            </span>
+            <span className="text-[8px] font-bold text-zinc-550 uppercase tracking-widest font-mono">
+              Translate VGC Jargon & mechanics to plain English
+            </span>
+          </div>
+
+          <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800 shadow-inner">
+            <button
+              type="button"
+              onClick={() => setIsBeginnerMode(true)}
+              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                isBeginnerMode
+                  ? "bg-red-950/20 border border-red-900/30 text-red-500 shadow-md"
+                  : "text-zinc-650 hover:text-zinc-400"
+              }`}
+            >
+              Beginner Coach
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsBeginnerMode(false)}
+              className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all cursor-pointer ${
+                !isBeginnerMode
+                  ? "bg-red-950/20 border border-red-900/30 text-red-500 shadow-md"
+                  : "text-zinc-650 hover:text-zinc-400"
+              }`}
+            >
+              Pro War Room
+            </button>
+          </div>
+        </div>
 
         {/* Buttons */}
         <div className="grid grid-cols-2 gap-3 mt-4">
