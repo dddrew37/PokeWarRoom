@@ -353,9 +353,17 @@ You MUST base your entire analysis on the specific 66-SP distributions, items, a
 
 If the user is in Beginner Mode, you must scan the team for glaring structural weaknesses (e.g., '4 Pokémon are weak to Ground', 'Zero Protects on the team', 'No Speed Control'). Output 1 to 3 severe warnings in the red_flags array. If the team is structurally sound, or if Beginner Mode is disabled, leave the array empty.
 
+You must score the team on a scale of 0 to 100 for these four pillars (offense, bulk, speed_control, synergy). Be highly critical. An all-attack team should have 90 Offense but 10 Bulk. A team with no Tailwind or Trick Room should have 0 Speed Control.
+
 You must output your response STRICTLY as a JSON object matching this schema:
 {
   "red_flags": ["Glaring teambuilding warning 1", "Glaring teambuilding warning 2"],
+  "team_grades": {
+    "offense": 85,
+    "bulk": 60,
+    "speed_control": 70,
+    "synergy": 75
+  },
   "core_identity": "Detailed description of the team's archetype and overall win condition.",
   "suggested_lineups": [
     {
@@ -574,6 +582,12 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
       if (action === "assess_team") {
         return NextResponse.json({
           red_flags: ["3 Pokémon are weak to Electric", "Zero Protects detected on Amoonguss"],
+          team_grades: {
+            offense: 80,
+            bulk: 75,
+            speed_control: 85,
+            synergy: 90
+          },
           core_identity: "A hybrid speed-control team utilizing Tailwind and hard-hitting physical attackers to establish early-game board control.",
           suggested_lineups: [
             {

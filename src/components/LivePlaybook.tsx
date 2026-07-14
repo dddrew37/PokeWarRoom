@@ -20,6 +20,12 @@ export interface PlaybookData {
   default_leads?: string[]; // kept for backwards compatibility with old saves
   flowcharts?: FlowchartNode[]; // kept for backwards compatibility
   red_flags?: string[];
+  team_grades?: {
+    offense: number;
+    bulk: number;
+    speed_control: number;
+    synergy: number;
+  };
 }
 
 export interface DeepDiveData {

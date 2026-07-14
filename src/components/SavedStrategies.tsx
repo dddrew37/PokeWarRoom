@@ -245,6 +245,36 @@ export default function SavedStrategies() {
                   </div>
                 )}
 
+                {/* Team Grading Dashboard */}
+                {selectedDossier.assessment_data.team_grades && (
+                  <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-5 space-y-4">
+                    <h4 className="text-xs font-black text-red-500 uppercase tracking-widest font-mono mb-2">
+                      Team Grading Dashboard
+                    </h4>
+                    <div className="space-y-3.5">
+                      {[
+                        { name: "Offense", val: selectedDossier.assessment_data.team_grades.offense },
+                        { name: "Bulk", val: selectedDossier.assessment_data.team_grades.bulk },
+                        { name: "Speed Control", val: selectedDossier.assessment_data.team_grades.speed_control },
+                        { name: "Synergy", val: selectedDossier.assessment_data.team_grades.synergy },
+                      ].map((grade, gIdx) => (
+                        <div key={gIdx} className="space-y-1.5">
+                          <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider font-mono">
+                            <span className="text-zinc-400">{grade.name}</span>
+                            <span className="text-red-500">{grade.val || 0} / 100</span>
+                          </div>
+                          <div className="w-full bg-zinc-900 border border-zinc-850 rounded-full h-2.5 overflow-hidden">
+                            <div 
+                              className="bg-red-600 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(220,38,38,0.4)]"
+                              style={{ width: `${Math.max(0, Math.min(grade.val || 0, 100))}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Core Identity */}
                 <div className="space-y-2">
                   <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Core Identity & Strategy</h4>
@@ -253,24 +283,71 @@ export default function SavedStrategies() {
                   </p>
                 </div>
 
-                {/* Primary Modes */}
-                <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                  <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Primary Operational Modes</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {selectedDossier.assessment_data.primary_modes?.map((mode: any, i: number) => (
-                      <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-3">
-                        <h5 className="text-lg font-black text-white border-b border-zinc-850 pb-2 tracking-wide">{mode.mode_name}</h5>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-xs text-zinc-500 font-extrabold uppercase tracking-widest">Leads:</span>
-                          {mode.lead_duo?.map((mon: string, mIdx: number) => (
-                            <span key={mIdx} className="bg-zinc-900 border border-zinc-750 text-zinc-200 font-bold px-2 py-0.5 rounded-lg text-xs">
-                              {mon}
+                {/* Suggested Lineups */}
+                <div className="space-y-6 pt-6 border-t border-zinc-800/60">
+                  <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Suggested Lineups (4-Man Cores)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {selectedDossier.assessment_data.suggested_lineups?.map((lineup: any, i: number) => {
+                      const getSpriteUrl = (monName: string) => {
+                        const match = selectedDossier.team_data?.find((t: any) => t.name.toLowerCase() === monName.toLowerCase() || t.name.toLowerCase().includes(monName.toLowerCase()));
+                        if (match) return `https://play.pokemonshowdown.com/sprites/gen5/${match.id}.png`;
+                        return `https://play.pokemonshowdown.com/sprites/gen5/${monName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`;
+                      };
+
+                      return (
+                        <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-5 flex flex-col gap-4 shadow-xl">
+                          <div className="border-b border-zinc-850 pb-2.5 flex justify-between items-center">
+                            <h5 className="text-sm font-black text-white tracking-wide uppercase">{lineup.lineup_name}</h5>
+                            <span className="text-[8px] font-black text-red-500 bg-red-950/20 border border-red-900/35 rounded px-1.5 py-0.5 uppercase tracking-widest font-mono">
+                              LINEUP {i + 1}
                             </span>
-                          ))}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            {/* Front Line */}
+                            <div className="bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex flex-col items-center gap-2">
+                              <span className="text-[8px] font-bold text-red-500 uppercase tracking-widest font-mono">Leads</span>
+                              <div className="flex justify-center gap-2.5">
+                                {lineup.front_line?.map((mon: string, mIdx: number) => (
+                                  <div key={mIdx} className="flex flex-col items-center gap-0.5">
+                                    <img 
+                                      src={getSpriteUrl(mon)} 
+                                      alt={mon} 
+                                      className="w-10 h-10 object-contain drop-shadow-md"
+                                      onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
+                                    />
+                                    <span className="text-[9px] font-bold text-zinc-350 text-center leading-tight truncate w-16">{mon}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Back Line */}
+                            <div className="bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex flex-col items-center gap-2">
+                              <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest font-mono">Bench</span>
+                              <div className="flex justify-center gap-2.5">
+                                {lineup.back_line?.map((mon: string, mIdx: number) => (
+                                  <div key={mIdx} className="flex flex-col items-center gap-0.5">
+                                    <img 
+                                      src={getSpriteUrl(mon)} 
+                                      alt={mon} 
+                                      className="w-10 h-10 object-contain drop-shadow-md"
+                                      onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
+                                    />
+                                    <span className="text-[9px] font-bold text-zinc-400 text-center leading-tight truncate w-16">{mon}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-zinc-900/10 rounded-xl p-3 border border-zinc-850/60">
+                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1 font-mono">Strategy Execution</p>
+                            <p className="text-[11px] text-zinc-350 leading-relaxed font-medium">{lineup.strategy_explanation}</p>
+                          </div>
                         </div>
-                        <p className="text-base text-zinc-400 leading-relaxed">{mode.objective}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 

@@ -827,6 +827,36 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                       </div>
                     )}
 
+                    {/* Team Grading Dashboard */}
+                    {dossierData.team_grades && (
+                      <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-5 space-y-4">
+                        <h4 className="text-xs font-black text-red-500 uppercase tracking-widest font-mono mb-2">
+                          Team Grading Dashboard
+                        </h4>
+                        <div className="space-y-3.5">
+                          {[
+                            { name: "Offense", val: dossierData.team_grades.offense },
+                            { name: "Bulk", val: dossierData.team_grades.bulk },
+                            { name: "Speed Control", val: dossierData.team_grades.speed_control },
+                            { name: "Synergy", val: dossierData.team_grades.synergy },
+                          ].map((grade, gIdx) => (
+                            <div key={gIdx} className="space-y-1.5">
+                              <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider font-mono">
+                                <span className="text-zinc-400">{grade.name}</span>
+                                <span className="text-red-500">{grade.val || 0} / 100</span>
+                              </div>
+                              <div className="w-full bg-zinc-900 border border-zinc-850 rounded-full h-2.5 overflow-hidden">
+                                <div 
+                                  className="bg-red-600 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(220,38,38,0.4)]"
+                                  style={{ width: `${Math.max(0, Math.min(grade.val || 0, 100))}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Core Identity */}
                     <div className="space-y-2">
                       <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Core Identity & Strategy</h4>
