@@ -221,14 +221,19 @@ You are an expert Pokemon VGC Teambuilder. Your task is to calculate optimal 66-
 3. NO individual stat can exceed 32 SP. (0 is the minimum).
 4. Standard 252 EVs map exactly to 32 SP. 4 EVs map to 2 SP.
 
-Analyze the team's species, items, abilities, natures, and moves to determine their optimal roles and output their perfect 66-SP spreads.
+Analyze the team's species, items, abilities, natures, and moves to determine their optimal roles and output their perfect 66-SP spreads. For every stat that has an SP allocation greater than 0, you must provide a 1-sentence educational explanation in the explanations object.
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
   "optimized_team": [
     { 
       "id": "pokemon_id_here",
-      "sp": { "hp": 0, "atk": 32, "def": 0, "spa": 0, "spd": 2, "spe": 32 } 
+      "sp": { "hp": 0, "atk": 32, "def": 0, "spa": 0, "spd": 2, "spe": 32 },
+      "explanations": {
+        "atk": "Maximized to secure critical physical KOs.",
+        "spd": "Remaining 2 points allocated to Special Defense to survive specs attacks.",
+        "spe": "Maximized to outspeed default base 100 speed tiers."
+      }
     }
   ]
 }
@@ -342,7 +347,9 @@ You must output your response STRICTLY as a JSON object matching this schema:
 TONE DIRECTIVE: Speak with the absolute authority and extreme tactical depth of a World Champion. DO NOT give generic, beginner-level advice. Be highly opinionated, cite specific meta threats by name, and provide advanced, cutthroat VGC strategies.
 
 You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation M-B team.
-Your task is to analyze the team's core identity, primary modes, threat matrix, and optimizations based on their composition.
+Your task is to analyze the team's core identity, suggested lineups, threat matrix, and optimizations based on their composition.
+
+You MUST base your entire analysis on the specific 66-SP distributions, items, abilities, and movesets provided in the roster. Do not give generic advice. If a Pokémon has 32 Speed SP, explain how that exact speed tier dictates their gameplan. Keep explanations deeply detailed but extremely easy to understand (jargon-free).
 
 If the user is in Beginner Mode, you must scan the team for glaring structural weaknesses (e.g., '4 Pokémon are weak to Ground', 'Zero Protects on the team', 'No Speed Control'). Output 1 to 3 severe warnings in the red_flags array. If the team is structurally sound, or if Beginner Mode is disabled, leave the array empty.
 
@@ -350,11 +357,12 @@ You must output your response STRICTLY as a JSON object matching this schema:
 {
   "red_flags": ["Glaring teambuilding warning 1", "Glaring teambuilding warning 2"],
   "core_identity": "Detailed description of the team's archetype and overall win condition.",
-  "primary_modes": [
+  "suggested_lineups": [
     {
-      "mode_name": "Mode Name (e.g. Tailwind Offense, Hard Trick Room)",
-      "lead_duo": ["Pokemon A", "Pokemon B"],
-      "objective": "Objective of this mode and how to execute it."
+      "lineup_name": "Example: Fast Rain Offense",
+      "front_line": ["Pokemon A", "Pokemon B"],
+      "back_line": ["Pokemon C", "Pokemon D"],
+      "strategy_explanation": "A detailed but easy-to-understand explanation of why these 4 Pokémon are chosen, how their specific SP spreads/items synergize, and what the win condition is."
     }
   ],
   "threat_matrix": {
@@ -536,7 +544,12 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
         return NextResponse.json({
           optimized_team: team.map((p: any) => ({
             id: p.id,
-            sp: { hp: 0, atk: 32, def: 0, spa: 0, spd: 2, spe: 32 }
+            sp: { hp: 0, atk: 32, def: 0, spa: 0, spd: 2, spe: 32 },
+            explanations: {
+              atk: "Maximized physical attack to maximize damage output of critical hits.",
+              spd: "Allocated remaining 2 points to bolster Special Defense against priority moves.",
+              spe: "Maximized speed to outspeed other base 110 physical attackers in Tailwind."
+            }
           }))
         });
       }
@@ -562,16 +575,24 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
         return NextResponse.json({
           red_flags: ["3 Pokémon are weak to Electric", "Zero Protects detected on Amoonguss"],
           core_identity: "A hybrid speed-control team utilizing Tailwind and hard-hitting physical attackers to establish early-game board control.",
-          primary_modes: [
+          suggested_lineups: [
             {
-              mode_name: "Tailwind Hyper Offense",
-              lead_duo: [team[0]?.name || "Tornadus", team[1]?.name || "Urshifu"],
-              objective: "Set up priority Tailwind immediately and pressure opponent leads with high-damage attacks."
+              lineup_name: "Tailwind Hyper Offense",
+              front_line: [team[0]?.name || "Tornadus", team[1]?.name || "Urshifu"],
+              back_line: [team[4]?.name || "Flutter Mane", team[5]?.name || "Raging Bolt"],
+              strategy_explanation: "Lead with Tornadus and Urshifu to set immediate Tailwind control. Urshifu's 32 Speed SP lets it outspeed common checks in Tailwind to secure fast KOs, while Flutter Mane sweeps from the back line."
             },
             {
-              mode_name: "Defensive Control",
-              lead_duo: [team[2]?.name || "Incineroar", team[3]?.name || "Amoonguss"],
-              objective: "Rotate Intimidates and use Spore to disrupt fast sweepers and position safely."
+              lineup_name: "Defensive Control Mode",
+              front_line: [team[2]?.name || "Incineroar", team[3]?.name || "Amoonguss"],
+              back_line: [team[1]?.name || "Urshifu", team[5]?.name || "Raging Bolt"],
+              strategy_explanation: "Lead Incineroar and Amoonguss to rotate Intimidate and use Spore to disrupt opponent leads. The passive bulk combined with 32 HP SP allows safe pivoting to bring in sweepers."
+            },
+            {
+              lineup_name: "Trick Room Denial",
+              front_line: [team[0]?.name || "Tornadus", team[2]?.name || "Incineroar"],
+              back_line: [team[3]?.name || "Amoonguss", team[5]?.name || "Raging Bolt"],
+              strategy_explanation: "Lead Tornadus and Incineroar to disrupt Trick Room setup. Incineroar uses Fake Out, and Tornadus uses Taunt to shut down status moves, pivoting to Amoonguss to stall turns."
             }
           ],
           threat_matrix: {

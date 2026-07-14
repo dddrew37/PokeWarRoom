@@ -16,6 +16,7 @@ export interface ParsedPokemon {
   evs: Stats;
   sp: Stats;
   moves: string[];
+  spExplanations?: Record<string, string>;
 }
 
 export function convertEVtoSP(ev: number): number {

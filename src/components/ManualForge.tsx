@@ -32,6 +32,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
   const [moves, setMoves] = useState<string[]>(["", "", "", ""]);
   
   const [sp, setSp] = useState<Stats>({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
+  const [spExplanations, setSpExplanations] = useState<Record<string, string>>({});
 
   // Two-way hydration for edit mode
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
         matchMove(p.moves[3])
       ]);
       setSp(p.sp);
+      setSpExplanations(p.spExplanations || {});
     }
   }, [activeEditIndex, team]);
 
@@ -73,6 +75,26 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
   const STAT_CAP = 32;
   const spRemaining = SP_CAP - totalSP;
 
+  const getStatExplanation = (statName: string): string | undefined => {
+    if (!spExplanations) return undefined;
+    const lowerName = statName.toLowerCase();
+    
+    // Check standard abbreviations
+    if (spExplanations[lowerName]) return spExplanations[lowerName];
+    
+    // Check full names or capitalized versions
+    for (const key of Object.keys(spExplanations)) {
+      const lowerKey = key.toLowerCase();
+      if (lowerKey === lowerName) return spExplanations[key];
+      if (lowerName === "atk" && (lowerKey === "attack" || lowerKey === "phys_atk")) return spExplanations[key];
+      if (lowerName === "def" && (lowerKey === "defense" || lowerKey === "phys_def")) return spExplanations[key];
+      if (lowerName === "spa" && (lowerKey === "special attack" || lowerKey === "special_attack" || lowerKey === "spa")) return spExplanations[key];
+      if (lowerName === "spd" && (lowerKey === "special defense" || lowerKey === "special_defense" || lowerKey === "spd")) return spExplanations[key];
+      if (lowerName === "spe" && (lowerKey === "speed" || lowerKey === "spe")) return spExplanations[key];
+    }
+    return undefined;
+  };
+
   const handleStatChange = (stat: StatKey, value: number) => {
     let newVal = Math.max(0, Math.min(value, STAT_CAP));
     
@@ -82,7 +104,27 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
       newVal = SP_CAP - currentTotalExcludingThisStat;
     }
 
+    const valueChanged = newVal !== sp[stat];
     setSp(prev => ({ ...prev, [stat]: newVal }));
+    
+    if (valueChanged) {
+      setSpExplanations(prev => {
+        const next = { ...prev };
+        const lowerStat = stat.toLowerCase();
+        for (const k of Object.keys(next)) {
+          const lk = k.toLowerCase();
+          if (lk === lowerStat || 
+              (lowerStat === "atk" && lk === "attack") ||
+              (lowerStat === "def" && lk === "defense") ||
+              (lowerStat === "spa" && (lk === "special attack" || lk === "special_attack")) ||
+              (lowerStat === "spd" && (lk === "special defense" || lk === "special_defense")) ||
+              (lowerStat === "spe" && lk === "speed")) {
+            delete next[k];
+          }
+        }
+        return next;
+      });
+    }
   };
 
   const handleAdd = () => {
@@ -145,6 +187,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
       evs,
       sp,
       moves: moves.map(m => m.trim()).filter(Boolean),
+      spExplanations,
     };
 
     if (activeEditIndex !== null && onUpdatePokemon) {
@@ -163,6 +206,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
     setNature("");
     setMoves(["", "", "", ""]);
     setSp({ hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 });
+    setSpExplanations({});
     if (onCancelEdit) {
       onCancelEdit();
     }
@@ -275,29 +319,40 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
           </div>
 
           <div className="space-y-4">
-            {STAT_KEYS.map((stat) => (
-              <div key={stat} className="flex items-center gap-4">
-                <div className="w-12 text-sm font-bold text-zinc-400 uppercase text-right tracking-wider">
-                  {stat}
+            {STAT_KEYS.map((stat) => {
+              const explanation = getStatExplanation(stat);
+              return (
+                <div key={stat} className="flex items-center gap-4">
+                  <div className="w-12 text-sm font-bold text-zinc-400 uppercase text-right tracking-wider flex items-center justify-end gap-1">
+                    <span>{stat}</span>
+                    {explanation && (
+                      <span 
+                        title={explanation} 
+                        className="cursor-help text-red-500 hover:text-red-450 text-[11px] font-mono select-none"
+                      >
+                        ⓘ
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="32"
+                    value={sp[stat]}
+                    onChange={(e) => handleStatChange(stat, parseInt(e.target.value) || 0)}
+                    className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-600"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    max="32"
+                    value={sp[stat]}
+                    onChange={(e) => handleStatChange(stat, parseInt(e.target.value) || 0)}
+                    className="w-16 bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-center text-sm font-bold text-white focus:outline-none focus:border-red-500"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="32"
-                  value={sp[stat]}
-                  onChange={(e) => handleStatChange(stat, parseInt(e.target.value) || 0)}
-                  className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-red-600"
-                />
-                <input
-                  type="number"
-                  min="0"
-                  max="32"
-                  value={sp[stat]}
-                  onChange={(e) => handleStatChange(stat, parseInt(e.target.value) || 0)}
-                  className="w-16 bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-center text-sm font-bold text-white focus:outline-none focus:border-red-500"
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
