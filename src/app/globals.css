@@ -8,3 +8,39 @@
 body {
   @apply bg-zinc-950 text-zinc-50 antialiased;
 }
+
+/* Accessibility Text Scaling Overrides */
+body[data-text-scale="large"] p,
+body[data-text-scale="large"] li,
+body[data-text-scale="large"] span,
+body[data-text-scale="large"] input,
+body[data-text-scale="large"] textarea,
+body[data-text-scale="large"] select,
+body[data-text-scale="large"] button,
+body[data-text-scale="large"] .text-xs,
+body[data-text-scale="large"] .text-sm,
+body[data-text-scale="large"] .text-base,
+body[data-text-scale="large"] .text-\[9px\],
+body[data-text-scale="large"] .text-\[8px\],
+body[data-text-scale="large"] .text-\[10px\],
+body[data-text-scale="large"] .text-\[11px\],
+body[data-text-scale="large"] div.chat-bubble {
+  font-size: 1.15rem !important;
+  line-height: 1.75 !important;
+}
+
+body[data-text-scale="large"] .text-\[9px\],
+body[data-text-scale="large"] .text-\[8px\],
+body[data-text-scale="large"] .text-\[10px\],
+body[data-text-scale="large"] .text-\[11px\],
+body[data-text-scale="large"] .text-xs {
+  font-size: 0.95rem !important;
+  line-height: 1.5 !important;
+}
+
+body[data-text-scale="large"] h1 { font-size: 2.25rem !important; }
+body[data-text-scale="large"] h2 { font-size: 1.75rem !important; }
+body[data-text-scale="large"] h3 { font-size: 1.5rem !important; }
+body[data-text-scale="large"] h4 { font-size: 1.3rem !important; }
+body[data-text-scale="large"] h5,
+body[data-text-scale="large"] h6 { font-size: 1.15rem !important; }
