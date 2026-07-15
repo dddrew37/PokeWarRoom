@@ -222,7 +222,7 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
     const optimizeSystemPrompt = `${REGULATION_MB_CONTEXT}
 
-You are an expert Pokemon VGC Teambuilder. Your task is to calculate optimal 66-SP math distributions for the provided team based on their competitive roles (e.g. fast screen setter, unburden aggro, late-game nuke, bulk).
+You are an expert Pokemon VGC Teambuilder. Your task is to calculate optimal 66-SP math distributions for the provided team, complete the roster to exactly 6 Pokémon, and optimize items, moves, abilities, and natures as needed.
 
 # 66-SP Math Engine Constraints
 1. The SP (Stat Point) system uses a strict maximum of 66 total SP per Pokemon.
@@ -230,19 +230,35 @@ You are an expert Pokemon VGC Teambuilder. Your task is to calculate optimal 66-
 3. NO individual stat can exceed 32 SP. (0 is the minimum).
 4. Standard 252 EVs map exactly to 32 SP. 4 EVs map to 2 SP.
 
-Analyze the team's species, items, abilities, natures, and moves to determine their optimal roles and output their perfect 66-SP spreads. For every stat that has an SP allocation greater than 0, you must provide a 1-sentence educational explanation in the explanations object.
+# teambuilding & autocomplete rules:
+- If the user provides fewer than 6 Pokémon, you MUST generate synergistic meta Pokémon to fill the empty slots so the returned optimized_team array always contains exactly 6 Pokémon.
+- You are authorized to change items, abilities, natures, and moves if the user's current selections are unviable in the Regulation M-B VGC meta.
+- Document every change (including adding new Pokémon, changing moves/items/abilities/natures) in the optimization_report.
+- For every stat that has an SP allocation greater than 0, you must provide a 1-sentence educational explanation in the spExplanations object.
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
   "optimized_team": [
     { 
-      "id": "pokemon_id_here",
+      "id": "pokemon_id",
+      "name": "Pokemon Name",
+      "item": "Focus Sash",
+      "ability": "Intimidate",
+      "nature": "Jolly",
+      "moves": ["Fake Out", "Knock Off", "Parting Shot", "Protect"],
       "sp": { "hp": 0, "atk": 32, "def": 0, "spa": 0, "spd": 2, "spe": 32 },
-      "explanations": {
+      "spExplanations": {
         "atk": "Maximized to secure critical physical KOs.",
         "spd": "Remaining 2 points allocated to Special Defense to survive specs attacks.",
         "spe": "Maximized to outspeed default base 100 speed tiers."
       }
+    }
+  ],
+  "optimization_report": [
+    {
+      "pokemon": "Incineroar",
+      "changes": ["Changed item from Leftovers to Sitrus Berry.", "Swapped U-turn for Knock Off."],
+      "rationale": "Sitrus Berry provides immediate burst healing which Incineroar prefers over gradual Leftovers recovery. Knock Off is strictly better in this meta to remove Clear Amulets."
     }
   ]
 }
@@ -551,16 +567,56 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
       }
 
       if (action === "optimize") {
-        return NextResponse.json({
-          optimized_team: team.map((p: any) => ({
-            id: p.id,
-            sp: { hp: 0, atk: 32, def: 0, spa: 0, spd: 2, spe: 32 },
-            explanations: {
-              atk: "Maximized physical attack to maximize damage output of critical hits.",
-              spd: "Allocated remaining 2 points to bolster Special Defense against priority moves.",
-              spe: "Maximized speed to outspeed other base 110 physical attackers in Tailwind."
+        const mockMons = [
+          { id: "incineroar", name: "Incineroar", item: "Sitrus Berry", ability: "Intimidate", nature: "Careful", moves: ["Fake Out", "Flare Blitz", "Parting Shot", "Knock Off"] },
+          { id: "amoonguss", name: "Amoonguss", item: "Rocky Helmet", ability: "Regenerator", nature: "Relaxed", moves: ["Spore", "Rage Powder", "Pollen Puff", "Protect"] },
+          { id: "tornadus", name: "Tornadus", item: "Covert Cloak", ability: "Prankster", nature: "Timid", moves: ["Tailwind", "Bleakwind Storm", "Taunt", "Protect"] },
+          { id: "urshifurapidstrike", name: "Urshifu Rapid Strike", item: "Focus Sash", ability: "Unseen Fist", nature: "Jolly", moves: ["Surging Strikes", "Close Combat", "Aqua Jet", "Protect"] },
+          { id: "fluttermane", name: "Flutter Mane", item: "Choice Specs", ability: "Protosynthesis", nature: "Timid", moves: ["Moonblast", "Dazzling Gleam", "Shadow Ball", "Trick"] },
+          { id: "ragingbolt", name: "Raging Bolt", item: "Leftovers", ability: "Protosynthesis", nature: "Modest", moves: ["Thunderclap", "Draco Meteor", "Snarl", "Protect"] }
+        ];
+
+        const finalOptimized = [...(team || [])];
+        const report = [];
+
+        while (finalOptimized.length < 6) {
+          const nextMock = mockMons[finalOptimized.length];
+          finalOptimized.push(nextMock);
+          report.push({
+            pokemon: nextMock.name,
+            changes: [`Added ${nextMock.name} to complete the meta core.`],
+            rationale: `Roster had fewer than 6 Pokémon. Added standard top-tier synergy pick.`
+          });
+        }
+
+        const formattedTeam = finalOptimized.map((p: any, idx: number) => {
+          const matchedMock = mockMons.find(m => m.id === p.id || m.name.toLowerCase() === p.name.toLowerCase()) || mockMons[idx];
+          return {
+            id: p.id || matchedMock.id,
+            name: p.name || matchedMock.name,
+            item: p.item || matchedMock.item,
+            ability: p.ability || matchedMock.ability,
+            nature: p.nature || matchedMock.nature,
+            moves: Array.isArray(p.moves) && p.moves.length > 0 ? p.moves : matchedMock.moves,
+            sp: p.sp && Object.values(p.sp).some(v => v !== 0) ? p.sp : { hp: 32, atk: 0, def: 4, spa: 0, spd: 4, spe: 26 },
+            spExplanations: {
+              hp: "Maximized bulk to survive common attacks.",
+              spe: "Allocated points to outspeed standard meta threats in Tailwind."
             }
-          }))
+          };
+        });
+
+        if (team && team.length > 0) {
+          report.unshift({
+            pokemon: team[0].name,
+            changes: ["Optimized 66-SP math distribution.", "Set optimal competitive nature & moveset."],
+            rationale: "Fitted stat distribution to align with their primary team preview speed-control profile."
+          });
+        }
+
+        return NextResponse.json({
+          optimized_team: formattedTeam,
+          optimization_report: report
         });
       }
 

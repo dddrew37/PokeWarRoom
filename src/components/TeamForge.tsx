@@ -38,6 +38,10 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
   const [isChatting, setIsChatting] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
 
+  // Auto-Optimize Teambuilder States
+  const [preOptimizationState, setPreOptimizationState] = useState<ParsedPokemon[] | null>(null);
+  const [optimizationReport, setOptimizationReport] = useState<any[] | null>(null);
+
   const handleAssessTeamDeepDive = async (chatContextPayload?: any[] | React.MouseEvent) => {
     if (team.length !== 6) return;
     setIsAssessingDeep(true);
@@ -191,6 +195,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
   const handleOptimize = async () => {
     if (team.length === 0) return;
     setIsOptimizing(true);
+    setPreOptimizationState([...team]);
     try {
       const res = await fetch("/api/coach", {
         method: "POST",
@@ -201,34 +206,58 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
       const data = await res.json();
       
       if (data.optimized_team) {
-        setTeam(prev => prev.map(p => {
-          // Attempt to match by id, or simply by name if id changed
-          const optimized = data.optimized_team.find((op: any) => op.id === p.id || op.name === p.name);
-          if (optimized && optimized.sp) {
-             const newSp = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0, ...optimized.sp };
-             let total = 0;
-             const STATS = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
-             
-             // Strict Rule 1: Max 32 per stat, Min 0
-             STATS.forEach(s => {
-               newSp[s] = Math.max(0, Math.min(Number(newSp[s]) || 0, 32));
-               total += newSp[s];
-             });
-             
-             // Strict Rule 2: Max 66 total SP
-             if (total > 66) {
-               let diff = total - 66;
-               while(diff > 0) {
-                 const highestStat = STATS.reduce((max, s) => newSp[s] > newSp[max] ? s : max, "hp" as const);
-                 newSp[highestStat] -= 1;
-                 diff--;
-               }
-             }
+        const localConvert = (sp: number) => {
+          if (sp <= 0) return 0;
+          if (sp >= 32) return 252;
+          return (sp - 2) * 8 + 4;
+        };
 
-             return { ...p, sp: newSp, spExplanations: optimized.explanations };
-           }
-           return p;
-        }));
+        const mappedTeam: ParsedPokemon[] = data.optimized_team.map((op: any) => {
+          const rawSp = op.sp || { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };
+          const spStats = {
+            hp: Math.max(0, Math.min(Number(rawSp.hp) || 0, 32)),
+            atk: Math.max(0, Math.min(Number(rawSp.atk) || 0, 32)),
+            def: Math.max(0, Math.min(Number(rawSp.def) || 0, 32)),
+            spa: Math.max(0, Math.min(Number(rawSp.spa) || 0, 32)),
+            spd: Math.max(0, Math.min(Number(rawSp.spd) || 0, 32)),
+            spe: Math.max(0, Math.min(Number(rawSp.spe) || 0, 32))
+          };
+
+          let total = Object.values(spStats).reduce((sum, v) => sum + v, 0);
+          const STATS = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
+          if (total > 66) {
+            let diff = total - 66;
+            while(diff > 0) {
+              const highestStat = STATS.reduce((max, s) => spStats[s] > spStats[max] ? s : max, "hp" as const);
+              spStats[highestStat] -= 1;
+              diff--;
+            }
+          }
+
+          const evStats = {
+            hp: localConvert(spStats.hp),
+            atk: localConvert(spStats.atk),
+            def: localConvert(spStats.def),
+            spa: localConvert(spStats.spa),
+            spd: localConvert(spStats.spd),
+            spe: localConvert(spStats.spe)
+          };
+
+          return {
+            id: op.id || op.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+            name: op.name,
+            item: op.item || "",
+            ability: op.ability || "",
+            nature: op.nature || "",
+            moves: Array.isArray(op.moves) ? op.moves.filter(Boolean) : [],
+            sp: spStats,
+            evs: evStats,
+            spExplanations: op.spExplanations || {}
+          };
+        });
+
+        setTeam(mappedTeam);
+        setOptimizationReport(data.optimization_report || []);
       }
     } catch (e) {
       console.error(e);
@@ -507,7 +536,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 disabled={team.length === 0 || isOptimizing}
                 className="col-span-2 py-3 rounded-2xl font-black text-sm transition-all duration-300 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 border-2 disabled:cursor-not-allowed bg-red-700 border-red-500 text-white hover:bg-red-600 hover:border-red-400 shadow-[0_0_15px_rgba(220,38,38,0.2)] disabled:shadow-none uppercase tracking-wide flex items-center justify-center gap-2"
               >
-                {isOptimizing ? "Optimizing..." : "Auto-Optimize"}
+                {isOptimizing ? "Optimizing..." : "Auto-Optimize Team"}
               </button>
             </div>
             
@@ -1135,6 +1164,101 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+    {/* Auto-Optimize Team Report Modal Overlay */}
+      {optimizationReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-4xl shadow-2xl p-6 md:p-8 flex flex-col max-h-[85vh] relative overflow-hidden">
+            
+            {/* Ambient Red glow background */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red-750/5 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex flex-col gap-1 border-b border-zinc-800 pb-4">
+              <h3 className="text-xl font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                <span>Roster Optimization Report</span>
+              </h3>
+              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-mono">
+                Coach optimized spreads, filled roster gaps, and adjusted sets for competitive viability.
+              </p>
+            </div>
+
+            {/* Scrollable Report Content */}
+            <div className="flex-1 overflow-y-auto pr-2 space-y-6 my-6">
+              {optimizationReport.map((rep, idx) => (
+                <div 
+                  key={idx} 
+                  className="bg-zinc-950 border border-zinc-850 rounded-2xl p-5 space-y-3 relative overflow-hidden group hover:border-zinc-800 transition-colors"
+                >
+                  <div className="absolute top-0 left-0 w-1 h-full bg-red-650" />
+                  
+                  <h4 className="text-sm font-black text-white uppercase tracking-wider pl-1">
+                    {rep.pokemon}
+                  </h4>
+                  
+                  <div className="space-y-1.5 pl-1">
+                    <span className="text-[9px] font-bold text-zinc-550 uppercase tracking-widest font-mono block">Changes Made</span>
+                    <ul className="space-y-1 text-xs text-zinc-300 font-medium">
+                      {rep.changes?.map((change: string, cIdx: number) => (
+                        <li key={cIdx} className="flex items-start gap-2.5">
+                          <span className="text-red-500 font-bold font-mono">•</span>
+                          <span>{change}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {rep.rationale && (
+                    <div className="bg-zinc-900/30 border border-zinc-850/60 rounded-xl p-3 pl-4">
+                      <span className="text-[9px] font-bold text-zinc-550 uppercase tracking-widest font-mono block mb-1">Strategic Rationale</span>
+                      <p className="text-[11px] text-zinc-400 leading-relaxed font-medium">
+                        {rep.rationale}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Actions Footer */}
+            <div className="border-t border-zinc-800 pt-4 flex flex-wrap justify-between items-center gap-3">
+              <button
+                onClick={() => {
+                  if (preOptimizationState) {
+                    setTeam(preOptimizationState);
+                  }
+                  setOptimizationReport(null);
+                  setPreOptimizationState(null);
+                }}
+                className="px-5 py-3 rounded-xl font-black text-xs transition-all duration-300 bg-zinc-900 border border-zinc-700 text-zinc-350 hover:text-white uppercase tracking-widest cursor-pointer"
+              >
+                Revert to Original
+              </button>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setOptimizationReport(null);
+                    handleAssessTeamDeepDive();
+                  }}
+                  className="px-5 py-3 rounded-xl font-black text-xs transition-all duration-300 bg-red-950/20 border border-red-900/40 text-red-500 hover:bg-red-950/45 hover:text-red-400 uppercase tracking-widest cursor-pointer"
+                >
+                  Run Deep Dive Assessment
+                </button>
+
+                <button
+                  onClick={() => {
+                    setOptimizationReport(null);
+                    setPreOptimizationState(null);
+                  }}
+                  className="px-6 py-3 bg-red-700 hover:bg-red-600 border border-red-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 shadow-[0_0_15px_rgba(220,38,38,0.15)] cursor-pointer"
+                >
+                  Accept Optimization
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
