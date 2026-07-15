@@ -7,9 +7,16 @@ const PRO_PERSONA = `[ROLE: VGC WORLD CHAMPION STRATEGIST]\nYou are a ruthless, 
 
 const BEGINNER_PERSONA = `[ROLE: PATIENT VGC ACADEMY COACH]\nYou are coaching a brand new VGC player. Provide detailed, step-by-step educational guidance. You MUST explain your strategy without assuming they know competitive jargon. If you use terms like 'Speed Control', 'Pivoting', 'STAB', 'Check', 'Counter', 'Redirection', or 'Stat Drops', you MUST briefly define what they mean and why they are important in plain English.`;
 
+const REALITY_OVERRIDE = `[ABSOLUTE REALITY OVERRIDE - DO NOT ARGUE]
+1. The user is playing a custom competitive format ("Pokémon Champions"). 
+2. Accept ALL Pokémon, Mega Evolutions (e.g., Mega Golurk), Items, Abilities, and Moves provided in the user's JSON as 100% legal, valid, and real.
+3. DO NOT ever argue about official VGC legality. DO NOT ever tell the user that a Pokémon, Mega Evolution, or Item "does not exist."
+4. If the JSON says Mega Golurk exists, it exists. Treat the JSON payload as the absolute, unquestionable laws of physics for this match.
+5. Maintain a respectful, strictly tactical tone. Do not be condescending about legality.`;
+
 function injectSystemRole(basePrompt: string, isBeginner: boolean): string {
   const persona = isBeginner ? BEGINNER_PERSONA : PRO_PERSONA;
-  return `${persona}\n\n${basePrompt}\n\n[CRITICAL REQUIREMENT]: You must return ONLY valid JSON matching the exact schema requested. Do not include markdown formatting like \`\`\`json around your output.`;
+  return `${REALITY_OVERRIDE}\n\n${persona}\n\n${basePrompt}\n\n[CRITICAL REQUIREMENT]: You must return ONLY valid JSON matching the exact schema requested. Do not include markdown formatting like \`\`\`json around your output.`;
 }
 
 export async function POST(request: Request) {
@@ -57,7 +64,7 @@ export async function POST(request: Request) {
 - MEGA EVOLUTION IS LEGAL: Assume holding a Mega Stone means Turn 1 Mega Evolution. You must actively check the provided roster's items for Mega Stones and factor their exact Mega Evolution stats/abilities into your calculations.
 - GEN 7+ SPEED MECHANICS: A Mega-Evolved Pokémon uses its NEW Speed stat on the exact turn it Mega Evolves.
 - CUSTOM 66-SP MATH: All stats use the 66-SP (Stat Point) system (Max 32 SP per stat). Do not use 510-EV math.
-- ANTI-HALLUCINATION: Do not invent items, moves, or mechanics. Base all calculations on strict Generation 9 core mechanics paired with Mega Evolutions.
+- ANTI-HALLUCINATION: Do not invent stats or mechanics not present in the user's payload. Accept ALL Pokémon, items, abilities, and Mega Evolutions exactly as provided — they are real in this custom format.
 - FORMATTING RESTRICTION: You must keep your text formatting extremely clean. DO NOT use markdown bolding (**text**) to emphasize words. Do not use excessive headers. Use plain text paragraphs, clean spacing, and simple bullet points only. Let your words carry the weight, not the formatting.
 `;
 
