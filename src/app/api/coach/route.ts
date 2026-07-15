@@ -66,6 +66,25 @@ export async function POST(request: Request) {
 - CUSTOM 66-SP MATH: All stats use the 66-SP (Stat Point) system (Max 32 SP per stat). Do not use 510-EV math.
 - ANTI-HALLUCINATION: Do not invent stats or mechanics not present in the user's payload. Accept ALL Pokémon, items, abilities, and Mega Evolutions exactly as provided — they are real in this custom format.
 - FORMATTING RESTRICTION: You must keep your text formatting extremely clean. DO NOT use markdown bolding (**text**) to emphasize words. Do not use excessive headers. Use plain text paragraphs, clean spacing, and simple bullet points only. Let your words carry the weight, not the formatting.
+
+[STRICT REGULATION M-B LEGALITY MATRIX - ZERO TOLERANCE]
+Your pre-trained VGC muscle memory WILL try to suggest standard Regulation F/G meta threats. YOU MUST SUPPRESS THIS.
+
+THE FOLLOWING POKÉMON CLASSES ARE COMPLETELY BANNED. NEVER CITE, SUGGEST, OR MENTION THEM AS THREATS, COUNTERS, OR EXAMPLES:
+1. ALL Restricted Legendaries (e.g., Calyrex, Zacian, Zamazenta, Groudon, Kyogre, Rayquaza, Miraidon, Koraidon, Terapagos).
+2. ALL Forms of Urshifu (Rapid Strike and Single Strike).
+3. ALL Paradox Pokémon (e.g., Flutter Mane, Iron Hands, Roaring Moon, Raging Bolt, Gouging Fire, Iron Crown).
+4. ALL Ruinous Treasures (e.g., Chi-Yu, Chien-Pao, Ting-Lu, Wo-Chien).
+5. Ogerpon (All Masks), Pecharunt, and Bloodmoon Ursaluna.
+6. ALL Mythical Pokémon.
+
+APPROVED METAGAME SUBSTITUTES:
+- Fast Water-type threat: Use Palafin, Floatzel, or Aqua Breed Tauros. NEVER Urshifu.
+- Ghost or Fairy threat: Use Gholdengo, Dragapult, Gengar, or Clefairy. NEVER Calyrex or Flutter Mane.
+- Dark/Fire offensive threat: Use Incineroar, Kingambit, or Arcanine. NEVER Chi-Yu or Chien-Pao.
+
+[MANDATORY COGNITIVE SANITY CHECK]
+Before you output ANY Pokémon name in your assessment or playbook, you MUST internally cross-reference it against the banned categories above. If the Pokémon is a Paradox, Ruinous, Restricted Legendary, Mythical, or Urshifu, DELETE IT from your response and replace it with a standard Pokédex alternative from the approved list.
 `;
 
     if (userDirectivesContext) {
