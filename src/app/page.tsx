@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import TeamForge from "@/components/TeamForge";
 import TeamPreviewLogger from "@/components/TeamPreviewLogger";
 import SavedStrategies from "@/components/SavedStrategies";
@@ -33,6 +34,9 @@ export default function Home() {
         </div>
         
         <div className="flex items-center gap-6 mt-4 md:mt-0 font-mono text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
+          <Link href="/manual" className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all mr-2 flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg">
+            📖 User Manual
+          </Link>
           <div>
             <span className="text-zinc-600 mr-1.5 font-semibold">SYS STATUS:</span>
             <span className="text-red-500 font-black">OPERATIONAL</span>

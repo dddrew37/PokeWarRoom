@@ -208,7 +208,7 @@ export default function SavedStrategies() {
       {/* Massive Dossier Viewer Modal */}
       {selectedDossier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-5xl shadow-2xl my-8 flex flex-col overflow-hidden max-h-[90vh]">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-7xl shadow-2xl my-8 flex flex-col overflow-hidden max-h-[90vh]">
             
             {/* Header */}
             <div className="sticky top-0 z-10 bg-zinc-900/90 backdrop-blur-md px-6 py-4 border-b border-zinc-800 flex justify-between items-center">

@@ -776,7 +776,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
       {/* Deep-Dive Assessment Dossier Modal */}
       {showDossierModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-5xl shadow-2xl my-8 flex flex-col overflow-hidden max-h-[90vh]">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-7xl shadow-2xl my-8 flex flex-col overflow-hidden max-h-[90vh]">
             
             {/* Header */}
             <div className="sticky top-0 z-10 bg-zinc-900/90 backdrop-blur-md px-6 py-4 border-b border-zinc-800 flex justify-between items-center">
@@ -1039,7 +1039,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                 </div>
 
                 {/* Scrollable Message History */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 flex flex-col">
                   {dossierChat.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center text-center p-6 text-zinc-500">
                       <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">
@@ -1051,7 +1051,7 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
                     dossierChat.map((msg, idx) => (
                       <div
                         key={idx}
-                        className={`max-w-[85%] rounded-2xl p-3.5 text-sm font-medium ${
+                        className={`max-w-[85%] rounded-2xl p-3.5 text-sm font-medium break-words whitespace-pre-wrap ${
                           msg.role === "user"
                             ? "bg-red-700/10 border border-red-900/30 text-zinc-200 self-end rounded-tr-none"
                             : "bg-zinc-900 border border-zinc-800 text-zinc-300 self-start rounded-tl-none"
