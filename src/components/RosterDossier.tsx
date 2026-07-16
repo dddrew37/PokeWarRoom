@@ -407,10 +407,16 @@ export default function RosterDossier() {
     const teamName = prompt("Name this reforged roster (e.g. Golurk TR Core v2):");
     if (!teamName?.trim()) return;
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Authentication session expired. Please sign in again.");
+        return;
+      }
       const { error } = await supabase.from("saved_teams").insert([{
         team_name: teamName.trim(),
         team_data: extractedTeam,
-        assessment_data: { source: "dossier_extraction", chat_length: messages.length }
+        assessment_data: { source: "dossier_extraction", chat_length: messages.length },
+        user_id: user.id
       }]);
       if (error) { console.error("[Supabase] saved_teams INSERT error:", error); alert("Save failed: " + error.message); }
       else { alert(`Roster "${teamName}" saved successfully!`); }
@@ -423,10 +429,16 @@ export default function RosterDossier() {
   const handleSaveExtractedTactic = async (tactic: ExtractedTactic) => {
     if (!supabase) { alert("Supabase not configured. Add env vars to enable saving."); return; }
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Authentication session expired. Please sign in again.");
+        return;
+      }
       const { error } = await supabase.from("saved_strategies").insert([{
         title: tactic.title,
         team: team,
-        playbook: tactic
+        playbook: tactic,
+        user_id: user.id
       }]);
       if (error) { console.error("[Supabase] saved_strategies INSERT error:", error); alert("Save failed: " + error.message); }
       else { alert(`Strategy "${tactic.title}" saved to Playbook Library!`); }

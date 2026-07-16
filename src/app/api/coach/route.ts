@@ -390,13 +390,18 @@ You must output your response STRICTLY as a JSON object matching this schema:
 TONE DIRECTIVE: Speak with the absolute authority and extreme tactical depth of a World Champion. DO NOT give generic, beginner-level advice. Be highly opinionated, cite specific meta threats by name, and provide advanced, cutthroat VGC strategies.
 
 You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation M-B team.
-Your task is to analyze the team's core identity, suggested lineups, threat matrix, and optimizations based on their composition.
+Your task is to analyze the team's core identity, determine the absolute best 4-Pokémon lineup, and map out matchups against the top-tier Regulation M-B meta.
 
 You MUST base your entire analysis on the specific 66-SP distributions, items, abilities, and movesets provided in the roster. Do not give generic advice. If a Pokémon has 32 Speed SP, explain how that exact speed tier dictates their gameplan. Keep explanations deeply detailed but extremely easy to understand (jargon-free).
 
 If the user is in Beginner Mode, you must scan the team for glaring structural weaknesses (e.g., '4 Pokémon are weak to Ground', 'Zero Protects on the team', 'No Speed Control'). Output 1 to 3 severe warnings in the red_flags array. If the team is structurally sound, or if Beginner Mode is disabled, leave the array empty.
 
 You must score the team on a scale of 0 to 100 for these four pillars (offense, bulk, speed_control, synergy). Be highly critical. An all-attack team should have 90 Offense but 10 Bulk. A team with no Tailwind or Trick Room should have 0 Speed Control.
+
+[STRICT MATCHUP & WHITE LIST CONSTRAINTS]
+- You MUST select a 4-Pokémon optimal lineup (optimal_core_4) from the provided roster.
+- You MUST generate exactly 6 detailed strategies (meta_matchups) against 6 different top-tier meta teams currently dominating Regulation M-B.
+- Ensure the meta teams you invent for the opponent strictly adhere to the Regulation M-B Whitelist (NO Urshifu, NO Calyrex, NO Paradoxes).
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
@@ -408,41 +413,32 @@ You must output your response STRICTLY as a JSON object matching this schema:
     "synergy": 75
   },
   "core_identity": "Detailed description of the team's archetype and overall win condition.",
-  "suggested_lineups": [
+  "optimal_core_4": ["Pokemon 1", "Pokemon 2", "Pokemon 3", "Pokemon 4"],
+  "meta_matchups": [
     {
-      "lineup_name": "Example: Fast Rain Offense",
-      "front_line": ["Pokemon A", "Pokemon B"],
-      "back_line": ["Pokemon C", "Pokemon D"],
-      "strategy_explanation": "A detailed but easy-to-understand explanation of why these 4 Pokémon are chosen, how their specific SP spreads/items synergize, and what the win condition is."
-    }
-  ],
-  "threat_matrix": {
-    "favorable_matchups": ["Favorable matchup scenario 1", "Favorable matchup scenario 2"],
-    "critical_vulnerabilities": ["Critical vulnerability 1", "Critical vulnerability 2"]
-  },
-  "optimizations": [
-    {
-      "target_pokemon": "Pokemon Name",
-      "suggested_tweak": "Suggested move, item, or 66-SP point redistribution.",
-      "rationale": "Why this tweak improves the team's synergy and matchups."
-    }
-  ],
-  "detailed_tactics": [
-    {
-      "scenario_name": "Scenario name (e.g. Vs. Archaludon Rain, Vs. Hard Trick Room). Create 3-4 distinct scenarios.",
+      "opponent_archetype": "Tailwind Rain (e.g., Pelipper / Archaludon / Basculegion / Amoonguss)",
       "key_interactions": "Details on key Pokemon interactions and type advantages in this matchup.",
+      "recommended_lead": ["Pokemon 1", "Pokemon 2"],
+      "recommended_back": ["Pokemon 3", "Pokemon 4"],
       "execution_steps": [
         "Turn 1 details...",
         "Turn 2 details...",
         "Turn 3 details..."
       ]
     }
+  ],
+  "optimizations": [
+    {
+      "target_pokemon": "Pokemon Name",
+      "suggested_tweak": "Suggested move, item, or 66-SP point redistribution.",
+      "rationale": "Why this tweak improves the team's synergy and matchups."
+    }
   ]
 }`;
 
     let finalAssessTeamPrompt = assessTeamSystemPrompt;
     if (action === "assess_team" && chatContext && chatContext.length > 0) {
-      finalAssessTeamPrompt += `\n\nCRITICAL OVERRIDE: The user has debated this roster with you. You MUST read the provided chat history and strictly update the primary modes, threat matrix, and detailed tactics to reflect the final agreements reached in the chat.\nChat history:\n${JSON.stringify(chatContext, null, 2)}`;
+      finalAssessTeamPrompt += `\n\nCRITICAL OVERRIDE: The user has debated this roster with you. You MUST read the provided chat history and strictly update the optimal_core_4, optimizations, and meta_matchups to reflect the final agreements reached in the chat.\nChat history:\n${JSON.stringify(chatContext, null, 2)}`;
     }
 
     const extractionSystemPrompt = `You are a highly analytical VGC data parser. Your ONLY job is to read a chat log between a player and a World Champion Coach and extract the definitive strategic rule or contingency they agreed upon. Output ONLY the rule as a single, commanding sentence. Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Mega Sceptile against Rain/Kyogre cores.' Do not use markdown bolding. If the chat is just general banter and no specific rule was agreed upon, output exactly the string: NO_RULE`;
@@ -656,70 +652,97 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
       }
 
       if (action === "assess_team") {
+        const defaultMons = ["Tornadus", "Gholdengo", "Incineroar", "Amoonguss", "Dragonite", "Rillaboom"];
+        const p1 = team[0]?.name || defaultMons[0];
+        const p2 = team[1]?.name || defaultMons[1];
+        const p3 = team[2]?.name || defaultMons[2];
+        const p4 = team[3]?.name || defaultMons[3];
+        const p5 = team[4]?.name || defaultMons[4];
+        const p6 = team[5]?.name || defaultMons[5];
+
         return NextResponse.json({
-          red_flags: ["3 Pokémon are weak to Electric", "Zero Protects detected on Amoonguss"],
+          red_flags: ["3 Pokémon are weak to Fire / Flying", "No Protects on Amoonguss"],
           team_grades: {
             offense: 80,
             bulk: 75,
             speed_control: 85,
             synergy: 90
           },
-          core_identity: "A hybrid speed-control team utilizing Tailwind and hard-hitting physical attackers to establish early-game board control.",
-          suggested_lineups: [
+          core_identity: "A balanced speed-control core using Tailwind and defensive pivots to position heavy hitters.",
+          optimal_core_4: [p1, p2, p3, p4],
+          meta_matchups: [
             {
-              lineup_name: "Tailwind Hyper Offense",
-              front_line: [team[0]?.name || "Tornadus", team[1]?.name || "Urshifu"],
-              back_line: [team[4]?.name || "Flutter Mane", team[5]?.name || "Raging Bolt"],
-              strategy_explanation: "Lead with Tornadus and Urshifu to set immediate Tailwind control. Urshifu's 32 Speed SP lets it outspeed common checks in Tailwind to secure fast KOs, while Flutter Mane sweeps from the back line."
+              opponent_archetype: "Tailwind Rain (Pelipper / Archaludon / Basculegion / Amoonguss)",
+              key_interactions: "Establish early speed control with Tailwind and pivot defenses to sponge rain-boosted attacks.",
+              recommended_lead: [p1, p2],
+              recommended_back: [p3, p4],
+              execution_steps: [
+                "Turn 1: Lead with speed control. Use defensive options to buffer immediate swift swim pressure.",
+                "Turn 2: Lower their rain sweeper's offense or pivot to check their water coverage.",
+                "Turn 3: Retaliate with powerful stab moves once their tailwind is equalized."
+              ]
             },
             {
-              lineup_name: "Defensive Control Mode",
-              front_line: [team[2]?.name || "Incineroar", team[3]?.name || "Amoonguss"],
-              back_line: [team[1]?.name || "Urshifu", team[5]?.name || "Raging Bolt"],
-              strategy_explanation: "Lead Incineroar and Amoonguss to rotate Intimidate and use Spore to disrupt opponent leads. The passive bulk combined with 32 HP SP allows safe pivoting to bring in sweepers."
+              opponent_archetype: "Hard Trick Room (Indeedee / Hatterene / Torkoal / Ursaluna)",
+              key_interactions: "Use Taunt or Fake Out to stall their setup. Rotate defenses to mitigate Torkoal's fire damage.",
+              recommended_lead: [p3, p4],
+              recommended_back: [p1, p2],
+              execution_steps: [
+                "Turn 1: Apply immediate flinch pressure or disrupt the Indeedee redirection with spread damage.",
+                "Turn 2: Pivot out to recycle Intimidate. Stall out Trick Room turns using Protect and redirection.",
+                "Turn 3: Bring sweepers back in to secure late game knockouts as Trick Room expires."
+              ]
             },
             {
-              lineup_name: "Trick Room Denial",
-              front_line: [team[0]?.name || "Tornadus", team[2]?.name || "Incineroar"],
-              back_line: [team[3]?.name || "Amoonguss", team[5]?.name || "Raging Bolt"],
-              strategy_explanation: "Lead Tornadus and Incineroar to disrupt Trick Room setup. Incineroar uses Fake Out, and Tornadus uses Taunt to shut down status moves, pivoting to Amoonguss to stall turns."
+              opponent_archetype: "Sun Offense (Torkoal / Lilligant / Hisuian Typhlosion / Archaludon)",
+              key_interactions: "Disrupt Lilligant's Sleep Powder and speed control. Control weather transitions.",
+              recommended_lead: [p1, p3],
+              recommended_back: [p2, p4],
+              execution_steps: [
+                "Turn 1: Deny Lilligant's redirection or Sleep Powder. Establish offensive damage check.",
+                "Turn 2: Pivot in fire resists or disrupt Lilligant's support role.",
+                "Turn 3: Clear weather hazards and sweep the backline."
+              ]
+            },
+            {
+              opponent_archetype: "Psyspam (Indeedee-F / Hatterene / Gallade / Gholdengo)",
+              key_interactions: "Psychic Terrain blocks priority. Rely on dark-type pivot strategies and heavy special defense spreads.",
+              recommended_lead: [p2, p4],
+              recommended_back: [p1, p3],
+              execution_steps: [
+                "Turn 1: Use strong spread options to break focus sashes while keeping redirection active.",
+                "Turn 2: Position dark type resists to absorb incoming psychic coverage safely.",
+                "Turn 3: Sweep with high base power special attackers."
+              ]
+            },
+            {
+              opponent_archetype: "Snow Blizzard (Abomasnow / Alolan Ninetales / Baxcalibur / Amoonguss)",
+              key_interactions: "Snow increases ice defense. Break Aurora Veil with brick break or steel coverage.",
+              recommended_lead: [p1, p2],
+              recommended_back: [p3, p5],
+              execution_steps: [
+                "Turn 1: Fire steel/rock coverage immediately to pressure Alolan Ninetales before Veil is set.",
+                "Turn 2: Shift focus to their physical ice threat (Baxcalibur) using defense drops.",
+                "Turn 3: Secure knockouts after their snow turns expire."
+              ]
+            },
+            {
+              opponent_archetype: "Sand Balance (Hippowdon / Excadrill / Gholdengo / Amoonguss)",
+              key_interactions: "Excadrill Sand Rush outspeeds default rosters. Prioritize steel resists and speed control overrides.",
+              recommended_lead: [p1, p4],
+              recommended_back: [p2, p3],
+              execution_steps: [
+                "Turn 1: Deny sand sweep potential by matching with active speed control (Tailwind).",
+                "Turn 2: Soften sand sweepers with Intimidate pivots.",
+                "Turn 3: Clean up remaining structural threads with priority/high-speed attackers."
+              ]
             }
           ],
-          threat_matrix: {
-            favorable_matchups: [
-              "Balanced teams that cannot match our Tailwind speed control.",
-              "Rain-based weather cores that we can pressure with redirection."
-            ],
-            critical_vulnerabilities: [
-              "Hard Trick Room teams that bypass our speed control.",
-              "Special attackers that bypass Intimidate drops."
-            ]
-          },
           optimizations: [
             {
-              target_pokemon: team[0]?.name || "Tornadus",
-              suggested_tweak: "Shift 4 SP from HP to Speed to guarantee outspeeding opposing base 110s.",
-              rationale: "Ensures we get Tailwind up first in mirrors."
-            }
-          ],
-          detailed_tactics: [
-            {
-              scenario_name: "Vs. Archaludon Rain",
-              key_interactions: "Use Amoonguss and Urshifu to pivot against Pelipper and check Archaludon.",
-              execution_steps: [
-                "Turn 1: Lead with Tornadus to set Tailwind immediately. Use Urshifu to attack Pelipper to deny Tailwind setup.",
-                "Turn 2: Pivot Tornadus to Amoonguss on an expected Electro Shot from Archaludon.",
-                "Turn 3: Utilize Rage Powder redirection to allow Urshifu to land a critical Close Combat on Archaludon."
-              ]
-            },
-            {
-              scenario_name: "Vs. Hard Trick Room",
-              key_interactions: "Mitigate early sweeps using Incineroar Fake Out and Amoonguss Spore.",
-              execution_steps: [
-                "Turn 1: Lead Incineroar. Fake Out the Trick Room setter while Amoonguss uses Spore on the offensive threat.",
-                "Turn 2: Parting Shot with Incineroar to lower stats and bring in Urshifu.",
-                "Turn 3: Use Amoonguss to put the setter to sleep once Trick Room is finally set to stall out TR turns."
-              ]
+              target_pokemon: p1,
+              suggested_tweak: "Shift 4 SP from HP to Speed to guarantee outspeeding mirrors.",
+              rationale: "Ensures speed control goes up first in competitive mirror scenarios."
             }
           ]
         });

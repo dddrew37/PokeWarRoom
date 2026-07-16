@@ -119,10 +119,16 @@ export default function LivePlaybook({
 
     setIsSaving(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Authentication session expired. Please sign in again.");
+        return;
+      }
       const { error } = await supabase.from("saved_strategies").insert([{
         title,
         team,
-        playbook: data
+        playbook: data,
+        user_id: user.id
       }]);
 
       if (error) {

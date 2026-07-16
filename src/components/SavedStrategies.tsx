@@ -22,10 +22,18 @@ export default function SavedStrategies() {
     }
     setIsRefreshing(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        setIsRefreshing(false);
+        return;
+      }
+
       // 1. Fetch saved strategies (mid-match playbooks)
       const { data: stratData, error: stratError } = await supabase
         .from("saved_strategies")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (stratError) {
@@ -39,6 +47,7 @@ export default function SavedStrategies() {
         .from("saved_teams")
         .select("*")
         .not("assessment_data", "is", null)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (teamError) {
@@ -282,128 +291,112 @@ export default function SavedStrategies() {
                     {selectedDossier.assessment_data.core_identity}
                   </p>
                 </div>
+                                {/* Optimal Bring Core */}
+                {selectedDossier.assessment_data.optimal_core_4 && selectedDossier.assessment_data.optimal_core_4.length > 0 && (
+                  <div className="space-y-3 pt-6 border-t border-zinc-800/60">
+                    <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Optimal Bring Core (Primary 4)</h4>
+                    <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-xl">
+                      <p className="text-xs text-zinc-400 font-mono mb-4 uppercase">The absolute best 4-Pokémon combination from this roster to bring to most matches:</p>
+                      <div className="flex gap-4 flex-wrap justify-center sm:justify-start">
+                        {selectedDossier.assessment_data.optimal_core_4.map((monName: string, idx: number) => {
+                          const match = selectedDossier.team_data?.find((t: any) => t.name.toLowerCase() === monName.toLowerCase() || t.name.toLowerCase().includes(monName.toLowerCase()));
+                          const spriteUrl = match 
+                            ? `https://play.pokemonshowdown.com/sprites/gen5/${match.id}.png`
+                            : `https://play.pokemonshowdown.com/sprites/gen5/${monName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`;
 
-                {/* Suggested Lineups */}
-                <div className="space-y-6 pt-6 border-t border-zinc-800/60">
-                  <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Suggested Lineups (4-Man Cores)</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {selectedDossier.assessment_data.suggested_lineups?.map((lineup: any, i: number) => {
-                      const getSpriteUrl = (monName: string) => {
-                        const match = selectedDossier.team_data?.find((t: any) => t.name.toLowerCase() === monName.toLowerCase() || t.name.toLowerCase().includes(monName.toLowerCase()));
-                        if (match) return `https://play.pokemonshowdown.com/sprites/gen5/${match.id}.png`;
-                        return `https://play.pokemonshowdown.com/sprites/gen5/${monName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`;
-                      };
-
-                      return (
-                        <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-5 flex flex-col gap-4 shadow-xl">
-                          <div className="border-b border-zinc-850 pb-2.5 flex justify-between items-center">
-                            <h5 className="text-sm font-black text-white tracking-wide uppercase">{lineup.lineup_name}</h5>
-                            <span className="text-[8px] font-black text-red-500 bg-red-950/20 border border-red-900/35 rounded px-1.5 py-0.5 uppercase tracking-widest font-mono">
-                              LINEUP {i + 1}
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            {/* Front Line */}
-                            <div className="bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex flex-col items-center gap-2">
-                              <span className="text-[8px] font-bold text-red-500 uppercase tracking-widest font-mono">Leads</span>
-                              <div className="flex justify-center gap-2.5">
-                                {lineup.front_line?.map((mon: string, mIdx: number) => (
-                                  <div key={mIdx} className="flex flex-col items-center gap-0.5">
-                                    <img 
-                                      src={getSpriteUrl(mon)} 
-                                      alt={mon} 
-                                      className="w-10 h-10 object-contain drop-shadow-md"
-                                      onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
-                                    />
-                                    <span className="text-[9px] font-bold text-zinc-350 text-center leading-tight truncate w-16">{mon}</span>
-                                  </div>
-                                ))}
-                              </div>
+                          return (
+                            <div key={idx} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 flex flex-col items-center gap-1 shadow-inner min-w-[100px] flex-1 sm:flex-initial animate-fade-in">
+                              <img 
+                                src={spriteUrl} 
+                                alt={monName} 
+                                className="w-12 h-12 object-contain drop-shadow-md"
+                                onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
+                              />
+                              <span className="text-[10px] font-black text-zinc-200 uppercase tracking-wider text-center truncate w-24">{monName}</span>
+                              <span className="text-[8px] font-mono font-bold text-zinc-500 uppercase">Mon {idx + 1}</span>
                             </div>
-
-                            {/* Back Line */}
-                            <div className="bg-zinc-900/30 border border-zinc-850 rounded-xl p-3 flex flex-col items-center gap-2">
-                              <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest font-mono">Bench</span>
-                              <div className="flex justify-center gap-2.5">
-                                {lineup.back_line?.map((mon: string, mIdx: number) => (
-                                  <div key={mIdx} className="flex flex-col items-center gap-0.5">
-                                    <img 
-                                      src={getSpriteUrl(mon)} 
-                                      alt={mon} 
-                                      className="w-10 h-10 object-contain drop-shadow-md"
-                                      onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
-                                    />
-                                    <span className="text-[9px] font-bold text-zinc-400 text-center leading-tight truncate w-16">{mon}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="bg-zinc-900/10 rounded-xl p-3 border border-zinc-850/60">
-                            <p className="text-[8px] font-black text-zinc-500 uppercase tracking-widest mb-1 font-mono">Strategy Execution</p>
-                            <p className="text-[11px] text-zinc-350 leading-relaxed font-medium">{lineup.strategy_explanation}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Threat Matrix */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-zinc-800/60">
-                  <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
-                    <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3 flex items-center gap-1">
-                      <span>Favorable Matchups</span>
-                    </h4>
-                    <ul className="space-y-2">
-                      {selectedDossier.assessment_data.threat_matrix?.favorable_matchups?.map((matchup: string, i: number) => (
-                        <li key={i} className="text-base text-zinc-300 flex items-start gap-2 leading-relaxed">
-                          <span className="text-red-500/40 mt-0.5">•</span>
-                          <span>{matchup}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="space-y-3 bg-zinc-950 border border-zinc-850 p-5 rounded-2xl">
-                    <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3 flex items-center gap-1">
-                      <span>Critical Vulnerabilities</span>
-                    </h4>
-                    <ul className="space-y-2">
-                      {selectedDossier.assessment_data.threat_matrix?.critical_vulnerabilities?.map((vuln: string, i: number) => (
-                        <li key={i} className="text-base text-zinc-300 flex items-start gap-2 leading-relaxed">
-                          <span className="text-red-500/40 mt-0.5">•</span>
-                          <span>{vuln}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Detailed Matchup Tactics */}
-                {selectedDossier.assessment_data.detailed_tactics && selectedDossier.assessment_data.detailed_tactics.length > 0 && (
+                {/* Meta Matchup Plans */}
+                {selectedDossier.assessment_data.meta_matchups && selectedDossier.assessment_data.meta_matchups.length > 0 && (
                   <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                    <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Detailed Matchup Tactics</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedDossier.assessment_data.detailed_tactics.map((tactic: any, i: number) => (
-                        <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-3">
-                          <h5 className="text-lg font-black text-white border-b border-zinc-850 pb-2 tracking-wide">{tactic.scenario_name}</h5>
-                          <p className="text-sm text-zinc-400 italic leading-relaxed">{tactic.key_interactions}</p>
-                          <div className="space-y-1.5 pt-2">
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest block">Execution Steps:</span>
-                            <ul className="space-y-2 text-base text-zinc-350">
-                              {tactic.execution_steps?.map((step: string, sIdx: number) => (
-                                <li key={sIdx} className="leading-relaxed flex items-start gap-1.5">
-                                  <span className="font-mono text-sm text-red-500 font-black whitespace-nowrap mt-0.5">TURN {sIdx + 1}:</span>
-                                  <span>{step.replace(/^Turn \d+:\s*/i, "")}</span>
-                                </li>
-                              ))}
-                            </ul>
+                    <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Meta Matchup Plans</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {selectedDossier.assessment_data.meta_matchups.map((matchup: any, i: number) => {
+                        const getSpriteUrl = (monName: string) => {
+                          const match = selectedDossier.team_data?.find((t: any) => t.name.toLowerCase() === monName.toLowerCase() || t.name.toLowerCase().includes(monName.toLowerCase()));
+                          if (match) return `https://play.pokemonshowdown.com/sprites/gen5/${match.id}.png`;
+                          return `https://play.pokemonshowdown.com/sprites/gen5/${monName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`;
+                        };
+
+                        return (
+                          <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-5 flex flex-col gap-4 shadow-xl hover:border-red-900/40 transition-colors animate-fade-in">
+                            <div className="border-b border-zinc-850 pb-2.5 flex justify-between items-start gap-2">
+                              <h5 className="text-sm font-black text-white tracking-wide uppercase leading-tight">{matchup.opponent_archetype}</h5>
+                              <span className="text-[8px] font-black text-red-400 bg-red-950/20 border border-red-900/35 rounded px-1.5 py-0.5 uppercase tracking-widest font-mono shrink-0">
+                                MATCHUP {i + 1}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-zinc-400 leading-relaxed font-semibold italic">{matchup.key_interactions}</p>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              {/* Lead Pairing */}
+                              <div className="bg-zinc-900/40 border border-zinc-850 rounded-xl p-3 flex flex-col items-center gap-2">
+                                <span className="text-[8px] font-bold text-red-500 uppercase tracking-widest font-mono">Recommended Leads</span>
+                                <div className="flex justify-center gap-2">
+                                  {matchup.recommended_lead?.map((mon: string, mIdx: number) => (
+                                    <div key={mIdx} className="flex flex-col items-center gap-0.5">
+                                      <img 
+                                        src={getSpriteUrl(mon)} 
+                                        alt={mon} 
+                                        className="w-10 h-10 object-contain drop-shadow-md"
+                                        onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
+                                      />
+                                      <span className="text-[9px] font-bold text-zinc-350 text-center leading-tight truncate w-16" title={mon}>{mon}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Back Pairing */}
+                              <div className="bg-zinc-900/40 border border-zinc-850 rounded-xl p-3 flex flex-col items-center gap-2">
+                                <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest font-mono">In The Back</span>
+                                <div className="flex justify-center gap-2">
+                                  {matchup.recommended_back?.map((mon: string, mIdx: number) => (
+                                    <div key={mIdx} className="flex flex-col items-center gap-0.5">
+                                      <img 
+                                        src={getSpriteUrl(mon)} 
+                                        alt={mon} 
+                                        className="w-10 h-10 object-contain drop-shadow-md"
+                                        onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
+                                      />
+                                      <span className="text-[9px] font-bold text-zinc-400 text-center leading-tight truncate w-16" title={mon}>{mon}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1.5 pt-2 border-t border-zinc-900">
+                              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block font-mono">Execution Steps:</span>
+                              <ul className="space-y-2 text-xs text-zinc-350 font-semibold">
+                                {matchup.execution_steps?.map((step: string, sIdx: number) => (
+                                  <li key={sIdx} className="leading-relaxed flex items-start gap-1.5">
+                                    <span className="font-mono text-xs text-red-500 font-black whitespace-nowrap mt-0.5">TURN {sIdx + 1}:</span>
+                                    <span>{step.replace(/^Turn \d+:\s*/i, "")}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import TeamForge from "@/components/TeamForge";
 import TeamPreviewLogger from "@/components/TeamPreviewLogger";
@@ -8,10 +8,48 @@ import SavedStrategies from "@/components/SavedStrategies";
 import RosterDossier from "@/components/RosterDossier";
 import MemoryDashboard from "@/components/MemoryDashboard";
 import { ParsedPokemon } from "@/lib/parser";
+import { supabase } from "@/lib/supabase";
+import AuthOverlay from "@/components/AuthOverlay";
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"forge" | "logger" | "saved" | "dossier" | "memory">("forge");
   const [teamState, setTeamState] = useState<ParsedPokemon[]>([]);
+  const [session, setSession] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabase) {
+      setAuthLoading(false);
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 text-center">
+        <div className="animate-spin h-10 w-10 rounded-full border-4 border-red-500 border-t-transparent"></div>
+        <p className="text-xs font-black uppercase tracking-widest text-red-500 animate-pulse font-mono">Loading Session...</p>
+      </div>
+    );
+  }
+
+  if (supabase && !session) {
+    return <AuthOverlay onSuccess={(sess) => setSession(sess)} />;
+  }
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-50 flex flex-col items-center pb-20 px-4 relative overflow-hidden selection:bg-red-500/30">
@@ -37,6 +75,18 @@ export default function Home() {
           <Link href="/manual" className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all mr-2 flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg">
             📖 User Manual
           </Link>
+          {session && (
+            <button
+              onClick={async () => {
+                if (supabase) {
+                  await supabase.auth.signOut();
+                }
+              }}
+              className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg cursor-pointer"
+            >
+              🚪 Sign Out
+            </button>
+          )}
           <div>
             <span className="text-zinc-600 mr-1.5 font-semibold">SYS STATUS:</span>
             <span className="text-red-500 font-black">OPERATIONAL</span>
