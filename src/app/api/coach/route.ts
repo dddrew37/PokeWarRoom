@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext, dossier, messages, chatContext, isBeginnerMode } = body;
 
-    if (!team && !playerLockedRoster && action !== "fetch_meta" && action !== "extract_lesson" && action !== "match_debrief") {
+    if (!team && !playerLockedRoster && action !== "fetch_meta" && action !== "extract_lesson" && action !== "match_debrief" && action !== "extract_dossier") {
       return NextResponse.json({ error: 'Team data is required' }, { status: 400 });
     }
 
@@ -865,6 +865,30 @@ The current Roster Study Dossier: ${JSON.stringify(dossier, null, 2)}
  
 Provide advanced, highly opinionated, cutthroat tactical insights. Defend your logic, explain your thoughts, or agree to adjust the strategies. Speak with extreme competitive authority.`;
 
+    const extractDossierSystemPrompt = `${REGULATION_MB_CONTEXT}
+
+Analyze the following chat transcript between a Challenger and a VGC Coach.
+Your job is to harvest and structure any actionable data that emerged during the discussion.
+
+Extract:
+1. extracted_team: If the coach discussed or recommended team modifications (items, SP spreads, moves, abilities, natures), reconstruct the final optimized 6-man roster reflecting all agreed changes. Use the original team as the base and apply every modification mentioned. If no team changes were discussed, set this to null.
+2. extracted_tactic: If a specific matchup strategy or game plan was debated, formalize it as a tactical playbook entry. If no specific tactic was discussed, set this to null.
+
+You MUST return ONLY valid JSON with this exact schema:
+{
+  "extracted_team": [
+    { "id": "string", "name": "string", "item": "string", "ability": "string", "nature": "string", "moves": ["string"], "sp": { "hp": 0, "atk": 0, "def": 0, "spa": 0, "spd": 0, "spe": 0 } }
+  ],
+  "extracted_tactic": {
+    "title": "e.g., Mega Golurk TR vs Tailwind Rain",
+    "matchup_summary": "string",
+    "primary_win_condition": { "core_strategy": "string", "lead_pairing": "string" },
+    "turn_by_turn": [ { "turn_number": 1, "player_actions": ["string"], "expected_board_state": "string" } ]
+  }
+}
+
+Note: extracted_team and extracted_tactic may each be null if no relevant data was found in that category.`;
+
     let finalMessages = [];
     if (action === "dossier_chat") {
       finalMessages = [
@@ -876,6 +900,11 @@ Provide advanced, highly opinionated, cutthroat tactical insights. Defend your l
       finalMessages = [
         { role: "system", content: extractionSystemPrompt },
         { role: "user", content: "Extract the strategic rule from this coaching chat log:\n\n" + JSON.stringify(messages || [], null, 2) }
+      ];
+    } else if (action === "extract_dossier") {
+      finalMessages = [
+        { role: "system", content: injectSystemRole(extractDossierSystemPrompt, isBeginnerMode ?? false) },
+        { role: "user", content: `Extract actionable insights from this coaching session.\n\nOriginal Team:\n${JSON.stringify(team, null, 2)}\n\nChat Transcript:\n${JSON.stringify(messages || [], null, 2)}` }
       ];
     } else if (action === "match_debrief") {
       finalMessages = [
@@ -905,7 +934,7 @@ Extract the single tactical rule.` }
         model: model,
         messages: finalMessages,
         response_format: (action === "dossier_chat" || action === "extract_lesson" || action === "match_debrief") ? undefined : { type: "json_object" },
-        temperature: (action === "assess_team" || action === "dossier_chat") ? 0.5 : (action === "extract_lesson" || action === "match_debrief") ? 0.1 : 0.2
+        temperature: (action === "assess_team" || action === "dossier_chat") ? 0.5 : (action === "extract_lesson" || action === "match_debrief") ? 0.1 : action === "extract_dossier" ? 0.1 : 0.2
       })
     });
 
@@ -918,6 +947,13 @@ Extract the single tactical rule.` }
 
     if (action === "dossier_chat" || action === "extract_lesson" || action === "match_debrief") {
       return NextResponse.json({ message: content });
+    }
+
+    if (action === "extract_dossier") {
+      content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
+      const sanitized = content.replace(/,\s*([\]}])/g, '$1');
+      const parsed = JSON.parse(sanitized);
+      return NextResponse.json(parsed);
     }
 
     if (action === "draft_suggestion" || action === "turn1" || action === "deepdive") {
