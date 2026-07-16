@@ -5,7 +5,7 @@ import { supabase } from "../lib/supabase";
 import LivePlaybook from "./LivePlaybook";
 import { POKEBALL_FALLBACK } from "../lib/pokemon";
 
-export default function SavedStrategies() {
+export default function SavedStrategies({ session }: { session?: any }) {
   const [activeTab, setActiveTab] = useState<"playbooks" | "dossiers">("playbooks");
   const [strategies, setStrategies] = useState<any[]>([]);
   const [savedDossiers, setSavedDossiers] = useState<any[]>([]);
@@ -16,14 +16,23 @@ export default function SavedStrategies() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchSaved = async () => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
     setIsRefreshing(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!session?.user) {
+        // LocalStorage fallback
+        const localStrategies = JSON.parse(localStorage.getItem("poke_saved_strategies") || "[]");
+        setStrategies(localStrategies);
+
+        const localTeams = JSON.parse(localStorage.getItem("poke_saved_teams") || "[]");
+        const dossiersOnly = localTeams.filter((t: any) => t.assessment_data !== null && t.assessment_data !== undefined);
+        setSavedDossiers(dossiersOnly);
+
+        setLoading(false);
+        setIsRefreshing(false);
+        return;
+      }
+
+      if (!supabase) {
         setLoading(false);
         setIsRefreshing(false);
         return;
@@ -33,7 +42,7 @@ export default function SavedStrategies() {
       const { data: stratData, error: stratError } = await supabase
         .from("saved_strategies")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
       if (stratError) {
@@ -47,7 +56,7 @@ export default function SavedStrategies() {
         .from("saved_teams")
         .select("*")
         .not("assessment_data", "is", null)
-        .eq("user_id", user.id)
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
       if (teamError) {
@@ -72,7 +81,7 @@ export default function SavedStrategies() {
   }, []);
 
   if (selected) {
-    return <LivePlaybook team={selected.team} data={selected.playbook} onBack={() => setSelected(null)} readOnly={true} />;
+    return <LivePlaybook team={selected.team} data={selected.playbook} onBack={() => setSelected(null)} readOnly={true} session={session} />;
   }
 
   return (

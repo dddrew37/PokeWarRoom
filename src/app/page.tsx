@@ -16,6 +16,7 @@ export default function Home() {
   const [teamState, setTeamState] = useState<ParsedPokemon[]>([]);
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     if (!supabase) {
@@ -47,8 +48,8 @@ export default function Home() {
     );
   }
 
-  if (supabase && !session) {
-    return <AuthOverlay onSuccess={(sess) => setSession(sess)} />;
+  if (supabase && !session && !isGuest) {
+    return <AuthOverlay onSuccess={(sess) => setSession(sess)} onGuestLogin={() => setIsGuest(true)} />;
   }
 
   return (
@@ -75,6 +76,16 @@ export default function Home() {
           <Link href="/manual" className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all mr-2 flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg">
             📖 User Manual
           </Link>
+          {isGuest && (
+            <button
+              onClick={() => {
+                setIsGuest(false);
+              }}
+              className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg cursor-pointer"
+            >
+              🔑 Create Account / Login
+            </button>
+          )}
           {session && (
             <button
               onClick={async () => {
@@ -157,10 +168,10 @@ export default function Home() {
       </div>
 
       <div className="w-full relative z-10">
-        {activeTab === "forge" && <TeamForge team={teamState} setTeam={setTeamState} />}
-        {activeTab === "logger" && <TeamPreviewLogger playerTeam={teamState} onGoToForge={() => setActiveTab("forge")} />}
-        {activeTab === "saved" && <SavedStrategies />}
-        {activeTab === "dossier" && <RosterDossier />}
+        {activeTab === "forge" && <TeamForge team={teamState} setTeam={setTeamState} session={session} />}
+        {activeTab === "logger" && <TeamPreviewLogger playerTeam={teamState} onGoToForge={() => setActiveTab("forge")} session={session} />}
+        {activeTab === "saved" && <SavedStrategies session={session} />}
+        {activeTab === "dossier" && <RosterDossier session={session} />}
         {activeTab === "memory" && <MemoryDashboard />}
       </div>
     </main>

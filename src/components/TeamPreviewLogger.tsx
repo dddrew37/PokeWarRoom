@@ -13,9 +13,10 @@ const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(
 interface TeamPreviewLoggerProps {
   playerTeam?: ParsedPokemon[];
   onGoToForge?: () => void;
+  session?: any;
 }
 
-export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: TeamPreviewLoggerProps) {
+export default function TeamPreviewLogger({ playerTeam = [], onGoToForge, session }: TeamPreviewLoggerProps) {
   const [selected, setSelected] = useState<Pokemon[]>([]);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -374,6 +375,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge }: Team
             handleResetMatchModifiers();
           }} 
           onNextTurn={matchPhase === "turn1" ? handleNextTurn : undefined}
+          session={session}
         />
       </div>
     );

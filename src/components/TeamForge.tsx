@@ -10,7 +10,13 @@ import { POKEBALL_FALLBACK } from "../lib/pokemon";
 import metaTeamsData from "../data/meta_teams.json";
 import { exportTeamToPokepaste } from "../utils/exporter";
 
-export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], setTeam: React.Dispatch<React.SetStateAction<ParsedPokemon[]>> }) {
+interface TeamForgeProps {
+  team: ParsedPokemon[];
+  setTeam: React.Dispatch<React.SetStateAction<ParsedPokemon[]>>;
+  session?: any;
+}
+
+export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
   const [paste, setPaste] = useState("");
   const [mode, setMode] = useState<"paste" | "manual">("manual");
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -274,11 +280,6 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
       alert(msg);
       return;
     }
-    if (!supabase) {
-      console.warn("[TeamForge] Guard: Supabase client is null. Check NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in .env.local");
-      alert("Supabase not configured in .env! Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
-      return;
-    }
 
     if (!teamName.trim()) {
       console.warn("[TeamForge] Guard: teamName is empty. Save aborted.");
@@ -288,16 +289,32 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
 
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert("Authentication session expired. Please sign in again.");
+      if (!session?.user) {
+        // LocalStorage fallback
+        const localPayload = {
+          id: Math.random().toString(36).substring(2, 11),
+          team_name: teamName,
+          team_data: team,
+          assessment_data: dossierToSave || dossierData || null,
+          created_at: new Date().toISOString()
+        };
+        const currentTeams = JSON.parse(localStorage.getItem("poke_saved_teams") || "[]");
+        currentTeams.unshift(localPayload);
+        localStorage.setItem("poke_saved_teams", JSON.stringify(currentTeams));
+        alert("Roster & Assessment saved successfully (Local Save)!");
+        await refreshSavedTeams();
+        return;
+      }
+
+      if (!supabase) {
+        alert("Supabase client is null. Cannot complete cloud save.");
         return;
       }
 
       const payload: any = {
         team_name: teamName,
         team_data: team,
-        user_id: user.id
+        user_id: session.user.id
       };
       if (dossierToSave) {
         payload.assessment_data = dossierToSave;
@@ -312,7 +329,6 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
         alert("Failed to save roster: " + error.message);
       } else {
         alert("Roster & Assessment saved successfully!");
-        // Immediately refresh the saved teams list so the Load modal is up to date
         await refreshSavedTeams();
       }
     } catch (err: unknown) {
@@ -326,15 +342,19 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
 
   /** Shared fetch helper — keeps savedTeams state in sync after both saves and explicit loads. */
   const refreshSavedTeams = async () => {
+    if (!session?.user) {
+      // LocalStorage fallback
+      const currentTeams = JSON.parse(localStorage.getItem("poke_saved_teams") || "[]");
+      setSavedTeams(currentTeams);
+      return;
+    }
+
     if (!supabase) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data, error } = await supabase
         .from("saved_teams")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -350,11 +370,20 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
     }
   };
 
-  const handleDeleteRoster = async (id: number, e: React.MouseEvent) => {
+  const handleDeleteRoster = async (id: any, e: React.MouseEvent) => {
     e.stopPropagation(); // prevent loading the team when clicking delete
-    if (!supabase) return;
     if (!confirm("Are you sure you want to delete this roster?")) return;
+
+    if (!session?.user) {
+      // LocalStorage fallback
+      const currentTeams = JSON.parse(localStorage.getItem("poke_saved_teams") || "[]");
+      const updatedTeams = currentTeams.filter((t: any) => t.id !== id);
+      localStorage.setItem("poke_saved_teams", JSON.stringify(updatedTeams));
+      await refreshSavedTeams();
+      return;
+    }
     
+    if (!supabase) return;
     try {
       const { error } = await supabase.from('saved_teams').delete().eq('id', id);
       if (error) {
@@ -371,11 +400,6 @@ export default function TeamForge({ team, setTeam }: { team: ParsedPokemon[], se
   };
 
   const handleFetchTeams = async () => {
-    if (!supabase) {
-      alert("Supabase not configured in .env! Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
-      return;
-    }
-
     setIsLoadingTeams(true);
     setShowLoadModal(true);
 

@@ -63,13 +63,15 @@ export default function LivePlaybook({
   data, 
   onBack, 
   readOnly = false,
-  onNextTurn
+  onNextTurn,
+  session
 }: { 
   team: Pokemon[], 
   data: PlaybookData, 
   onBack: () => void,
   readOnly?: boolean,
-  onNextTurn?: (context: string) => Promise<void>
+  onNextTurn?: (context: string) => Promise<void>,
+  session?: any
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [showAuditLogic, setShowAuditLogic] = useState(false);
@@ -110,25 +112,37 @@ export default function LivePlaybook({
   const nodes = activeFlowchart?.turns || [];
 
   const handleSave = async () => {
-    if (!supabase) {
-      alert("Supabase not configured in .env! Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
-      return;
-    }
     const title = prompt("Name this Strategy (e.g. Vs Hard Trick Room):");
     if (!title) return;
 
     setIsSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert("Authentication session expired. Please sign in again.");
+      if (!session?.user) {
+        // LocalStorage fallback
+        const localPayload = {
+          id: Math.random().toString(36).substring(2, 11),
+          title,
+          team,
+          playbook: data,
+          created_at: new Date().toISOString()
+        };
+        const currentStrats = JSON.parse(localStorage.getItem("poke_saved_strategies") || "[]");
+        currentStrats.unshift(localPayload);
+        localStorage.setItem("poke_saved_strategies", JSON.stringify(currentStrats));
+        alert("Strategy saved successfully (Local Save)!");
         return;
       }
+
+      if (!supabase) {
+        alert("Supabase client is null. Cannot complete cloud save.");
+        return;
+      }
+
       const { error } = await supabase.from("saved_strategies").insert([{
         title,
         team,
         playbook: data,
-        user_id: user.id
+        user_id: session.user.id
       }]);
 
       if (error) {

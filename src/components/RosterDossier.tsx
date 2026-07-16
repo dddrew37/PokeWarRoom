@@ -297,7 +297,7 @@ function ExtractionModal({
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export default function RosterDossier() {
+export default function RosterDossier({ session }: { session?: any }) {
   const [pasteInput, setPasteInput]     = useState("");
   const [team, setTeam]                 = useState<ParsedPokemon[]>([]);
   const [messages, setMessages]         = useState<{ role: "user" | "assistant"; content: string }[]>([]);
@@ -403,20 +403,35 @@ export default function RosterDossier() {
   // ── Save Handlers ─────────────────────────────────────────────────────────
 
   const handleSaveExtractedTeam = async (extractedTeam: ExtractedPokemon[]) => {
-    if (!supabase) { alert("Supabase not configured. Add env vars to enable saving."); return; }
     const teamName = prompt("Name this reforged roster (e.g. Golurk TR Core v2):");
     if (!teamName?.trim()) return;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert("Authentication session expired. Please sign in again.");
+      if (!session?.user) {
+        // LocalStorage fallback
+        const localPayload = {
+          id: Math.random().toString(36).substring(2, 11),
+          team_name: teamName.trim(),
+          team_data: extractedTeam,
+          assessment_data: { source: "dossier_extraction", chat_length: messages.length },
+          created_at: new Date().toISOString()
+        };
+        const currentTeams = JSON.parse(localStorage.getItem("poke_saved_teams") || "[]");
+        currentTeams.unshift(localPayload);
+        localStorage.setItem("poke_saved_teams", JSON.stringify(currentTeams));
+        alert(`Roster "${teamName}" saved successfully (Local Save)!`);
         return;
       }
+
+      if (!supabase) {
+        alert("Supabase client is null. Cannot complete cloud save.");
+        return;
+      }
+
       const { error } = await supabase.from("saved_teams").insert([{
         team_name: teamName.trim(),
         team_data: extractedTeam,
         assessment_data: { source: "dossier_extraction", chat_length: messages.length },
-        user_id: user.id
+        user_id: session.user.id
       }]);
       if (error) { console.error("[Supabase] saved_teams INSERT error:", error); alert("Save failed: " + error.message); }
       else { alert(`Roster "${teamName}" saved successfully!`); }
@@ -427,18 +442,33 @@ export default function RosterDossier() {
   };
 
   const handleSaveExtractedTactic = async (tactic: ExtractedTactic) => {
-    if (!supabase) { alert("Supabase not configured. Add env vars to enable saving."); return; }
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert("Authentication session expired. Please sign in again.");
+      if (!session?.user) {
+        // LocalStorage fallback
+        const localPayload = {
+          id: Math.random().toString(36).substring(2, 11),
+          title: tactic.title,
+          team: team,
+          playbook: tactic,
+          created_at: new Date().toISOString()
+        };
+        const currentStrats = JSON.parse(localStorage.getItem("poke_saved_strategies") || "[]");
+        currentStrats.unshift(localPayload);
+        localStorage.setItem("poke_saved_strategies", JSON.stringify(currentStrats));
+        alert(`Strategy "${tactic.title}" saved to Playbook Library (Local Save)!`);
         return;
       }
+
+      if (!supabase) {
+        alert("Supabase client is null. Cannot complete cloud save.");
+        return;
+      }
+
       const { error } = await supabase.from("saved_strategies").insert([{
         title: tactic.title,
         team: team,
         playbook: tactic,
-        user_id: user.id
+        user_id: session.user.id
       }]);
       if (error) { console.error("[Supabase] saved_strategies INSERT error:", error); alert("Save failed: " + error.message); }
       else { alert(`Strategy "${tactic.title}" saved to Playbook Library!`); }
