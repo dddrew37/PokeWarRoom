@@ -403,6 +403,12 @@ You must score the team on a scale of 0 to 100 for these four pillars (offense, 
 - You MUST generate exactly 6 detailed strategies (meta_matchups) against 6 different top-tier meta teams currently dominating Regulation M-B.
 - Ensure the meta teams you invent for the opponent strictly adhere to the Regulation M-B Whitelist (NO Urshifu, NO Calyrex, NO Paradoxes).
 
+[TACTICAL MANDATE: HYPER-AGGRESSION & BOARD CONTROL]
+Your strategies must NOT be passive. Do not default to safe, defensive switching unless absolutely necessary. You must dictate the pace of the game.
+1. PRIORITIZE KOs OVER SURVIVAL: If a Turn 1 sequence results in a 1-for-1 trade that removes the opponent's primary win condition (e.g., their Trick Room setter or Tailwind user), take the trade.
+2. EXPLOIT HARD READS: Instruct the Challenger to make aggressive reads. (e.g., "They will likely protect X, so double target Y," or "Ignore their redirector and hit the incoming switch.")
+3. MAXIMUM PRESSURE: Emphasize offensive momentum, trapping (Shadow Tag/Perish), and immediate speed control dominance. Force the opponent onto their back foot from Turn 1.
+
 You must output your response STRICTLY as a JSON object matching this schema:
 {
   "red_flags": ["Glaring teambuilding warning 1", "Glaring teambuilding warning 2"],
@@ -421,7 +427,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
       "recommended_lead": ["Pokemon 1", "Pokemon 2"],
       "recommended_back": ["Pokemon 3", "Pokemon 4"],
       "execution_steps": [
-        "Turn 1 details...",
+        "Turn 1 details (describe ruthless, proactive plays. Do not suggest 'Protect and scout' unless facing an immediate, uncounterable OHKO threat)...",
         "Turn 2 details...",
         "Turn 3 details..."
       ]
