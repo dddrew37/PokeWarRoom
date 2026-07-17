@@ -211,7 +211,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
     }
   };
 
-  // Team name input â€” replaces the prompt() for saving rosters
+  // Team name input — replaces the prompt() for saving rosters
   const [teamName, setTeamName] = useState("");
   const [format, setFormat] = useState("reg_mb");
 
@@ -367,7 +367,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
     }
   };
 
-  /** Shared fetch helper â€” keeps savedTeams state in sync after both saves and explicit loads. */
+  /** Shared fetch helper — keeps savedTeams state in sync after both saves and explicit loads. */
   const refreshSavedTeams = async () => {
     if (!session?.user) {
       // LocalStorage fallback
@@ -950,10 +950,11 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
 
                 {/* Tab Content Area */}
                 <div className="flex-1 min-h-0 overflow-hidden">
+                  <div className="max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-600">
 
-                  {/* â”€â”€ Tab 1: Optimal Cores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* Tab 1: Optimal Cores */}
                   {dossierTab === "cores" && (
-                    <div className="h-full overflow-y-auto p-6">
+                    <div className="p-6">
                       {!dossierData ? (
                         <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">No data loaded.</div>
                       ) : (
@@ -966,7 +967,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                               </div>
                               <ul className="space-y-1.5 font-mono text-[11px] font-semibold text-zinc-200">
                                 {dossierData.red_flags.map((flag: string, i: number) => (
-                                  <li key={i} className="flex items-start gap-2"><span className="text-red-500">â€¢</span><span>{flag}</span></li>
+                                  <li key={i} className="flex items-start gap-2"><span className="text-red-500">•</span><span>{flag}</span></li>
                                 ))}
                               </ul>
                             </div>
@@ -1006,7 +1007,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                           {/* Optimal Cores Grid */}
                           {dossierData.optimal_cores && dossierData.optimal_cores.length > 0 && (
                             <div className="space-y-3">
-                              <h4 className="text-sm font-black text-red-500 uppercase tracking-widest border-l-4 border-red-600 pl-3">Bring 6, Pick 4 â€” Optimal Cores</h4>
+                              <h4 className="text-sm font-black text-red-500 uppercase tracking-widest border-l-4 border-red-600 pl-3">Bring 6, Pick 4 — Optimal Cores</h4>
                               <p className="text-xs text-zinc-500 font-mono uppercase">Each core represents a distinct game plan you can select depending on the matchup.</p>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {dossierData.optimal_cores.map((core: any, cIdx: number) => (
@@ -1058,9 +1059,9 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                     </div>
                   )}
 
-                  {/* â”€â”€ Tab 2: Meta Matchups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* Tab 2: Meta Matchups */}
                   {dossierTab === "matchups" && (
-                    <div className="h-full overflow-y-auto p-6">
+                    <div className="p-6">
                       {!dossierData || !dossierData.meta_matchups ? (
                         <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">No matchup data loaded.</div>
                       ) : (
@@ -1107,10 +1108,11 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                       )}
                     </div>
                   )}
+                  </div>
 
-                  {/* â”€â”€ Tab 3: Coach Chat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {/* Tab 3: Coach Chat */}
                   {dossierTab === "chat" && (
-                    <div className="h-full flex flex-col overflow-hidden bg-zinc-950/30">
+                    <div className="max-h-[70vh] flex flex-col overflow-hidden bg-zinc-950/30">
                       {/* Reforge Action Header */}
                       <div className="p-4 border-b border-zinc-800 flex flex-col gap-2 bg-zinc-900/40 flex-shrink-0">
                         <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Sparring Engine</span>
@@ -1276,7 +1278,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                     <ul className="space-y-1 text-xs text-zinc-300 font-medium">
                       {rep.changes?.map((change: string, cIdx: number) => (
                         <li key={cIdx} className="flex items-start gap-2.5">
-                          <span className="text-red-500 font-bold font-mono">â€¢</span>
+                          <span className="text-red-500 font-bold font-mono">•</span>
                           <span>{change}</span>
                         </li>
                       ))}
