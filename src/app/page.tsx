@@ -17,6 +17,55 @@ export default function Home() {
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const syncSessionCookie = (session: any) => {
+    if (session) {
+      document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${session.expires_in}; SameSite=Lax; Secure`;
+    } else {
+      document.cookie = `sb-access-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; Secure`;
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!supabase) return;
+    setIsDeleting(true);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession) {
+        alert("No active session found.");
+        setIsDeleting(false);
+        setShowDeleteConfirm(false);
+        return;
+      }
+
+      const response = await fetch("/api/auth/delete-account", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${currentSession.access_token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        const resData = await response.json();
+        throw new Error(resData.error || "Failed to delete account");
+      }
+
+      await supabase.auth.signOut();
+      setSession(null);
+      syncSessionCookie(null);
+      setIsGuest(false);
+      alert("Your operator account and all associated data have been permanently wiped.");
+    } catch (err: any) {
+      console.error("[Delete Account] Error:", err);
+      alert("Failed to delete account: " + (err.message || "Unknown error"));
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   useEffect(() => {
     if (!supabase) {
@@ -27,6 +76,7 @@ export default function Home() {
     // 1. Initial Check: Try to get existing session on load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      syncSessionCookie(session);
       setAuthLoading(false);
       // If session exists, we are done
       if (session) return;
@@ -51,6 +101,7 @@ export default function Home() {
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Supabase Auth Event:', event);
       setSession(session);
+      syncSessionCookie(session);
       setAuthLoading(false);
     });
 
@@ -106,16 +157,25 @@ export default function Home() {
             </button>
           )}
           {session && (
-            <button
-              onClick={async () => {
-                if (supabase) {
-                  await supabase.auth.signOut();
-                }
-              }}
-              className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg cursor-pointer"
-            >
-              🚪 Sign Out
-            </button>
+            <>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-red-500 hover:text-white hover:border-red-900 hover:bg-red-950/50 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-red-950/45 bg-red-950/10 px-3 py-1.5 rounded-lg cursor-pointer"
+              >
+                ⚠️ Delete Account
+              </button>
+              <button
+                onClick={async () => {
+                  if (supabase) {
+                    await supabase.auth.signOut();
+                    syncSessionCookie(null);
+                  }
+                }}
+                className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg cursor-pointer"
+              >
+                🚪 Sign Out
+              </button>
+            </>
           )}
           <div>
             <span className="text-zinc-600 mr-1.5 font-semibold">SYS STATUS:</span>
@@ -191,8 +251,48 @@ export default function Home() {
         {activeTab === "logger" && <TeamPreviewLogger playerTeam={teamState} onGoToForge={() => setActiveTab("forge")} session={session} />}
         {activeTab === "saved" && <SavedStrategies session={session} />}
         {activeTab === "dossier" && <RosterDossier session={session} />}
-        {activeTab === "memory" && <MemoryDashboard />}
+        {activeTab === "memory" && <MemoryDashboard session={session} />}
       </div>
+
+      {/* Account Deletion Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
+          <div className="relative max-w-md w-full bg-zinc-900 border-2 border-red-900/40 rounded-3xl p-8 shadow-2xl flex flex-col gap-6 text-center">
+            <div className="h-14 w-14 rounded-full bg-red-950/30 border border-red-800 text-red-500 flex items-center justify-center mx-auto text-2xl font-mono animate-pulse">
+              ⚠️
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-black uppercase tracking-wider text-red-500">Deauthorize Operator Profile?</h3>
+              <p className="text-xs text-zinc-400 font-mono leading-relaxed uppercase">
+                Warning: This action is permanent and irreversible. Your account credentials, profile metadata, and all cloud strategies/teams will be deleted from the database.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 py-3 rounded-xl font-bold text-xs bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 uppercase tracking-widest transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="flex-1 py-3 rounded-xl font-black text-xs bg-red-750 hover:bg-red-650 border border-red-650 text-white hover:text-red-100 uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(220,38,38,0.3)] flex items-center justify-center gap-1.5"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full" />
+                    <span>Wiping...</span>
+                  </>
+                ) : (
+                  "Wipe Account"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -134,6 +134,21 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
       }
 
       // Persist rule to memory bank
+      if (!session?.user) {
+        const localPayload = {
+          id: Math.random().toString(36).substring(2, 11),
+          rule_text: ruleText,
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+        const currentTactics = JSON.parse(localStorage.getItem("poke_learned_tactics") || "[]");
+        currentTactics.unshift(localPayload);
+        localStorage.setItem("poke_learned_tactics", JSON.stringify(currentTactics));
+        alert("Lesson saved to Memory Bank (Local Save): " + ruleText);
+        setIsExtracting(false);
+        return;
+      }
+
       const saveRes = await fetch("/api/memory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -38,15 +38,40 @@ export async function POST(request: Request) {
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       if (supabaseUrl && supabaseKey) {
         try {
-          const supabase = createClient(supabaseUrl, supabaseKey);
-          const { data: tactics, error: tacticsError } = await supabase
-            .from('ai_learned_tactics')
-            .select('rule_text')
-            .eq('is_active', true);
-          if (!tacticsError && tactics && tactics.length > 0) {
-            userDirectivesContext = tactics
-              .map((t: { rule_text: string }, i: number) => `${i + 1}. ${t.rule_text}`)
-              .join('\n');
+          const supabase = createClient(supabaseUrl, supabaseKey, {
+            auth: {
+              persistSession: false
+            }
+          });
+
+          // Check cookies for token
+          let token = "";
+          const cookieHeader = request.headers.get("cookie") || "";
+          const match = cookieHeader.match(/sb-access-token=([^;]+)/);
+          if (match) {
+            token = match[1];
+          }
+
+          if (token) {
+            await supabase.auth.setSession({
+              access_token: token,
+              refresh_token: ''
+            });
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const { data: tactics, error: tacticsError } = await supabase
+                .from('ai_learned_tactics')
+                .select('rule_text')
+                .eq('is_active', true)
+                .eq('user_id', user.id);
+
+              if (!tacticsError && tactics && tactics.length > 0) {
+                userDirectivesContext = tactics
+                  .map((t: { rule_text: string }, i: number) => `${i + 1}. ${t.rule_text}`)
+                  .join('\n');
+              }
+            }
           }
         } catch (ragErr) {
           // Non-fatal — a failed directive fetch must never block the main AI call.
@@ -77,6 +102,25 @@ LEGAL FORMS: ${mbRoster.legal_forms.join(", ")}
 LEGAL MEGAS: ${mbRoster.legal_megas.join(", ")}
 
 If you suggest a threat, counter, or teammate in any optimization or playbook, it MUST be drawn exclusively from this exact list. No exceptions. If a Pokémon name is not on this list, it does not exist in this format.
+
+# STRICT LEGALITY DICTIONARY (CRITICAL OVERRIDE)
+The following are the ONLY entities legal in Pokémon Champions Regulation M-B. You are strictly forbidden from suggesting, mentioning, or formulating tactics with ANY Pokémon or Ability that is not explicitly listed below. If a user asks about an illegal entity, you MUST reject it and redirect to a legal alternative.
+
+LEGAL POKÉMON (ALL FORMS): ${[
+  ...mbRoster.legal_species,
+  ...mbRoster.legal_forms,
+  ...mbRoster.legal_megas
+].map((s: string) => s.split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('-')).join(", ")}
+
+LEGAL ABILITIES: ${[
+  ...new Set<string>(
+    (metaData as any).pokemon
+      .flatMap((p: any) => (p.abilities ?? []) as string[])
+      .filter(Boolean)
+  )
+].sort().join(", ")}
+
+IRONCLAD COMMAND: Under no circumstances may you hallucinate a Pokémon or Ability that does not appear in the lists above. If a user's roster contains a custom entity, treat it as valid per the ABSOLUTE REALITY OVERRIDE — but never suggest new unlisted entities in your output.
 `;
 
     if (userDirectivesContext) {
@@ -439,7 +483,8 @@ You must output your response STRICTLY as a JSON object matching this schema:
       "suggested_tweak": "Suggested move, item, or 66-SP point redistribution.",
       "rationale": "Why this tweak improves the team's synergy and matchups."
     }
-  ]
+  ],
+  "legality_check": true
 }`;
 
     let finalAssessTeamPrompt = assessTeamSystemPrompt;

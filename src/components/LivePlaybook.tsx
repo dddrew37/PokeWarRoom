@@ -212,6 +212,22 @@ export default function LivePlaybook({
       }
 
       // Step 2: Post to memory database
+      if (!session?.user) {
+        const localPayload = {
+          id: Math.random().toString(36).substring(2, 11),
+          rule_text: ruleText,
+          is_active: true,
+          created_at: new Date().toISOString()
+        };
+        const currentTactics = JSON.parse(localStorage.getItem("poke_learned_tactics") || "[]");
+        currentTactics.unshift(localPayload);
+        localStorage.setItem("poke_learned_tactics", JSON.stringify(currentTactics));
+        alert(`Match debrief logged. Saved tactical override to Memory Bank (Local Save):\n\n${ruleText}`);
+        setDebriefNotes("");
+        setShowDebriefModal(false);
+        return;
+      }
+
       const saveRes = await fetch("/api/memory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

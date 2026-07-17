@@ -220,7 +220,7 @@ function TacticCard({
 }
 
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
-export default function MemoryDashboard() {
+export default function MemoryDashboard({ session }: { session?: any }) {
   const [tactics, setTactics] = useState<Tactic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -232,6 +232,13 @@ export default function MemoryDashboard() {
     setError(null);
 
     try {
+      if (!session?.user) {
+        // LocalStorage fallback path
+        const localTactics = JSON.parse(localStorage.getItem("poke_learned_tactics") || "[]");
+        setTactics(localTactics);
+        return;
+      }
+
       const res = await fetch("/api/memory");
       const data = await res.json();
 
@@ -248,7 +255,7 @@ export default function MemoryDashboard() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [session]);
 
   useEffect(() => {
     fetchTactics();
@@ -262,6 +269,14 @@ export default function MemoryDashboard() {
     setTactics(prev =>
       prev.map(t => t.id === id ? { ...t, is_active: newValue } : t)
     );
+
+    if (!session?.user) {
+      // LocalStorage update
+      const currentTactics = JSON.parse(localStorage.getItem("poke_learned_tactics") || "[]");
+      const updatedTactics = currentTactics.map((t: any) => t.id === id ? { ...t, is_active: newValue } : t);
+      localStorage.setItem("poke_learned_tactics", JSON.stringify(updatedTactics));
+      return;
+    }
 
     try {
       const res = await fetch("/api/memory", {
@@ -285,7 +300,7 @@ export default function MemoryDashboard() {
       );
       console.error("[MemoryDashboard] PATCH network error:", e);
     }
-  }, []);
+  }, [session]);
 
   // Optimistic delete
   const handleDelete = useCallback(async (id: string) => {
@@ -293,6 +308,14 @@ export default function MemoryDashboard() {
 
     // Optimistic remove
     setTactics(prev => prev.filter(t => t.id !== id));
+
+    if (!session?.user) {
+      // LocalStorage delete
+      const currentTactics = JSON.parse(localStorage.getItem("poke_learned_tactics") || "[]");
+      const updatedTactics = currentTactics.filter((t: any) => t.id !== id);
+      localStorage.setItem("poke_learned_tactics", JSON.stringify(updatedTactics));
+      return;
+    }
 
     try {
       const res = await fetch("/api/memory", {
@@ -316,7 +339,7 @@ export default function MemoryDashboard() {
       }
       console.error("[MemoryDashboard] DELETE network error:", e);
     }
-  }, [tactics]);
+  }, [session, tactics]);
 
   const activeTactics = tactics.filter(t => t.is_active).length;
   const totalTactics = tactics.length;

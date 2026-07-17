@@ -1,24 +1,52 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-/**
- * Server-side Supabase client for the memory API.
- * Uses the anon key (matching the existing project pattern).
- * Requires the ai_learned_tactics table to exist in Supabase.
- */
-function getServerSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key);
-}
-
 const TABLE = 'ai_learned_tactics';
 
+/**
+ * Creates a server-side Supabase client authenticated with the user's JWT session token.
+ * Extracts the token from either the Authorization Bearer header or the sb-access-token cookie.
+ */
+async function getAuthenticatedSupabase(request: Request) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+
+  const client = createClient(url, anonKey, {
+    auth: {
+      persistSession: false
+    }
+  });
+
+  // Extract session access token
+  let token = "";
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else {
+    const cookieHeader = request.headers.get("cookie") || "";
+    const match = cookieHeader.match(/sb-access-token=([^;]+)/);
+    if (match) {
+      token = match[1];
+    }
+  }
+
+  if (token) {
+    const { error } = await client.auth.setSession({
+      access_token: token,
+      refresh_token: ''
+    });
+    if (error) {
+      console.warn("[Memory API] Failed to set session from token:", error.message);
+    }
+  }
+
+  return client;
+}
+
 // ─── GET /api/memory ──────────────────────────────────────────────────────────
-// Returns all rows ordered by created_at descending.
-export async function GET() {
-  const supabase = getServerSupabase();
+export async function GET(request: Request) {
+  const supabase = await getAuthenticatedSupabase(request);
   if (!supabase) {
     return NextResponse.json(
       { error: 'Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.' },
@@ -26,9 +54,16 @@ export async function GET() {
     );
   }
 
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    // If not authenticated, return an empty array gracefully (Guest Mode)
+    return NextResponse.json({ tactics: [] });
+  }
+
   const { data, error } = await supabase
     .from(TABLE)
     .select('id, rule_text, is_active, created_at')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -40,14 +75,15 @@ export async function GET() {
 }
 
 // ─── PATCH /api/memory ────────────────────────────────────────────────────────
-// Toggles a rule's is_active state. Body: { id: string, is_active: boolean }
 export async function PATCH(request: Request) {
-  const supabase = getServerSupabase();
+  const supabase = await getAuthenticatedSupabase(request);
   if (!supabase) {
-    return NextResponse.json(
-      { error: 'Supabase is not configured.' },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
   let body: { id?: string; is_active?: boolean };
@@ -58,7 +94,6 @@ export async function PATCH(request: Request) {
   }
 
   const { id, is_active } = body;
-
   if (!id || typeof is_active !== 'boolean') {
     return NextResponse.json(
       { error: 'Body must include id (string) and is_active (boolean).' },
@@ -70,6 +105,7 @@ export async function PATCH(request: Request) {
     .from(TABLE)
     .update({ is_active })
     .eq('id', id)
+    .eq('user_id', user.id)
     .select('id, rule_text, is_active, created_at')
     .single();
 
@@ -82,14 +118,15 @@ export async function PATCH(request: Request) {
 }
 
 // ─── DELETE /api/memory ───────────────────────────────────────────────────────
-// Permanently deletes a rule. Body: { id: string }
 export async function DELETE(request: Request) {
-  const supabase = getServerSupabase();
+  const supabase = await getAuthenticatedSupabase(request);
   if (!supabase) {
-    return NextResponse.json(
-      { error: 'Supabase is not configured.' },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
   let body: { id?: string };
@@ -100,7 +137,6 @@ export async function DELETE(request: Request) {
   }
 
   const { id } = body;
-
   if (!id) {
     return NextResponse.json({ error: 'Body must include id (string).' }, { status: 400 });
   }
@@ -108,7 +144,8 @@ export async function DELETE(request: Request) {
   const { error } = await supabase
     .from(TABLE)
     .delete()
-    .eq('id', id);
+    .eq('id', id)
+    .eq('user_id', user.id);
 
   if (error) {
     console.error('[Memory API] DELETE error:', error);
@@ -119,14 +156,15 @@ export async function DELETE(request: Request) {
 }
 
 // ─── POST /api/memory ─────────────────────────────────────────────────────────
-// Inserts a new rule into ai_learned_tactics. Body: { rule_text: string }
 export async function POST(request: Request) {
-  const supabase = getServerSupabase();
+  const supabase = await getAuthenticatedSupabase(request);
   if (!supabase) {
-    return NextResponse.json(
-      { error: 'Supabase is not configured.' },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: 'Supabase is not configured.' }, { status: 503 });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
   }
 
   let body: { rule_text?: string };
@@ -137,7 +175,6 @@ export async function POST(request: Request) {
   }
 
   const { rule_text } = body;
-
   if (!rule_text || typeof rule_text !== 'string' || !rule_text.trim()) {
     return NextResponse.json(
       { error: 'Body must include a non-empty rule_text (string).' },
@@ -147,7 +184,7 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from(TABLE)
-    .insert({ rule_text: rule_text.trim(), is_active: true })
+    .insert({ rule_text: rule_text.trim(), is_active: true, user_id: user.id })
     .select('id, rule_text, is_active, created_at')
     .single();
 
