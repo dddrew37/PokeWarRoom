@@ -442,9 +442,12 @@ If the user is in Beginner Mode, you must scan the team for glaring structural w
 
 You must score the team on a scale of 0 to 100 for these four pillars (offense, bulk, speed_control, synergy). Be highly critical. An all-attack team should have 90 Offense but 10 Bulk. A team with no Tailwind or Trick Room should have 0 Speed Control.
 
+[BRING 6 PICK 4 — MULTI-CORE MANDATE]
+VGC teams play "Bring 6, Pick 4". Your roster contains multiple distinct viable cores. You MUST identify exactly 4 named cores a player can build their game plan around. Do NOT collapse them into a single team.
+
 [STRICT MATCHUP & WHITE LIST CONSTRAINTS]
-- You MUST select a 4-Pokémon optimal lineup (optimal_core_4) from the provided roster.
-- You MUST generate exactly 6 detailed strategies (meta_matchups) against 6 different top-tier meta teams currently dominating Regulation M-B.
+- You MUST output exactly 4 distinct optimal_cores. Each core is 4 Pokémon chosen from the provided 6-man roster. Cores may overlap in membership.
+- You MUST generate exactly 6 detailed matchup strategies (meta_matchups) against 6 different top-tier Regulation M-B meta archetypes. Each matchup must name which of the 4 optimal_cores the player should select.
 - Ensure the meta teams you invent for the opponent strictly adhere to the Regulation M-B Whitelist (NO Urshifu, NO Calyrex, NO Paradoxes).
 
 [TACTICAL MANDATE: HYPER-AGGRESSION & BOARD CONTROL]
@@ -463,18 +466,34 @@ You must output your response STRICTLY as a JSON object matching this schema:
     "synergy": 75
   },
   "core_identity": "Detailed description of the team's archetype and overall win condition.",
-  "optimal_core_4": ["Pokemon 1", "Pokemon 2", "Pokemon 3", "Pokemon 4"],
+  "optimal_cores": [
+    {
+      "core_name": "Tailwind Offense",
+      "pokemon_lineup": ["Pokemon 1", "Pokemon 2", "Pokemon 3", "Pokemon 4"],
+      "strategy_summary": "How this core wins and when to use it."
+    },
+    {
+      "core_name": "Trick Room Mode",
+      "pokemon_lineup": ["Pokemon 1", "Pokemon 2", "Pokemon 3", "Pokemon 4"],
+      "strategy_summary": "How this core wins and when to use it."
+    },
+    {
+      "core_name": "Hyper Offense",
+      "pokemon_lineup": ["Pokemon 1", "Pokemon 2", "Pokemon 3", "Pokemon 4"],
+      "strategy_summary": "How this core wins and when to use it."
+    },
+    {
+      "core_name": "Defensive Pivot",
+      "pokemon_lineup": ["Pokemon 1", "Pokemon 2", "Pokemon 3", "Pokemon 4"],
+      "strategy_summary": "How this core wins and when to use it."
+    }
+  ],
   "meta_matchups": [
     {
       "opponent_archetype": "Tailwind Rain (e.g., Pelipper / Archaludon / Basculegion / Amoonguss)",
-      "key_interactions": "Details on key Pokemon interactions and type advantages in this matchup.",
-      "recommended_lead": ["Pokemon 1", "Pokemon 2"],
-      "recommended_back": ["Pokemon 3", "Pokemon 4"],
-      "execution_steps": [
-        "Turn 1 details (describe ruthless, proactive plays. Do not suggest 'Protect and scout' unless facing an immediate, uncounterable OHKO threat)...",
-        "Turn 2 details...",
-        "Turn 3 details..."
-      ]
+      "recommended_core": "Tailwind Offense",
+      "turn_1_plan": "Describe exactly what moves to use Turn 1 to immediately apply pressure. Be ruthless and specific.",
+      "win_condition": "The critical path to victory — what needs to happen to close out the game."
     }
   ],
   "optimizations": [
@@ -489,7 +508,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
     let finalAssessTeamPrompt = assessTeamSystemPrompt;
     if (action === "assess_team" && chatContext && chatContext.length > 0) {
-      finalAssessTeamPrompt += `\n\nCRITICAL OVERRIDE: The user has debated this roster with you. You MUST read the provided chat history and strictly update the optimal_core_4, optimizations, and meta_matchups to reflect the final agreements reached in the chat.\nChat history:\n${JSON.stringify(chatContext, null, 2)}`;
+      finalAssessTeamPrompt += `\n\nCRITICAL OVERRIDE: The user has debated this roster with you. You MUST read the provided chat history and strictly update the optimal_cores, optimizations, and meta_matchups to reflect the final agreements reached in the chat.\nChat history:\n${JSON.stringify(chatContext, null, 2)}`;
     }
 
     const extractionSystemPrompt = `You are a highly analytical VGC data parser. Your ONLY job is to read a chat log between a player and a World Champion Coach and extract the definitive strategic rule or contingency they agreed upon. Output ONLY the rule as a single, commanding sentence. Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Mega Sceptile against Rain/Kyogre cores.' Do not use markdown bolding. If the chat is just general banter and no specific rule was agreed upon, output exactly the string: NO_RULE`;
@@ -744,73 +763,64 @@ You must output your response STRICTLY as a JSON object matching this schema:
             synergy: 90
           },
           core_identity: "A balanced speed-control core using Tailwind and defensive pivots to position heavy hitters.",
-          optimal_core_4: [p1, p2, p3, p4],
+          optimal_cores: [
+            {
+              core_name: "Tailwind Offense",
+              pokemon_lineup: [p1, p2, p3, p4],
+              strategy_summary: "Lead speed control + heavy offense. Set Tailwind Turn 1 and apply maximum pressure with high base power attackers before the opponent stabilizes."
+            },
+            {
+              core_name: "Anti-Trick Room",
+              pokemon_lineup: [p1, p2, p4, p5],
+              strategy_summary: "Bring Fake Out + Taunt to disrupt Trick Room setters. Deny the speed inversion and pivot to your fastest attackers once their win condition is neutralized."
+            },
+            {
+              core_name: "Intimidate Loop",
+              pokemon_lineup: [p2, p3, p4, p6],
+              strategy_summary: "Cycle Intimidate drops to neuter physical attackers. Use Parting Shot pivots to recycle the attack drop and maintain board control."
+            },
+            {
+              core_name: "Defensive Pivot",
+              pokemon_lineup: [p1, p3, p5, p6],
+              strategy_summary: "Bring maximum bulk + redirection. Absorb burst damage with redirectors and Protect stalls, then clean up with a single high-powered win condition in the back."
+            }
+          ],
           meta_matchups: [
             {
               opponent_archetype: "Tailwind Rain (Pelipper / Archaludon / Basculegion / Amoonguss)",
-              key_interactions: "Establish early speed control with Tailwind and pivot defenses to sponge rain-boosted attacks.",
-              recommended_lead: [p1, p2],
-              recommended_back: [p3, p4],
-              execution_steps: [
-                "Turn 1: Lead with speed control. Use defensive options to buffer immediate swift swim pressure.",
-                "Turn 2: Lower their rain sweeper's offense or pivot to check their water coverage.",
-                "Turn 3: Retaliate with powerful stab moves once their tailwind is equalized."
-              ]
+              recommended_core: "Tailwind Offense",
+              turn_1_plan: `Lead ${p1} + ${p2}. Use Fake Out on Pelipper to stall rain setup, then fire your strongest attack at Archaludon. Do not Protect unless they are locked into a guaranteed OHKO.`,
+              win_condition: "Remove Pelipper before they establish weather. Once rain is down, their Swift Swim sweeper becomes a top-priority KO target."
             },
             {
               opponent_archetype: "Hard Trick Room (Indeedee / Hatterene / Torkoal / Ursaluna)",
-              key_interactions: "Use Taunt or Fake Out to stall their setup. Rotate defenses to mitigate Torkoal's fire damage.",
-              recommended_lead: [p3, p4],
-              recommended_back: [p1, p2],
-              execution_steps: [
-                "Turn 1: Apply immediate flinch pressure or disrupt the Indeedee redirection with spread damage.",
-                "Turn 2: Pivot out to recycle Intimidate. Stall out Trick Room turns using Protect and redirection.",
-                "Turn 3: Bring sweepers back in to secure late game knockouts as Trick Room expires."
-              ]
+              recommended_core: "Anti-Trick Room",
+              turn_1_plan: `Lead ${p3} + ${p4}. Use Fake Out on Indeedee to stall the Follow Me redirect. Simultaneously Taunt Hatterene to deny Trick Room setup entirely.`,
+              win_condition: "If Trick Room is up, switch in your fastest attacker and stall out the turns with Protect. Your speed advantage returns in 4 turns."
             },
             {
-              opponent_archetype: "Sun Offense (Torkoal / Lilligant / Hisuian Typhlosion / Archaludon)",
-              key_interactions: "Disrupt Lilligant's Sleep Powder and speed control. Control weather transitions.",
-              recommended_lead: [p1, p3],
-              recommended_back: [p2, p4],
-              execution_steps: [
-                "Turn 1: Deny Lilligant's redirection or Sleep Powder. Establish offensive damage check.",
-                "Turn 2: Pivot in fire resists or disrupt Lilligant's support role.",
-                "Turn 3: Clear weather hazards and sweep the backline."
-              ]
+              opponent_archetype: "Sun Offense (Torkoal / Lilligant-Hisui / Typhlosion-Hisui / Archaludon)",
+              recommended_core: "Tailwind Offense",
+              turn_1_plan: `Lead ${p1} + ${p5}. Target Lilligant with a spread move or priority to deny Sleep Powder. Set your own Tailwind to outspeed under sun.`,
+              win_condition: "Remove Lilligant immediately — without redirection and Sleep, their sun offense falls apart. Their Torkoal is the weather anchor, target it next."
             },
             {
               opponent_archetype: "Psyspam (Indeedee-F / Hatterene / Gallade / Gholdengo)",
-              key_interactions: "Psychic Terrain blocks priority. Rely on dark-type pivot strategies and heavy special defense spreads.",
-              recommended_lead: [p2, p4],
-              recommended_back: [p1, p3],
-              execution_steps: [
-                "Turn 1: Use strong spread options to break focus sashes while keeping redirection active.",
-                "Turn 2: Position dark type resists to absorb incoming psychic coverage safely.",
-                "Turn 3: Sweep with high base power special attackers."
-              ]
+              recommended_core: "Intimidate Loop",
+              turn_1_plan: `Lead ${p2} + ${p4}. Psychic Terrain blocks Fake Out — pivot to Intimidate cycling and spread moves instead. Target Gholdengo with dark-type coverage.`,
+              win_condition: "Gholdengo's Can't Be Hit immunity blocks most status. Isolate it with dark-type moves and knock it out before it accumulates Nasty Plot boosts."
             },
             {
               opponent_archetype: "Snow Blizzard (Abomasnow / Alolan Ninetales / Baxcalibur / Amoonguss)",
-              key_interactions: "Snow increases ice defense. Break Aurora Veil with brick break or steel coverage.",
-              recommended_lead: [p1, p2],
-              recommended_back: [p3, p5],
-              execution_steps: [
-                "Turn 1: Fire steel/rock coverage immediately to pressure Alolan Ninetales before Veil is set.",
-                "Turn 2: Shift focus to their physical ice threat (Baxcalibur) using defense drops.",
-                "Turn 3: Secure knockouts after their snow turns expire."
-              ]
+              recommended_core: "Tailwind Offense",
+              turn_1_plan: `Lead ${p1} + ${p3}. Fire steel or rock coverage at Alolan Ninetales before Aurora Veil is set. Ignore Amoonguss and prioritize the weather setter.`,
+              win_condition: "Deny Aurora Veil on Turn 1. With Veil down, their ice-type damage output is manageable and your offensive pressure wins the endgame."
             },
             {
               opponent_archetype: "Sand Balance (Hippowdon / Excadrill / Gholdengo / Amoonguss)",
-              key_interactions: "Excadrill Sand Rush outspeeds default rosters. Prioritize steel resists and speed control overrides.",
-              recommended_lead: [p1, p4],
-              recommended_back: [p2, p3],
-              execution_steps: [
-                "Turn 1: Deny sand sweep potential by matching with active speed control (Tailwind).",
-                "Turn 2: Soften sand sweepers with Intimidate pivots.",
-                "Turn 3: Clean up remaining structural threads with priority/high-speed attackers."
-              ]
+              recommended_core: "Defensive Pivot",
+              turn_1_plan: `Lead ${p5} + ${p6}. Establish Tailwind immediately to nullify Sand Rush. Target Excadrill before sand activates its speed boost.`,
+              win_condition: "Remove Excadrill early. Without their Sand Rush sweeper, their offense stalls and you can pivot to systematic chip damage + redirection to close."
             }
           ],
           optimizations: [

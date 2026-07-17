@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { parsePokePaste, ParsedPokemon } from "../lib/parser";
@@ -37,6 +37,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
   const [isAssessingDeep, setIsAssessingDeep] = useState(false);
   const [dossierData, setDossierData] = useState<any>(null);
   const [showDossierModal, setShowDossierModal] = useState(false);
+  const [dossierTab, setDossierTab] = useState<"cores" | "matchups" | "chat">("cores");
 
   // Dossier Sparring Chat States
   const [dossierChat, setDossierChat] = useState<{ role: string; content: string }[]>([]);
@@ -210,7 +211,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
     }
   };
 
-  // Team name input — replaces the prompt() for saving rosters
+  // Team name input â€” replaces the prompt() for saving rosters
   const [teamName, setTeamName] = useState("");
   const [format, setFormat] = useState("reg_mb");
 
@@ -301,7 +302,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
     console.log("[TeamForge] team.length =", team.length, "| teamName =", JSON.stringify(teamName), "| supabase configured =", !!supabase);
 
     if (team.length !== 6) {
-      const msg = `Cannot save: roster has ${team.length}/6 Pokémon. You need exactly 6 to save.`;
+      const msg = `Cannot save: roster has ${team.length}/6 PokÃ©mon. You need exactly 6 to save.`;
       console.warn("[TeamForge] Guard:", msg);
       alert(msg);
       return;
@@ -366,7 +367,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
     }
   };
 
-  /** Shared fetch helper — keeps savedTeams state in sync after both saves and explicit loads. */
+  /** Shared fetch helper â€” keeps savedTeams state in sync after both saves and explicit loads. */
   const refreshSavedTeams = async () => {
     if (!session?.user) {
       // LocalStorage fallback
@@ -437,7 +438,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
   };
 
   /**
-   * Defensive normalizer: ensures every Pokémon loaded from Supabase has
+   * Defensive normalizer: ensures every PokÃ©mon loaded from Supabase has
    * the full expected shape. Fills missing `sp` / `evs` / `moves` fields so
    * legacy rows never crash the UI.
    */
@@ -505,7 +506,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                 onChange={(e) => setFormat(e.target.value)}
                 className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-red-500"
               >
-                <option value="reg_mb">Pokémon Champions (Reg M-B)</option>
+                <option value="reg_mb">PokÃ©mon Champions (Reg M-B)</option>
               </select>
             </div>
           </div>
@@ -644,7 +645,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               {isScanningSynergy ? (
                 <><span className="animate-spin h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent inline-block" />Scanning Synergy...</>
               ) : (
-                <>⚡ Analyze Team Synergy</>
+                <>âš¡ Analyze Team Synergy</>
               )}
             </button>
 
@@ -699,17 +700,17 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
         </div>
       )}
 
-      {/* ── Synergy Report Modal ─────────────────────────────────────────── */}
+      {/* â”€â”€ Synergy Report Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {showSynergyPanel && synergyData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/85 backdrop-blur-sm">
           <div className="bg-zinc-900 border border-amber-900/40 rounded-3xl w-full max-w-2xl shadow-[0_0_40px_rgba(245,158,11,0.1)] max-h-[88vh] flex flex-col overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-amber-950/60 to-zinc-900 border-b border-amber-900/30 px-6 py-4 flex justify-between items-center flex-shrink-0">
               <div>
-                <h3 className="text-base font-black text-amber-400 uppercase tracking-widest">⚡ Synergy Scan Report</h3>
+                <h3 className="text-base font-black text-amber-400 uppercase tracking-widest">âš¡ Synergy Scan Report</h3>
                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Regulation M-B Structural Analysis</p>
               </div>
-              <button onClick={() => setShowSynergyPanel(false)} className="text-zinc-500 hover:text-white transition-colors text-xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800">✕</button>
+              <button onClick={() => setShowSynergyPanel(false)} className="text-zinc-500 hover:text-white transition-colors text-xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800">âœ•</button>
             </div>
 
             {/* Scrollable Content */}
@@ -723,11 +724,11 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               {/* Type Vulnerabilities */}
               {synergyData.type_vulnerabilities.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">⚠ Type Weaknesses</p>
+                  <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">âš  Type Weaknesses</p>
                   <div className="space-y-2">
                     {synergyData.type_vulnerabilities.map((v, i) => (
                       <div key={i} className="flex gap-3 items-start bg-amber-950/20 border border-amber-900/30 rounded-xl px-4 py-3">
-                        <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0">▲</span>
+                        <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0">â–²</span>
                         <p className="text-xs text-amber-200/90 leading-relaxed">{v}</p>
                       </div>
                     ))}
@@ -738,11 +739,11 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               {/* Meta Threats */}
               {synergyData.meta_threats.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-2">☠ Meta Threats</p>
+                  <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-2">â˜  Meta Threats</p>
                   <div className="space-y-2">
                     {synergyData.meta_threats.map((t, i) => (
                       <div key={i} className="flex gap-3 items-start bg-red-950/20 border border-red-900/30 rounded-xl px-4 py-3">
-                        <span className="text-red-500 text-xs mt-0.5 flex-shrink-0">●</span>
+                        <span className="text-red-500 text-xs mt-0.5 flex-shrink-0">â—</span>
                         <p className="text-xs text-red-200/90 leading-relaxed">{t}</p>
                       </div>
                     ))}
@@ -753,11 +754,11 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               {/* Suggested Tweaks */}
               {synergyData.suggested_tweaks.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-teal-400 uppercase tracking-widest mb-2">✦ Suggested Fixes</p>
+                  <p className="text-[9px] font-black text-teal-400 uppercase tracking-widest mb-2">âœ¦ Suggested Fixes</p>
                   <div className="space-y-2">
                     {synergyData.suggested_tweaks.map((s, i) => (
                       <div key={i} className="flex gap-3 items-start bg-teal-950/20 border border-teal-900/30 rounded-xl px-4 py-3">
-                        <span className="text-teal-400 text-xs mt-0.5 flex-shrink-0">→</span>
+                        <span className="text-teal-400 text-xs mt-0.5 flex-shrink-0">â†’</span>
                         <p className="text-xs text-teal-200/90 leading-relaxed">{s}</p>
                       </div>
                     ))}
@@ -790,7 +791,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                 onClick={() => setShowLoadModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors"
               >
-                ✕
+                âœ•
               </button>
             </div>
 
@@ -863,7 +864,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                 onClick={() => setShowMetaModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors"
               >
-                ✕
+                âœ•
               </button>
             </div>
 
@@ -910,305 +911,299 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                 onClick={() => setShowDossierModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors text-lg animate-fade-in"
               >
-                ✕
+                âœ•
               </button>
             </div>
 
-            {/* Split Grid Layout Container */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-zinc-800 min-h-0 overflow-hidden">
-              
-              {/* Left Side (col-span-2): Scrollable Dossier JSON UI */}
-              <div className="lg:col-span-2 p-6 overflow-y-auto space-y-6 text-zinc-300 leading-relaxed max-h-[70vh]">
-                {isAssessingDeep ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-4 text-center">
-                    <div className="animate-spin h-10 w-10 rounded-full border-4 border-red-500 border-t-transparent"></div>
-                    <p className="text-base font-bold uppercase tracking-wider text-red-500 animate-pulse">Forging Roster Dossier...</p>
-                    <p className="text-sm text-zinc-500 max-w-sm leading-relaxed">Analyzing your 6-man roster with a heavy reasoning model to construct archetype paths, lead combos, and SP adjustments.</p>
-                  </div>
-                ) : !dossierData ? (
-                  <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">
-                    No data loaded.
-                  </div>
-                ) : (
-                  <div className="space-y-6 animate-fade-in">
-                    {/* Red Flags / Glaring Weaknesses */}
-                    {dossierData.red_flags && dossierData.red_flags.length > 0 && (
-                      <div className="bg-red-950/20 border-2 border-red-650 rounded-2xl p-5 flex flex-col gap-3 shadow-[0_0_15px_rgba(220,38,38,0.15)] relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-full bg-red-700/5 blur-3xl pointer-events-none" />
-                        <div className="flex items-center gap-2 text-red-500 font-black uppercase tracking-widest text-xs font-mono">
-                          <span>⚠️</span>
-                          <span>Glaring Weakness Alert</span>
-                        </div>
-                        <ul className="space-y-2 font-mono text-[11px] font-semibold text-zinc-200">
-                          {dossierData.red_flags.map((flag: string, i: number) => (
-                            <li key={i} className="flex items-start gap-2 leading-relaxed">
-                              <span className="text-red-500 font-bold">•</span>
-                              <span>{flag}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+            {/* Loading State */}
+            {isAssessingDeep && (
+              <div className="flex flex-col items-center justify-center py-20 gap-4 text-center flex-1">
+                <div className="animate-spin h-10 w-10 rounded-full border-4 border-red-500 border-t-transparent"></div>
+                <p className="text-base font-bold uppercase tracking-wider text-red-500 animate-pulse">Forging Roster Dossier...</p>
+                <p className="text-sm text-zinc-500 max-w-sm leading-relaxed">Analyzing your 6-man roster with a heavy reasoning model to construct archetype cores, lead combos, and SP adjustments.</p>
+              </div>
+            )}
 
-                    {/* Team Grading Dashboard */}
-                    {dossierData.team_grades && (
-                      <div className="bg-zinc-950 border border-zinc-850 rounded-2xl p-5 space-y-4">
-                        <h4 className="text-xs font-black text-red-500 uppercase tracking-widest font-mono mb-2">
-                          Team Grading Dashboard
-                        </h4>
-                        <div className="space-y-3.5">
-                          {[
-                            { name: "Offense", val: dossierData.team_grades.offense },
-                            { name: "Bulk", val: dossierData.team_grades.bulk },
-                            { name: "Speed Control", val: dossierData.team_grades.speed_control },
-                            { name: "Synergy", val: dossierData.team_grades.synergy },
-                          ].map((grade, gIdx) => (
-                            <div key={gIdx} className="space-y-1.5">
-                              <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wider font-mono">
-                                <span className="text-zinc-400">{grade.name}</span>
-                                <span className="text-red-500">{grade.val || 0} / 100</span>
+            {/* Tab Navigation + Content */}
+            {!isAssessingDeep && (
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                {/* Tab Bar */}
+                <div className="flex border-b border-zinc-800 px-6 gap-1 bg-zinc-900/80 flex-shrink-0">
+                  {([
+                    { id: "cores", label: "Optimal Cores" },
+                    { id: "matchups", label: "Meta Matchups" },
+                    { id: "chat", label: "Coach Chat" },
+                  ] as const).map(tab => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setDossierTab(tab.id)}
+                      className={`px-5 py-3.5 text-xs font-black uppercase tracking-widest transition-all border-b-2 -mb-px ${
+                        dossierTab === tab.id
+                          ? "border-red-500 text-red-400"
+                          : "border-transparent text-zinc-500 hover:text-zinc-300"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab Content Area */}
+                <div className="flex-1 min-h-0 overflow-hidden">
+
+                  {/* â”€â”€ Tab 1: Optimal Cores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {dossierTab === "cores" && (
+                    <div className="h-full overflow-y-auto p-6">
+                      {!dossierData ? (
+                        <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">No data loaded.</div>
+                      ) : (
+                        <div className="space-y-6 animate-fade-in">
+                          {/* Red Flags */}
+                          {dossierData.red_flags && dossierData.red_flags.length > 0 && (
+                            <div className="bg-red-950/20 border-2 border-red-900/50 rounded-2xl p-5 flex flex-col gap-3 shadow-[0_0_15px_rgba(220,38,38,0.15)]">
+                              <div className="flex items-center gap-2 text-red-500 font-black uppercase tracking-widest text-xs">
+                                <span>âš ï¸</span><span>Glaring Weakness Alert</span>
                               </div>
-                              <div className="w-full bg-zinc-900 border border-zinc-850 rounded-full h-2.5 overflow-hidden">
-                                <div 
-                                  className="bg-red-600 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(220,38,38,0.4)]"
-                                  style={{ width: `${Math.max(0, Math.min(grade.val || 0, 100))}%` }}
-                                />
-                              </div>
+                              <ul className="space-y-1.5 font-mono text-[11px] font-semibold text-zinc-200">
+                                {dossierData.red_flags.map((flag: string, i: number) => (
+                                  <li key={i} className="flex items-start gap-2"><span className="text-red-500">â€¢</span><span>{flag}</span></li>
+                                ))}
+                              </ul>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          )}
 
-                    {/* Core Identity */}
-                    <div className="space-y-2">
-                      <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Core Identity & Strategy</h4>
-                      <p className="text-lg leading-relaxed text-zinc-200 font-medium">
-                        {dossierData.core_identity}
-                      </p>
-                    </div>
-                               {/* Optimal Bring Core */}
-                    {dossierData.optimal_core_4 && dossierData.optimal_core_4.length > 0 && (
-                      <div className="space-y-3 pt-6 border-t border-zinc-800/60">
-                        <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Optimal Bring Core (Primary 4)</h4>
-                        <div className="bg-zinc-950 border border-zinc-800 rounded-3xl p-5 shadow-xl">
-                          <p className="text-xs text-zinc-400 font-mono mb-4 uppercase">The absolute best 4-Pokémon combination from your roster to bring to most matches:</p>
-                          <div className="flex gap-4 flex-wrap justify-center sm:justify-start">
-                            {dossierData.optimal_core_4.map((monName: string, idx: number) => {
-                              const match = team.find(t => t.name.toLowerCase() === monName.toLowerCase() || t.name.toLowerCase().includes(monName.toLowerCase()));
-                              const spriteUrl = match 
-                                ? `https://play.pokemonshowdown.com/sprites/gen5/${match.id}.png`
-                                : `https://play.pokemonshowdown.com/sprites/gen5/${monName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`;
-
-                              return (
-                                <div key={idx} className="bg-zinc-900 border border-zinc-850 rounded-2xl p-3 flex flex-col items-center gap-1 shadow-inner min-w-[100px] flex-1 sm:flex-initial animate-fade-in">
-                                  <img 
-                                    src={spriteUrl} 
-                                    alt={monName} 
-                                    className="w-12 h-12 object-contain drop-shadow-md"
-                                    onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
-                                  />
-                                  <span className="text-[10px] font-black text-zinc-200 uppercase tracking-wider text-center truncate w-24">{monName}</span>
-                                  <span className="text-[8px] font-mono font-bold text-zinc-500 uppercase">Mon {idx + 1}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Meta Matchup Plans */}
-                    {dossierData.meta_matchups && dossierData.meta_matchups.length > 0 && (
-                      <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                        <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Meta Matchup Plans</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {dossierData.meta_matchups.map((matchup: any, i: number) => {
-                            const getSpriteUrl = (monName: string) => {
-                              const match = team.find(t => t.name.toLowerCase() === monName.toLowerCase() || t.name.toLowerCase().includes(monName.toLowerCase()));
-                              if (match) return `https://play.pokemonshowdown.com/sprites/gen5/${match.id}.png`;
-                              return `https://play.pokemonshowdown.com/sprites/gen5/${monName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`;
-                            };
-
-                            return (
-                              <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-5 flex flex-col gap-4 shadow-xl hover:border-red-900/40 transition-colors animate-fade-in">
-                                <div className="border-b border-zinc-850 pb-2.5 flex justify-between items-start gap-2">
-                                  <h5 className="text-sm font-black text-white tracking-wide uppercase leading-tight">{matchup.opponent_archetype}</h5>
-                                  <span className="text-[8px] font-black text-red-400 bg-red-950/20 border border-red-900/35 rounded px-1.5 py-0.5 uppercase tracking-widest font-mono shrink-0">
-                                    MATCHUP {i + 1}
-                                  </span>
-                                </div>
-
-                                <p className="text-xs text-zinc-400 leading-relaxed font-semibold italic">{matchup.key_interactions}</p>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                  {/* Lead Pairing */}
-                                  <div className="bg-zinc-900/40 border border-zinc-850 rounded-xl p-3 flex flex-col items-center gap-2">
-                                    <span className="text-[8px] font-bold text-red-500 uppercase tracking-widest font-mono">Recommended Leads</span>
-                                    <div className="flex justify-center gap-2">
-                                      {matchup.recommended_lead?.map((mon: string, mIdx: number) => (
-                                        <div key={mIdx} className="flex flex-col items-center gap-0.5">
-                                          <img 
-                                            src={getSpriteUrl(mon)} 
-                                            alt={mon} 
-                                            className="w-10 h-10 object-contain drop-shadow-md"
-                                            onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
-                                          />
-                                          <span className="text-[9px] font-bold text-zinc-350 text-center leading-tight truncate w-16" title={mon}>{mon}</span>
-                                        </div>
-                                      ))}
+                          {/* Team Grades */}
+                          {dossierData.team_grades && (
+                            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 space-y-4">
+                              <h4 className="text-xs font-black text-red-500 uppercase tracking-widest font-mono">Team Grading Dashboard</h4>
+                              <div className="space-y-3">
+                                {[
+                                  { name: "Offense", val: dossierData.team_grades.offense },
+                                  { name: "Bulk", val: dossierData.team_grades.bulk },
+                                  { name: "Speed Control", val: dossierData.team_grades.speed_control },
+                                  { name: "Synergy", val: dossierData.team_grades.synergy },
+                                ].map((g, i) => (
+                                  <div key={i} className="space-y-1">
+                                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider font-mono">
+                                      <span className="text-zinc-400">{g.name}</span>
+                                      <span className="text-red-500">{g.val || 0} / 100</span>
+                                    </div>
+                                    <div className="w-full bg-zinc-900 border border-zinc-800 rounded-full h-2.5 overflow-hidden">
+                                      <div className="bg-red-600 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(220,38,38,0.4)]" style={{ width: `${Math.max(0, Math.min(g.val || 0, 100))}%` }} />
                                     </div>
                                   </div>
-
-                                  {/* Back Pairing */}
-                                  <div className="bg-zinc-900/40 border border-zinc-850 rounded-xl p-3 flex flex-col items-center gap-2">
-                                    <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest font-mono">In The Back</span>
-                                    <div className="flex justify-center gap-2">
-                                      {matchup.recommended_back?.map((mon: string, mIdx: number) => (
-                                        <div key={mIdx} className="flex flex-col items-center gap-0.5">
-                                          <img 
-                                            src={getSpriteUrl(mon)} 
-                                            alt={mon} 
-                                            className="w-10 h-10 object-contain drop-shadow-md"
-                                            onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
-                                          />
-                                          <span className="text-[9px] font-bold text-zinc-400 text-center leading-tight truncate w-16" title={mon}>{mon}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-1.5 pt-2 border-t border-zinc-900">
-                                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block font-mono">Execution Steps:</span>
-                                  <ul className="space-y-2 text-xs text-zinc-350 font-semibold">
-                                    {matchup.execution_steps?.map((step: string, sIdx: number) => (
-                                      <li key={sIdx} className="leading-relaxed flex items-start gap-1.5">
-                                        <span className="font-mono text-xs text-red-500 font-black whitespace-nowrap mt-0.5">TURN {sIdx + 1}:</span>
-                                        <span>{step.replace(/^Turn \d+:\s*/i, "")}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
+                                ))}
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Optimizations */}
-                    <div className="space-y-4 pt-6 border-t border-zinc-800/60">
-                      <h4 className="text-base font-black text-red-500 uppercase tracking-widest border-l-4 border-red-650 pl-3">Roster Tweaks & Optimizations</h4>
-                      <div className="space-y-3">
-                        {dossierData.optimizations?.map((opt: any, i: number) => (
-                          <div key={i} className="bg-zinc-950 border border-red-900/30 rounded-2xl p-4 space-y-1.5">
-                            <div className="flex justify-between items-center">
-                              <span className="text-base font-black text-red-500 uppercase tracking-widest">{opt.target_pokemon}</span>
                             </div>
-                            <p className="text-base text-zinc-200 font-extrabold">{opt.suggested_tweak}</p>
-                            <p className="text-base text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
+                          )}
+
+                          {/* Core Identity */}
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-black text-red-500 uppercase tracking-widest border-l-4 border-red-600 pl-3">Core Identity & Strategy</h4>
+                            <p className="text-base leading-relaxed text-zinc-200 font-medium">{dossierData.core_identity}</p>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
 
-              {/* Right Side (col-span-1): Sleek eSports Chat Interface */}
-              <div className="lg:col-span-1 flex flex-col max-h-[70vh] overflow-hidden bg-zinc-950/30">
-                
-                {/* Reforge Action Header */}
-                <div className="p-4 border-b border-zinc-800 flex flex-col gap-2 bg-zinc-900/40">
-                  <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Sparring Engine</span>
-                  <button
-                    onClick={() => handleAssessTeamDeepDive(dossierChat)}
-                    disabled={isAssessingDeep || dossierChat.length === 0}
-                    className="w-full py-2.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-950/30 border border-red-900/40 text-red-500 hover:bg-red-950/50 hover:text-red-400 uppercase tracking-widest text-center"
-                  >
-                    Reforge Dossier from Chat
-                  </button>
-                  <button
-                    onClick={handleExtractLesson}
-                    disabled={isExtracting || isChatting || dossierChat.length === 0}
-                    className="w-full py-2.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-900 border border-zinc-700 text-zinc-300 hover:border-red-800 hover:text-red-400 uppercase tracking-widest text-center"
-                  >
-                    {isExtracting ? "Extracting..." : "Extract Lesson to Memory"}
-                  </button>
-                  <button
-                    onClick={handleClearChat}
-                    disabled={isChatting || dossierChat.length === 0}
-                    className="w-full py-1.5 rounded-xl font-bold text-[10px] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed bg-transparent border border-zinc-800 text-zinc-600 hover:border-zinc-700 hover:text-red-600 uppercase tracking-widest text-center"
-                  >
-                    Clear Chat
-                  </button>
-                </div>
+                          {/* Optimal Cores Grid */}
+                          {dossierData.optimal_cores && dossierData.optimal_cores.length > 0 && (
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-black text-red-500 uppercase tracking-widest border-l-4 border-red-600 pl-3">Bring 6, Pick 4 â€” Optimal Cores</h4>
+                              <p className="text-xs text-zinc-500 font-mono uppercase">Each core represents a distinct game plan you can select depending on the matchup.</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {dossierData.optimal_cores.map((core: any, cIdx: number) => (
+                                  <div key={cIdx} className="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 flex flex-col gap-4 hover:border-red-900/40 transition-colors animate-fade-in">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-black text-red-400 uppercase tracking-widest">{core.core_name}</span>
+                                      <span className="text-[9px] font-black bg-red-950/30 border border-red-900/30 text-red-500 rounded px-1.5 py-0.5 uppercase font-mono">Core {cIdx + 1}</span>
+                                    </div>
+                                    {/* PokÃ©mon Sprites */}
+                                    <div className="flex gap-3 justify-center flex-wrap">
+                                      {(core.pokemon_lineup || []).map((monName: string, mIdx: number) => {
+                                        const match = team.find((t: any) => t.name.toLowerCase() === monName.toLowerCase() || t.name.toLowerCase().includes(monName.toLowerCase()));
+                                        const spriteUrl = match
+                                          ? `https://play.pokemonshowdown.com/sprites/gen5/${match.id}.png`
+                                          : `https://play.pokemonshowdown.com/sprites/gen5/${monName.toLowerCase().replace(/[^a-z0-9]/g, '')}.png`;
+                                        return (
+                                          <div key={mIdx} className="flex flex-col items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-2 min-w-[72px]">
+                                            <img src={spriteUrl} alt={monName} className="w-12 h-12 object-contain drop-shadow-md" onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }} />
+                                            <span className="text-[9px] font-black text-zinc-300 uppercase tracking-wide text-center truncate w-16">{monName}</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                    {/* Strategy Summary */}
+                                    <p className="text-xs text-zinc-400 leading-relaxed italic border-t border-zinc-800/60 pt-3">{core.strategy_summary}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
-                {/* Scrollable Message History */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 flex flex-col">
-                  {dossierChat.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center text-center p-6 text-zinc-500">
-                      <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">
-                        Challenge the Coach here.<br/>
-                        Ask for contingencies or dispute threat matchups.
-                      </p>
-                    </div>
-                  ) : (
-                    dossierChat.map((msg, idx) => (
-                      <div
-                        key={idx}
-                        className={`max-w-[85%] rounded-2xl p-3.5 text-sm font-medium break-words whitespace-pre-wrap ${
-                          msg.role === "user"
-                            ? "bg-red-700/10 border border-red-900/30 text-zinc-200 self-end rounded-tr-none"
-                            : "bg-zinc-900 border border-zinc-800 text-zinc-300 self-start rounded-tl-none"
-                        }`}
-                      >
-                        <span className="text-[10px] font-black uppercase tracking-wider block mb-1 opacity-60">
-                          {msg.role === "user" ? "Challenger" : "VGC Coach"}
-                        </span>
-                        <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                      </div>
-                    ))
-                  )}
-                  {isChatting && (
-                    <div className="bg-zinc-900 border border-zinc-800 text-zinc-300 self-start rounded-2xl rounded-tl-none p-3.5 max-w-[85%] flex items-center gap-2">
-                      <div className="animate-pulse flex space-x-1">
-                        <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
-                        <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
-                        <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
-                      </div>
-                      <span className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Coach is writing...</span>
+                          {/* Optimizations */}
+                          {dossierData.optimizations && dossierData.optimizations.length > 0 && (
+                            <div className="space-y-3 pt-4 border-t border-zinc-800/60">
+                              <h4 className="text-sm font-black text-red-500 uppercase tracking-widest border-l-4 border-red-600 pl-3">Roster Tweaks & Optimizations</h4>
+                              <div className="space-y-3">
+                                {dossierData.optimizations.map((opt: any, i: number) => (
+                                  <div key={i} className="bg-zinc-950 border border-red-900/30 rounded-2xl p-4 space-y-1.5">
+                                    <span className="text-sm font-black text-red-500 uppercase tracking-widest">{opt.target_pokemon}</span>
+                                    <p className="text-sm text-zinc-200 font-extrabold">{opt.suggested_tweak}</p>
+                                    <p className="text-sm text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
 
-                {/* Input Fixed at Bottom */}
-                <div className="p-4 border-t border-zinc-800 bg-zinc-950/60 flex gap-2">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleSendChatMessage(); }}
-                    disabled={isChatting}
-                    placeholder="Ask the coach to pivot..."
-                    className="flex-1 bg-zinc-950 border border-zinc-800 text-zinc-200 placeholder:text-zinc-600 rounded-xl px-4 py-2.5 text-xs font-bold focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none"
-                  />
-                  <button
-                    onClick={handleSendChatMessage}
-                    disabled={isChatting || !chatInput.trim()}
-                    className="px-4 py-2 bg-red-700 hover:bg-red-600 border border-red-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Send
-                  </button>
+                  {/* â”€â”€ Tab 2: Meta Matchups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {dossierTab === "matchups" && (
+                    <div className="h-full overflow-y-auto p-6">
+                      {!dossierData || !dossierData.meta_matchups ? (
+                        <div className="text-center py-12 text-zinc-500 font-bold uppercase tracking-widest text-sm">No matchup data loaded.</div>
+                      ) : (
+                        <div className="space-y-4 animate-fade-in">
+                          <p className="text-xs text-zinc-500 font-mono uppercase tracking-widest">Each matchup shows which of your 4 cores to select and the ruthless Turn 1 execution plan.</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            {dossierData.meta_matchups.map((matchup: any, i: number) => (
+                              <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-5 flex flex-col gap-4 hover:border-red-900/40 transition-colors animate-fade-in">
+                                {/* Archetype Header */}
+                                <div className="flex justify-between items-start gap-2 border-b border-zinc-800/60 pb-3">
+                                  <h5 className="text-sm font-black text-white uppercase tracking-wide leading-tight">{matchup.opponent_archetype}</h5>
+                                  <span className="text-[8px] font-black text-red-400 bg-red-950/20 border border-red-900/35 rounded px-1.5 py-0.5 uppercase font-mono shrink-0">#{i + 1}</span>
+                                </div>
+
+                                {/* Recommended Core Badge */}
+                                {matchup.recommended_core && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest font-mono">Bring Core:</span>
+                                    <span className="px-3 py-1 bg-red-700/20 border border-red-600/40 text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_8px_rgba(220,38,38,0.2)]">
+                                      {matchup.recommended_core}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {/* Turn 1 Plan */}
+                                {matchup.turn_1_plan && (
+                                  <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3 space-y-1">
+                                    <span className="text-[9px] font-black text-red-500 uppercase tracking-widest font-mono block">Turn 1 Plan:</span>
+                                    <p className="text-xs text-zinc-300 leading-relaxed font-semibold">{matchup.turn_1_plan}</p>
+                                  </div>
+                                )}
+
+                                {/* Win Condition */}
+                                {matchup.win_condition && (
+                                  <div className="border-t border-zinc-800/60 pt-3">
+                                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest font-mono block mb-1">Win Condition:</span>
+                                    <p className="text-xs text-zinc-400 leading-relaxed italic">{matchup.win_condition}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* â”€â”€ Tab 3: Coach Chat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+                  {dossierTab === "chat" && (
+                    <div className="h-full flex flex-col overflow-hidden bg-zinc-950/30">
+                      {/* Reforge Action Header */}
+                      <div className="p-4 border-b border-zinc-800 flex flex-col gap-2 bg-zinc-900/40 flex-shrink-0">
+                        <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">Sparring Engine</span>
+                        <button
+                          onClick={() => handleAssessTeamDeepDive(dossierChat)}
+                          disabled={isAssessingDeep || dossierChat.length === 0}
+                          className="w-full py-2.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-950/30 border border-red-900/40 text-red-500 hover:bg-red-950/50 hover:text-red-400 uppercase tracking-widest text-center"
+                        >
+                          Reforge Dossier from Chat
+                        </button>
+                        <button
+                          onClick={handleExtractLesson}
+                          disabled={isExtracting || isChatting || dossierChat.length === 0}
+                          className="w-full py-2.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-900 border border-zinc-700 text-zinc-300 hover:border-red-800 hover:text-red-400 uppercase tracking-widest text-center"
+                        >
+                          {isExtracting ? "Extracting..." : "Extract Lesson to Memory"}
+                        </button>
+                        <button
+                          onClick={handleClearChat}
+                          disabled={isChatting || dossierChat.length === 0}
+                          className="w-full py-1.5 rounded-xl font-bold text-[10px] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed bg-transparent border border-zinc-800 text-zinc-600 hover:border-zinc-700 hover:text-red-600 uppercase tracking-widest text-center"
+                        >
+                          Clear Chat
+                        </button>
+                      </div>
+
+                      {/* Scrollable Message History */}
+                      <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col">
+                        {dossierChat.length === 0 ? (
+                          <div className="flex-1 flex items-center justify-center text-center p-6 text-zinc-500">
+                            <p className="text-xs font-bold uppercase tracking-widest leading-relaxed">
+                              Challenge the Coach here.<br/>
+                              Ask for contingencies or dispute threat matchups.
+                            </p>
+                          </div>
+                        ) : (
+                          dossierChat.map((msg, idx) => (
+                            <div
+                              key={idx}
+                              className={`max-w-[85%] rounded-2xl p-3.5 text-sm font-medium break-words whitespace-pre-wrap ${
+                                msg.role === "user"
+                                  ? "bg-red-700/10 border border-red-900/30 text-zinc-200 self-end rounded-tr-none"
+                                  : "bg-zinc-900 border border-zinc-800 text-zinc-300 self-start rounded-tl-none"
+                              }`}
+                            >
+                              <span className="text-[10px] font-black uppercase tracking-wider block mb-1 opacity-60">
+                                {msg.role === "user" ? "Challenger" : "VGC Coach"}
+                              </span>
+                              <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                            </div>
+                          ))
+                        )}
+                        {isChatting && (
+                          <div className="bg-zinc-900 border border-zinc-800 text-zinc-300 self-start rounded-2xl rounded-tl-none p-3.5 max-w-[85%] flex items-center gap-2">
+                            <div className="animate-pulse flex space-x-1">
+                              <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
+                              <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
+                              <div className="h-1.5 w-1.5 bg-red-500 rounded-full"></div>
+                            </div>
+                            <span className="text-xs text-zinc-500 font-bold uppercase tracking-widest">Coach is writing...</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Chat Input */}
+                      <div className="p-4 border-t border-zinc-800 bg-zinc-950/60 flex gap-2 flex-shrink-0">
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") handleSendChatMessage(); }}
+                          disabled={isChatting}
+                          placeholder="Ask the coach to pivot..."
+                          className="flex-1 bg-zinc-950 border border-zinc-800 text-zinc-200 placeholder:text-zinc-600 rounded-xl px-4 py-2.5 text-xs font-bold focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none"
+                        />
+                        <button
+                          onClick={handleSendChatMessage}
+                          disabled={isChatting || !chatInput.trim()}
+                          className="px-4 py-2 bg-red-700 hover:bg-red-600 border border-red-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Send
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               </div>
-
-            </div>
+            )}
 
             {/* Footer */}
             {dossierData && !isAssessingDeep && (
-              <div className="sticky bottom-0 z-10 bg-zinc-900/95 border-t border-zinc-800 px-6 py-4 flex justify-between items-center gap-3">
+              <div className="sticky bottom-0 z-10 bg-zinc-900/95 border-t border-zinc-800 px-6 py-4 flex justify-between items-center gap-3 flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setShowDossierModal(false)}
@@ -1246,6 +1241,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
         </div>
       )}
     {/* Auto-Optimize Team Report Modal Overlay */}
+    {/* Auto-Optimize Team Report Modal Overlay */}
       {optimizationReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm overflow-y-auto">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-4xl shadow-2xl p-6 md:p-8 flex flex-col max-h-[85vh] relative overflow-hidden">
@@ -1280,7 +1276,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                     <ul className="space-y-1 text-xs text-zinc-300 font-medium">
                       {rep.changes?.map((change: string, cIdx: number) => (
                         <li key={cIdx} className="flex items-start gap-2.5">
-                          <span className="text-red-500 font-bold font-mono">•</span>
+                          <span className="text-red-500 font-bold font-mono">â€¢</span>
                           <span>{change}</span>
                         </li>
                       ))}
