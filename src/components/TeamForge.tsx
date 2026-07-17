@@ -9,6 +9,7 @@ import { supabase } from "../lib/supabase";
 import { POKEBALL_FALLBACK } from "../lib/pokemon";
 import metaTeamsData from "../data/meta_teams.json";
 import { exportTeamToPokepaste } from "../utils/exporter";
+import { sanitizeText } from "../utils/sanitizeText";
 
 interface TeamForgeProps {
   team: ParsedPokemon[];
@@ -1001,7 +1002,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                           {/* Core Identity */}
                           <div className="space-y-2">
                             <h4 className="text-sm font-black text-red-500 uppercase tracking-widest border-l-4 border-red-600 pl-3">Core Identity & Strategy</h4>
-                            <p className="text-base leading-relaxed text-zinc-200 font-medium">{dossierData.core_identity}</p>
+                            <p className="text-base leading-relaxed text-zinc-200 font-medium">{sanitizeText(dossierData.core_identity)}</p>
                           </div>
 
                           {/* Optimal Cores Grid */}
@@ -1032,7 +1033,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                                       })}
                                     </div>
                                     {/* Strategy Summary */}
-                                    <p className="text-xs text-zinc-400 leading-relaxed italic border-t border-zinc-800/60 pt-3">{core.strategy_summary}</p>
+                                    <p className="text-xs text-zinc-400 leading-relaxed italic border-t border-zinc-800/60 pt-3">{sanitizeText(core.strategy_summary)}</p>
                                   </div>
                                 ))}
                               </div>
@@ -1047,8 +1048,8 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                                 {dossierData.optimizations.map((opt: any, i: number) => (
                                   <div key={i} className="bg-zinc-950 border border-red-900/30 rounded-2xl p-4 space-y-1.5">
                                     <span className="text-sm font-black text-red-500 uppercase tracking-widest">{opt.target_pokemon}</span>
-                                    <p className="text-sm text-zinc-200 font-extrabold">{opt.suggested_tweak}</p>
-                                    <p className="text-sm text-zinc-400 leading-relaxed italic">{opt.rationale}</p>
+                                    <p className="text-sm text-zinc-200 font-extrabold">{sanitizeText(opt.suggested_tweak)}</p>
+                                    <p className="text-sm text-zinc-400 leading-relaxed italic">{sanitizeText(opt.rationale)}</p>
                                   </div>
                                 ))}
                               </div>
@@ -1107,7 +1108,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                                           </span>
                                           <div className="min-w-0">
                                             <span className="text-[8px] font-black uppercase tracking-widest opacity-70 block mb-0.5">{turnLabels[tIdx]}</span>
-                                            <p className="text-[11px] text-zinc-300 leading-relaxed font-semibold">{turnText}</p>
+                                            <p className="text-[11px] text-zinc-300 leading-relaxed font-semibold">{sanitizeText(turnText)}</p>
                                           </div>
                                         </div>
                                       );
@@ -1116,7 +1117,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                                 ) : matchup.turn_1_plan ? (
                                   <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3 space-y-1">
                                     <span className="text-[9px] font-black text-red-500 uppercase tracking-widest font-mono block">Turn 1 Plan:</span>
-                                    <p className="text-xs text-zinc-300 leading-relaxed font-semibold">{matchup.turn_1_plan}</p>
+                                    <p className="text-xs text-zinc-300 leading-relaxed font-semibold">{sanitizeText(matchup.turn_1_plan)}</p>
                                   </div>
                                 ) : null}
 
@@ -1124,7 +1125,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                                 {matchup.win_condition && (
                                   <div className="border-t border-zinc-800/60 pt-3">
                                     <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest font-mono block mb-1">Win Condition:</span>
-                                    <p className="text-xs text-zinc-400 leading-relaxed italic">{matchup.win_condition}</p>
+                                    <p className="text-xs text-zinc-400 leading-relaxed italic">{sanitizeText(matchup.win_condition)}</p>
                                   </div>
                                 )}
                               </div>
@@ -1187,7 +1188,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                               <span className="text-[10px] font-black uppercase tracking-wider block mb-1 opacity-60">
                                 {msg.role === "user" ? "Challenger" : "VGC Coach"}
                               </span>
-                              <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                              <p className="leading-relaxed whitespace-pre-wrap">{msg.role === "user" ? msg.content : sanitizeText(msg.content)}</p>
                             </div>
                           ))
                         )}

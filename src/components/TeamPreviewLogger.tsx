@@ -7,6 +7,7 @@ import metaTeamsData from "../data/meta_teams.json";
 import LivePlaybook from "./LivePlaybook";
 import SpeedBoard from "./SpeedBoard";
 import DamageCalculator from "./DamageCalculator";
+import { sanitizeText } from "../utils/sanitizeText";
 
 const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -493,7 +494,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge, sessio
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   Coach's Notes
                 </h4>
-                <p className="text-sm text-zinc-300 leading-relaxed font-medium">{coachNotes}</p>
+                <p className="text-sm text-zinc-300 leading-relaxed font-medium">{sanitizeText(coachNotes)}</p>
               </div>
             )}
           </div>

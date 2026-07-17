@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import { Pokemon } from "../lib/pokemon";
+import { sanitizeText } from "../utils/sanitizeText";
 
 export interface PlaybookData {
   audit: {
@@ -281,7 +282,7 @@ export default function LivePlaybook({
         <div className="px-6 pb-6">
           <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 shadow-inner space-y-4">
             <h4 className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-2">VGC Audit Findings</h4>
-            <p className="text-sm text-zinc-300 font-medium mb-4 leading-relaxed">{data.audit.top_findings}</p>
+            <p className="text-sm text-zinc-300 font-medium mb-4 leading-relaxed">{sanitizeText(data.audit.top_findings)}</p>
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-zinc-500 font-bold">PRESERVE:</span>
               <div className="flex gap-1 flex-wrap">
@@ -310,15 +311,15 @@ export default function LivePlaybook({
             <div className="bg-black/80 border border-zinc-800/80 rounded-2xl p-6 font-mono text-xs space-y-6 shadow-inner animate-in fade-in slide-in-from-top-2 duration-300">
               <div>
                 <span className="text-red-500 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; speed_tier_analysis</span>
-                <p className="text-zinc-400 leading-relaxed">{data.decision_audit.speed_tier_analysis}</p>
+                <p className="text-zinc-400 leading-relaxed">{sanitizeText(data.decision_audit.speed_tier_analysis)}</p>
               </div>
               <div className="border-t border-zinc-800/50 pt-4">
                 <span className="text-red-500 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; primary_threat_identified</span>
-                <p className="text-zinc-400 leading-relaxed">{data.decision_audit.primary_threat_identified}</p>
+                <p className="text-zinc-400 leading-relaxed">{sanitizeText(data.decision_audit.primary_threat_identified)}</p>
               </div>
               <div className="border-t border-zinc-800/50 pt-4">
                 <span className="text-zinc-500 font-bold block mb-2 uppercase tracking-widest text-[10px]">&gt; risk_assessment_justification</span>
-                <p className="text-zinc-400 leading-relaxed">{data.decision_audit.risk_assessment_justification}</p>
+                <p className="text-zinc-400 leading-relaxed">{sanitizeText(data.decision_audit.risk_assessment_justification)}</p>
               </div>
             </div>
           )}
@@ -440,12 +441,12 @@ export default function LivePlaybook({
                       <div key={idx} className="bg-zinc-950/50 border border-zinc-800/80 rounded-xl p-4 flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                           <div className="flex flex-col">
-                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{act.pokemon}</span>
-                            <span className="text-sm font-black text-white leading-none mt-0.5">{act.action}</span>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{sanitizeText(act.pokemon)}</span>
+                            <span className="text-sm font-black text-white leading-none mt-0.5">{sanitizeText(act.action)}</span>
                           </div>
                           <div className="text-right flex flex-col items-end">
                             <span className="text-[8px] font-bold text-zinc-600 uppercase tracking-widest">Target</span>
-                            <span className="text-xs font-bold text-red-500">{act.target}</span>
+                            <span className="text-xs font-bold text-red-500">{sanitizeText(act.target)}</span>
                           </div>
                         </div>
                         {/* Micro-Granularity Badges */}
@@ -453,12 +454,12 @@ export default function LivePlaybook({
                           <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-800/50">
                             {act.damage_estimation && act.damage_estimation.toLowerCase() !== "none" && (
                               <span className="px-1.5 py-0.5 bg-red-950/40 text-red-500 border border-red-900/50 rounded text-[8px] font-bold uppercase tracking-widest">
-                                {act.damage_estimation}
+                                {sanitizeText(act.damage_estimation)}
                               </span>
                             )}
                             {act.mechanic_trigger && act.mechanic_trigger.toLowerCase() !== "none" && (
                               <span className="px-1.5 py-0.5 bg-zinc-850 text-zinc-400 border border-zinc-800 rounded text-[8px] font-bold uppercase tracking-widest">
-                                {act.mechanic_trigger}
+                                {sanitizeText(act.mechanic_trigger)}
                               </span>
                             )}
                           </div>
@@ -472,10 +473,10 @@ export default function LivePlaybook({
                 {node.expected_board_state && (
                   <div className="border-t border-zinc-800/80 pt-2 mt-1">
                     <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Expected Board State</p>
-                    <p className="text-xs text-zinc-300 italic mb-2">{node.expected_board_state}</p>
+                    <p className="text-xs text-zinc-300 italic mb-2">{sanitizeText(node.expected_board_state)}</p>
                     
                     <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Tactical Rationale</p>
-                    <p className="text-xs font-medium text-zinc-400">{node.tactical_rationale}</p>
+                    <p className="text-xs font-medium text-zinc-400">{sanitizeText(node.tactical_rationale)}</p>
                   </div>
                 )}
               </div>
@@ -503,7 +504,7 @@ export default function LivePlaybook({
                 Draft Justification
               </h4>
               <p className="text-sm text-zinc-300 leading-relaxed font-medium">
-                {deepDiveData.draft_justification}
+                {sanitizeText(deepDiveData.draft_justification)}
               </p>
             </div>
             
@@ -514,7 +515,7 @@ export default function LivePlaybook({
               <ul className="space-y-2">
                 {deepDiveData.potential_weaknesses?.map((weakness, i) => (
                   <li key={i} className="text-sm text-zinc-400 flex items-start gap-2 leading-tight">
-                    <span className="text-red-500/40 mt-0.5">•</span> {weakness}
+                    <span className="text-red-500/40 mt-0.5">•</span> {sanitizeText(weakness)}
                   </li>
                 ))}
               </ul>
@@ -527,7 +528,7 @@ export default function LivePlaybook({
               <ul className="space-y-2">
                 {deepDiveData.things_to_watch_out_for?.map((threat, i) => (
                   <li key={i} className="text-sm text-zinc-400 flex items-start gap-2 leading-tight">
-                    <span className="text-red-500/40 mt-0.5">•</span> {threat}
+                    <span className="text-red-500/40 mt-0.5">•</span> {sanitizeText(threat)}
                   </li>
                 ))}
               </ul>
