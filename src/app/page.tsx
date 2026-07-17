@@ -24,19 +24,38 @@ export default function Home() {
       return;
     }
 
+    // 1. Initial Check: Try to get existing session on load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setAuthLoading(false);
+      // If session exists, we are done
+      if (session) return;
+
+      // 2. PKCE/Hash Handler: Check the URL for the #access_token hash
+      if (typeof window !== 'undefined' && window.location.hash) {
+        const client = supabase;
+        if (client) {
+          client.auth.getUser().then(({ data: { user } }) => {
+            if (user) {
+              // Successfully exchanged token. Clean the URL bar.
+              window.history.replaceState(null, '', window.location.pathname);
+            }
+          });
+        }
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 3. Set up Persistent Listener
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Supabase Auth Event:', event);
       setSession(session);
       setAuthLoading(false);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    // 4. Cleanup
+    return () => subscription.unsubscribe();
   }, []);
 
   if (authLoading) {
