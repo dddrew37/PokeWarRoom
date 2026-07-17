@@ -121,6 +121,13 @@ LEGAL ABILITIES: ${[
 ].sort().join(", ")}
 
 IRONCLAD COMMAND: Under no circumstances may you hallucinate a Pokémon or Ability that does not appear in the lists above. If a user's roster contains a custom entity, treat it as valid per the ABSOLUTE REALITY OVERRIDE — but never suggest new unlisted entities in your output.
+
+[MANDATORY CHAIN-OF-THOUGHT LEGALITY CHECK]
+Before suggesting ANY Pokémon, Mega Evolution, or Item in your JSON output, you MUST:
+1. Cross-reference EVERY proposed Pokémon against the STRICT LEGALITY DICTIONARY above.
+2. Output your verification in the "legality_verification" array at the VERY TOP of your JSON response.
+3. If is_in_strict_dictionary is false for any proposed Pokémon, you MUST discard it and pick a legal alternative from the dictionary immediately.
+4. Do NOT output any Pokémon that fails this check. The legality_verification array proves you performed due diligence.
 `;
 
     if (userDirectivesContext) {
@@ -458,6 +465,9 @@ Your strategies must NOT be passive. Do not default to safe, defensive switching
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
+  "legality_verification": [
+    {"proposed_pokemon": "Every Pokemon you mention in this response", "is_in_strict_dictionary": true}
+  ],
   "red_flags": ["Glaring teambuilding warning 1", "Glaring teambuilding warning 2"],
   "team_grades": {
     "offense": 85,
@@ -567,6 +577,9 @@ Analyze the provided 6-Pokémon roster for:
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
+  "legality_verification": [
+    {"proposed_pokemon": "Every Pokemon you mention in this response", "is_in_strict_dictionary": true}
+  ],
   "core_identity": "Brief description of the team archetype and primary win condition.",
   "type_vulnerabilities": ["e.g., 4 Pokémon weak to Ground with no immunity — Excadrill Sand Rush will steamroll this team."],
   "meta_threats": ["e.g., Abomasnow + Alolan Ninetales Snow: Aurora Veil will shut down your offensive output completely."],
@@ -755,6 +768,14 @@ You must output your response STRICTLY as a JSON object matching this schema:
         const p6 = team[5]?.name || defaultMons[5];
 
         return NextResponse.json({
+          legality_verification: [
+            { proposed_pokemon: p1, is_in_strict_dictionary: true },
+            { proposed_pokemon: p2, is_in_strict_dictionary: true },
+            { proposed_pokemon: p3, is_in_strict_dictionary: true },
+            { proposed_pokemon: p4, is_in_strict_dictionary: true },
+            { proposed_pokemon: p5, is_in_strict_dictionary: true },
+            { proposed_pokemon: p6, is_in_strict_dictionary: true }
+          ],
           red_flags: ["3 Pokémon are weak to Fire / Flying", "No Protects on Amoonguss"],
           team_grades: {
             offense: 80,
@@ -836,6 +857,11 @@ You must output your response STRICTLY as a JSON object matching this schema:
       if (action === "synergy") {
         const names = (team || []).map((p: any) => p.name || p.id || "Unknown");
         return NextResponse.json({
+          legality_verification: [
+            { proposed_pokemon: names[0] || "Unknown", is_in_strict_dictionary: true },
+            { proposed_pokemon: names[1] || "Unknown", is_in_strict_dictionary: true },
+            { proposed_pokemon: "Incineroar", is_in_strict_dictionary: true }
+          ],
           core_identity: `A ${names.length}-Pokémon roster centered around ${names.slice(0, 2).join(" and ")} as the primary offensive core.`,
           type_vulnerabilities: [
             "3+ Pokémon are weak to Ground — Excadrill under Sand Rush will sweep without a Flying type or Levitate user.",
