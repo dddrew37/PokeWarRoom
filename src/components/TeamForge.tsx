@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { parsePokePaste, ParsedPokemon } from "../lib/parser";
@@ -1086,13 +1086,39 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                                   </div>
                                 )}
 
-                                {/* Turn 1 Plan */}
-                                {matchup.turn_1_plan && (
+                                {/* Play-by-Play (4-Turn Timeline) or legacy Turn 1 fallback */}
+                                {matchup.play_by_play ? (
+                                  <div className="space-y-2">
+                                    <span className="text-[9px] font-black text-red-500 uppercase tracking-widest font-mono block">Play-by-Play:</span>
+                                    {(["turn_1", "turn_2", "turn_3", "turn_4"] as const).map((key, tIdx) => {
+                                      const turnText = matchup.play_by_play[key];
+                                      if (!turnText) return null;
+                                      const turnLabels = ["Turn 1", "Turn 2", "Turn 3", "Turn 4"];
+                                      const turnColors = [
+                                        "border-red-700/60 bg-red-950/20 text-red-400",
+                                        "border-orange-700/50 bg-orange-950/15 text-orange-400",
+                                        "border-yellow-700/40 bg-yellow-950/10 text-yellow-500",
+                                        "border-zinc-600/50 bg-zinc-900/50 text-zinc-400",
+                                      ];
+                                      return (
+                                        <div key={key} className={`flex gap-3 items-start rounded-xl border px-3 py-2.5 ${turnColors[tIdx]}`}>
+                                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[9px] font-black text-zinc-300 mt-0.5">
+                                            {tIdx + 1}
+                                          </span>
+                                          <div className="min-w-0">
+                                            <span className="text-[8px] font-black uppercase tracking-widest opacity-70 block mb-0.5">{turnLabels[tIdx]}</span>
+                                            <p className="text-[11px] text-zinc-300 leading-relaxed font-semibold">{turnText}</p>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ) : matchup.turn_1_plan ? (
                                   <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-3 space-y-1">
                                     <span className="text-[9px] font-black text-red-500 uppercase tracking-widest font-mono block">Turn 1 Plan:</span>
                                     <p className="text-xs text-zinc-300 leading-relaxed font-semibold">{matchup.turn_1_plan}</p>
                                   </div>
-                                )}
+                                ) : null}
 
                                 {/* Win Condition */}
                                 {matchup.win_condition && (

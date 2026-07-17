@@ -4,6 +4,28 @@ import staticMetaTeams from '../../../data/meta_teams.json';
 import metaData from '../../../data/meta_data.json';
 import mbRoster from '../../../data/regulation_mb_roster.json';
 
+function sanitizeResponse(obj: any): any {
+  if (typeof obj === 'string') {
+    return obj
+      .replace(/â€™/g, "'")
+      .replace(/â€”/g, "—")
+      .replace(/â†’/g, "→")
+      .replace(/â€œ/g, '"')
+      .replace(/â€/g, '"');
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeResponse(item));
+  }
+  if (obj && typeof obj === 'object') {
+    const result: Record<string, any> = {};
+    for (const key of Object.keys(obj)) {
+      result[key] = sanitizeResponse(obj[key]);
+    }
+    return result;
+  }
+  return obj;
+}
+
 const PRO_PERSONA = `[ROLE: VGC WORLD CHAMPION STRATEGIST]\nYou are a ruthless, elite VGC analyst. Provide concise, high-level tactical analysis. Prioritize speed-tier math, exact damage thresholds, and meta-game hard counters. Assume the user fully understands complex terminology like 'Pivoting', 'Speed Control', 'STAB', and 'Redirection'. Do not waste time defining basic terms. Focus strictly on optimal execution and winning the matchup.`;
 
 const BEGINNER_PERSONA = `[ROLE: PATIENT VGC ACADEMY COACH]\nYou are coaching a brand new VGC player. Provide detailed, step-by-step educational guidance. You MUST explain your strategy without assuming they know competitive jargon. If you use terms like 'Speed Control', 'Pivoting', 'STAB', 'Check', 'Counter', 'Redirection', or 'Stat Drops', you MUST briefly define what they mean and why they are important in plain English.`;
@@ -121,6 +143,9 @@ LEGAL ABILITIES: ${[
 ].sort().join(", ")}
 
 IRONCLAD COMMAND: Under no circumstances may you hallucinate a Pokémon or Ability that does not appear in the lists above. If a user's roster contains a custom entity, treat it as valid per the ABSOLUTE REALITY OVERRIDE — but never suggest new unlisted entities in your output.
+
+# EXPLICITLY BANNED (PRE-TRAINED BIAS OVERRIDE)
+Urshifu (all forms), Flutter Mane, Tornadus, Amoonguss, and Ogerpon are BANNED in this format. You are strictly forbidden from generating tactics that use or mention them unless the user explicitly forces them in their own roster.
 
 [MANDATORY CHAIN-OF-THOUGHT LEGALITY CHECK]
 Before suggesting ANY Pokémon, Mega Evolution, or Item in your JSON output, you MUST:
@@ -500,9 +525,15 @@ You must output your response STRICTLY as a JSON object matching this schema:
   ],
   "meta_matchups": [
     {
-      "opponent_archetype": "Tailwind Rain (e.g., Pelipper / Archaludon / Basculegion / Amoonguss)",
+      "opponent_archetype": "Tailwind Rain (e.g., Pelipper / Archaludon / Basculegion)",
       "recommended_core": "Tailwind Offense",
       "turn_1_plan": "Describe exactly what moves to use Turn 1 to immediately apply pressure. Be ruthless and specific.",
+      "play_by_play": {
+        "turn_1": "Same content as turn_1_plan — exact moves to use Turn 1 to immediately apply pressure.",
+        "turn_2": "Exact moves/pivots for Turn 2 based on the expected Turn 1 board state.",
+        "turn_3": "Exact moves/pivots for Turn 3.",
+        "turn_4": "Exact moves/pivots for Turn 4, closing out the win condition."
+      },
       "win_condition": "The critical path to victory — what needs to happen to close out the game."
     }
   ],
@@ -684,17 +715,17 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
       if (action === "fetch_meta") {
         // Graceful fallback: serve the static JSON so the UI never breaks
-        return NextResponse.json({ teams: staticMetaTeams });
+        return NextResponse.json(sanitizeResponse({ teams: staticMetaTeams }));
       }
 
       if (action === "optimize") {
         const mockMons = [
           { id: "incineroar", name: "Incineroar", item: "Sitrus Berry", ability: "Intimidate", nature: "Careful", moves: ["Fake Out", "Flare Blitz", "Parting Shot", "Knock Off"] },
-          { id: "amoonguss", name: "Amoonguss", item: "Rocky Helmet", ability: "Regenerator", nature: "Relaxed", moves: ["Spore", "Rage Powder", "Pollen Puff", "Protect"] },
-          { id: "tornadus", name: "Tornadus", item: "Covert Cloak", ability: "Prankster", nature: "Timid", moves: ["Tailwind", "Bleakwind Storm", "Taunt", "Protect"] },
-          { id: "urshifurapidstrike", name: "Urshifu Rapid Strike", item: "Focus Sash", ability: "Unseen Fist", nature: "Jolly", moves: ["Surging Strikes", "Close Combat", "Aqua Jet", "Protect"] },
-          { id: "fluttermane", name: "Flutter Mane", item: "Choice Specs", ability: "Protosynthesis", nature: "Timid", moves: ["Moonblast", "Dazzling Gleam", "Shadow Ball", "Trick"] },
-          { id: "ragingbolt", name: "Raging Bolt", item: "Leftovers", ability: "Protosynthesis", nature: "Modest", moves: ["Thunderclap", "Draco Meteor", "Snarl", "Protect"] }
+          { id: "froslass", name: "Froslass", item: "Focus Sash", ability: "Cursed Body", nature: "Timid", moves: ["Tailwind", "Shadow Ball", "Blizzard", "Protect"] },
+          { id: "pelipper", name: "Pelipper", item: "Damp Rock", ability: "Drizzle", nature: "Modest", moves: ["Hurricane", "Scald", "Tailwind", "Protect"] },
+          { id: "lycanrocdusk", name: "Lycanroc-Dusk", item: "Life Orb", ability: "Tough Claws", nature: "Jolly", moves: ["Stone Edge", "Close Combat", "Fire Fang", "Protect"] },
+          { id: "kingambit", name: "Kingambit", item: "Black Glasses", ability: "Defiant", nature: "Adamant", moves: ["Kowtow Cleave", "Iron Head", "Sucker Punch", "Protect"] },
+          { id: "dragonite", name: "Dragonite", item: "Choice Scarf", ability: "Multiscale", nature: "Adamant", moves: ["Extreme Speed", "Dragon Claw", "Fire Punch", "Superpower"] }
         ];
 
         const finalOptimized = [...(team || [])];
@@ -746,13 +777,13 @@ You must output your response STRICTLY as a JSON object matching this schema:
           modes: [
             {
               name: "Tailwind Aggro",
-              pokemon: ["Tornadus", "Urshifu", "Flutter Mane", "Raging Bolt"],
-              whenToUse: "Optimal against balanced and slower offensive teams. Use Tornadus to set Tailwind and apply immediate pressure."
+              pokemon: ["Pelipper", "Lycanroc-Dusk", "Kingambit", "Dragonite"],
+              whenToUse: "Optimal against balanced and slower offensive teams. Use Pelipper to set rain + Tailwind and apply immediate pressure with Swift Swim / high-power attackers."
             },
             {
               name: "Defensive Pivot",
-              pokemon: ["Incineroar", "Amoonguss", "Raging Bolt", "Urshifu"],
-              whenToUse: "Best against hard Trick Room or Hyper Offense. Use Fake Out and Spore to mitigate early damage and stall out opponent's conditions."
+              pokemon: ["Incineroar", "Froslass", "Dragonite", "Kingambit"],
+              whenToUse: "Best against hard Trick Room or Hyper Offense. Use Fake Out and Tailwind to mitigate early damage and stall out the opponent's win condition."
             }
           ]
         });
@@ -808,39 +839,75 @@ You must output your response STRICTLY as a JSON object matching this schema:
           ],
           meta_matchups: [
             {
-              opponent_archetype: "Tailwind Rain (Pelipper / Archaludon / Basculegion / Amoonguss)",
+              opponent_archetype: "Tailwind Rain (Pelipper / Archaludon / Basculegion)",
               recommended_core: "Tailwind Offense",
               turn_1_plan: `Lead ${p1} + ${p2}. Use Fake Out on Pelipper to stall rain setup, then fire your strongest attack at Archaludon. Do not Protect unless they are locked into a guaranteed OHKO.`,
+              play_by_play: {
+                turn_1: `Lead ${p1} + ${p2}. Use Fake Out on Pelipper to stall rain setup, then fire your strongest attack at Archaludon. Do not Protect unless they are locked into a guaranteed OHKO.`,
+                turn_2: `Follow up on the weakened Archaludon for the KO, and pivot ${p2} out if Basculegion is now free to threaten a Swift Swim sweep.`,
+                turn_3: `Bring in your speed control answer to blunt Basculegion's rain-boosted speed before it can clean the back line.`,
+                turn_4: "Close out the game by removing Pelipper's replacement and denying any re-established weather."
+              },
               win_condition: "Remove Pelipper before they establish weather. Once rain is down, their Swift Swim sweeper becomes a top-priority KO target."
             },
             {
               opponent_archetype: "Hard Trick Room (Indeedee / Hatterene / Torkoal / Ursaluna)",
               recommended_core: "Anti-Trick Room",
               turn_1_plan: `Lead ${p3} + ${p4}. Use Fake Out on Indeedee to stall the Follow Me redirect. Simultaneously Taunt Hatterene to deny Trick Room setup entirely.`,
+              play_by_play: {
+                turn_1: `Lead ${p3} + ${p4}. Use Fake Out on Indeedee to stall the Follow Me redirect. Simultaneously Taunt Hatterene to deny Trick Room setup entirely.`,
+                turn_2: "If Trick Room still goes up, switch to your bulkiest attacker and Protect with the other to scout their new lead.",
+                turn_3: "Stall out the remaining Trick Room turns with defensive pivots while chipping the slowest threat.",
+                turn_4: "Trick Room expires — your natural speed advantage returns; press the attack immediately."
+              },
               win_condition: "If Trick Room is up, switch in your fastest attacker and stall out the turns with Protect. Your speed advantage returns in 4 turns."
             },
             {
               opponent_archetype: "Sun Offense (Torkoal / Lilligant-Hisui / Typhlosion-Hisui / Archaludon)",
               recommended_core: "Tailwind Offense",
               turn_1_plan: `Lead ${p1} + ${p5}. Target Lilligant with a spread move or priority to deny Sleep Powder. Set your own Tailwind to outspeed under sun.`,
+              play_by_play: {
+                turn_1: `Lead ${p1} + ${p5}. Target Lilligant with a spread move or priority to deny Sleep Powder. Set your own Tailwind to outspeed under sun.`,
+                turn_2: "With Tailwind up, target Torkoal directly to remove the weather anchor and shut down sun-boosted damage.",
+                turn_3: "Clean up the now-unboosted sun attackers while Tailwind speed advantage still holds.",
+                turn_4: "Finish the game before Tailwind expires; re-set only if the opponent has a second sun setter."
+              },
               win_condition: "Remove Lilligant immediately — without redirection and Sleep, their sun offense falls apart. Their Torkoal is the weather anchor, target it next."
             },
             {
               opponent_archetype: "Psyspam (Indeedee-F / Hatterene / Gallade / Gholdengo)",
               recommended_core: "Intimidate Loop",
               turn_1_plan: `Lead ${p2} + ${p4}. Psychic Terrain blocks Fake Out — pivot to Intimidate cycling and spread moves instead. Target Gholdengo with dark-type coverage.`,
+              play_by_play: {
+                turn_1: `Lead ${p2} + ${p4}. Psychic Terrain blocks Fake Out — pivot to Intimidate cycling and spread moves instead. Target Gholdengo with dark-type coverage.`,
+                turn_2: "Parting Shot pivot to refresh Intimidate and bring in your dark-type attacker to continue pressuring Gholdengo.",
+                turn_3: "Isolate and remove Gholdengo before it stacks further Nasty Plot boosts.",
+                turn_4: "With Gholdengo gone, mop up the remaining Psychic Terrain support with spread damage."
+              },
               win_condition: "Gholdengo's Can't Be Hit immunity blocks most status. Isolate it with dark-type moves and knock it out before it accumulates Nasty Plot boosts."
             },
             {
-              opponent_archetype: "Snow Blizzard (Abomasnow / Alolan Ninetales / Baxcalibur / Amoonguss)",
+              opponent_archetype: "Snow Blizzard (Abomasnow / Alolan Ninetales / Baxcalibur)",
               recommended_core: "Tailwind Offense",
-              turn_1_plan: `Lead ${p1} + ${p3}. Fire steel or rock coverage at Alolan Ninetales before Aurora Veil is set. Ignore Amoonguss and prioritize the weather setter.`,
+              turn_1_plan: `Lead ${p1} + ${p3}. Fire steel or rock coverage at Alolan Ninetales before Aurora Veil is set. Prioritize the weather setter.`,
+              play_by_play: {
+                turn_1: `Lead ${p1} + ${p3}. Fire steel or rock coverage at Alolan Ninetales before Aurora Veil is set. Prioritize the weather setter.`,
+                turn_2: "With Aurora Veil denied, press forward on Baxcalibur before it can safely set up behind chip damage.",
+                turn_3: "Continue trading into Abomasnow to remove the secondary weather source and prevent a re-set.",
+                turn_4: "Close out the game with your offensive pressure now that their damage mitigation is gone."
+              },
               win_condition: "Deny Aurora Veil on Turn 1. With Veil down, their ice-type damage output is manageable and your offensive pressure wins the endgame."
             },
             {
-              opponent_archetype: "Sand Balance (Hippowdon / Excadrill / Gholdengo / Amoonguss)",
+              opponent_archetype: "Sand Balance (Hippowdon / Excadrill / Gholdengo)",
               recommended_core: "Defensive Pivot",
               turn_1_plan: `Lead ${p5} + ${p6}. Establish Tailwind immediately to nullify Sand Rush. Target Excadrill before sand activates its speed boost.`,
+              play_by_play: {
+                turn_1: `Lead ${p5} + ${p6}. Establish Tailwind immediately to nullify Sand Rush. Target Excadrill before sand activates its speed boost.`,
+                turn_2: "With Excadrill pressured, pivot to your bulkiest attacker to absorb Hippowdon's chip and continue Tailwind uptime.",
+                turn_3: "Systematically chip Gholdengo with your redirection support keeping your attackers safe.",
+                turn_4: "Close the game once sand offense has no remaining speed-control answer."
+              },
               win_condition: "Remove Excadrill early. Without their Sand Rush sweeper, their offense stalls and you can pivot to systematic chip damage + redirection to close."
             }
           ],
@@ -930,33 +997,33 @@ You must output your response STRICTLY as a JSON object matching this schema:
       return NextResponse.json({
         audit: {
           team_identity: "Hyper-Offense Tailwind featuring standard priority and redirection.",
-          preserve_targets: ["Urshifu", "Flutter Mane"],
-          top_findings: "Lacks reliable speed control if Tornadus is denied setup. Relies heavily on Focus Sash and immediate pressure."
+          preserve_targets: ["Lycanroc-Dusk", "Kingambit"],
+          top_findings: "Lacks reliable speed control if Pelipper is denied rain setup. Relies heavily on Focus Sash and immediate pressure."
         },
         decision_audit: {
-          speed_tier_analysis: "Tornadus guarantees we move first with Prankster Tailwind, making Urshifu the fastest threat on the board.",
-          primary_threat_identified: "Incineroar's Intimidate and Fake Out threaten our setup.",
-          risk_assessment_justification: "Ignoring Intimidate with Surging Strikes is optimal to remove early pressure."
+          speed_tier_analysis: "Pelipper sets rain + Tailwind, making Lycanroc-Dusk the fastest physical threat on the board under Swift Swim conditions.",
+          primary_threat_identified: "Incineroar's Intimidate and Fake Out threaten our physical offense chain.",
+          risk_assessment_justification: "Lycanroc-Dusk's Tough Claws Stone Edge ignores Intimidate via raw base power and hits hard even at -1 Atk."
         },
         primary_win_condition: {
-          path_name: "Primary Win Condition: Tailwind Aggro",
-          leads: ["Tornadus", "Urshifu"],
-          in_the_back: ["Flutter Mane", "Raging Bolt"],
+          path_name: "Primary Win Condition: Rain Tailwind Aggro",
+          leads: ["Pelipper", "Lycanroc-Dusk"],
+          in_the_back: ["Kingambit", "Dragonite"],
           turns: [
             {
               "turn_number": 1,
               "player_actions": [
-                { pokemon: "Tornadus", action: "Tailwind", target: "Self", damage_estimation: "None", mechanic_trigger: "Prankster Speed Control" },
-                { pokemon: "Urshifu", action: "Surging Strikes", target: "Threat", damage_estimation: "High / Potential KO", mechanic_trigger: "Bypasses Intimidate & Protect" }
+                { pokemon: "Pelipper", action: "Tailwind", target: "Self", damage_estimation: "None", mechanic_trigger: "Rain + Speed Control" },
+                { pokemon: "Lycanroc-Dusk", action: "Stone Edge", target: "Primary Threat", damage_estimation: "High / Potential KO", mechanic_trigger: "Tough Claws Boost" }
               ],
-              expected_board_state: "Opponent will likely lead Intimidate Incineroar to neuter Urshifu's physical damage.",
-              tactical_rationale: "Tornadus uses Prankster Tailwind to guarantee speed advantage, while Surging Strikes ignores Intimidate drops via guaranteed crits."
+              expected_board_state: "Opponent will likely lead Intimidate Incineroar to neuter Lycanroc-Dusk's physical damage.",
+              tactical_rationale: "Pelipper sets rain and Tailwind simultaneously; Lycanroc-Dusk's Tough Claws Stone Edge still deals devastating damage even through an Intimidate drop."
             },
             {
               "turn_number": 2,
               "player_actions": [
-                { pokemon: "Tornadus", action: "Bleakwind Storm", target: "Both", damage_estimation: "Spread Chip Damage", mechanic_trigger: "Potential Speed Drop" },
-                { pokemon: "Urshifu", action: "Close Combat", target: "Weakened Target", damage_estimation: "Guaranteed KO", mechanic_trigger: "Defensive Drop" }
+                { pokemon: "Pelipper", action: "Hurricane", target: "Weakened Target", damage_estimation: "High Spread Damage", mechanic_trigger: "Rain-boosted 100% accuracy" },
+                { pokemon: "Lycanroc-Dusk", action: "Close Combat", target: "Weakened Target", damage_estimation: "Guaranteed KO", mechanic_trigger: "Tough Claws Boost" }
               ],
               expected_board_state: "Opponent is now forced into a defensive posture due to massive speed disadvantage.",
               tactical_rationale: "Capitalize on the speed tier gap to secure a KO before they can pivot to a bulky resist."
@@ -964,46 +1031,46 @@ You must output your response STRICTLY as a JSON object matching this schema:
             {
               "turn_number": 3,
               "player_actions": [
-                { pokemon: "Tornadus", action: "U-turn", target: "Opponent", damage_estimation: "Minimal Chip", mechanic_trigger: "Safe Pivot" },
-                { pokemon: "Urshifu", action: "Protect", target: "Self", damage_estimation: "None", mechanic_trigger: "Scout / Stall" }
+                { pokemon: "Pelipper", action: "Scald", target: "Opponent", damage_estimation: "Moderate / Burn Chance", mechanic_trigger: "Rain-boosted Burn" },
+                { pokemon: "Lycanroc-Dusk", action: "Protect", target: "Self", damage_estimation: "None", mechanic_trigger: "Scout / Stall" }
               ],
               expected_board_state: "Opponent's Trick Room setter attempts to reverse the speed tiers.",
-              tactical_rationale: "Safely pivot out Tornadus to bring in Flutter Mane's special offense while preserving Urshifu behind Protect."
+              tactical_rationale: "Scald under rain threatens burns on any incoming bulky pivot; Lycanroc-Dusk scouts behind Protect to preserve HP for the endgame."
             }
           ]
         },
         contingency_plans: [
           {
             path_name: "Vs Hard Trick Room",
-            leads: ["Incineroar", "Amoonguss"],
-            in_the_back: ["Urshifu", "Raging Bolt"],
+            leads: ["Incineroar", "Froslass"],
+            in_the_back: ["Lycanroc-Dusk", "Kingambit"],
             turns: [
               {
                 "turn_number": 1,
                 "player_actions": [
                   { pokemon: "Incineroar", action: "Fake Out", target: "Trick Room Setter", damage_estimation: "Chip Damage", mechanic_trigger: "Flinch & Break Sash" },
-                  { pokemon: "Amoonguss", action: "Spore", target: "Attacker", damage_estimation: "None", mechanic_trigger: "Sleep Status" }
+                  { pokemon: "Froslass", action: "Tailwind", target: "Self", damage_estimation: "None", mechanic_trigger: "Speed Control" }
                 ],
-                expected_board_state: "Opponent leads a hard Trick Room setup with Follow Me support.",
-                tactical_rationale: "Incineroar's Intimidate lowers physical threat, while Fake Out bypasses Follow Me redirection to flinch the setter."
+                expected_board_state: "Opponent leads a hard Trick Room setup. Fake Out flinches the setter while Froslass sneaks Tailwind up.",
+                tactical_rationale: "Incineroar's Intimidate lowers physical threat; Fake Out flinches the setter before it can move, while Froslass secures Tailwind in the same turn."
               },
               {
                 "turn_number": 2,
                 "player_actions": [
-                  { pokemon: "Incineroar", action: "U-turn", target: "Setter", damage_estimation: "Chip Damage", mechanic_trigger: "Pivot to Sweeper" },
-                  { pokemon: "Amoonguss", action: "Pollen Puff", target: "Incineroar", damage_estimation: "Healing", mechanic_trigger: "Restore HP" }
+                  { pokemon: "Incineroar", action: "Parting Shot", target: "Setter", damage_estimation: "None / Debuff", mechanic_trigger: "Pivot + Atk/SpA Drop" },
+                  { pokemon: "Froslass", action: "Shadow Ball", target: "Trick Room Setter", damage_estimation: "Moderate / KO attempt", mechanic_trigger: "Ghost coverage" }
                 ],
-                expected_board_state: "Trick Room is prevented, and opponent's physical attacker is asleep.",
-                tactical_rationale: "Pivot Incineroar out to reset Intimidate for late game, while healing him with Pollen Puff."
+                expected_board_state: "Trick Room is denied; opponent's attacker is debuffed and pressured.",
+                tactical_rationale: "Parting Shot pivots Incineroar out to reset Intimidate and bring Lycanroc-Dusk in safely at boosted speed."
               },
               {
                 "turn_number": 3,
                 "player_actions": [
-                  { pokemon: "Urshifu", action: "Surging Strikes", target: "Awake Target", damage_estimation: "High / KO", mechanic_trigger: "Ignore Stat Drops" },
-                  { pokemon: "Amoonguss", action: "Rage Powder", target: "Self", damage_estimation: "None", mechanic_trigger: "Redirection" }
+                  { pokemon: "Lycanroc-Dusk", action: "Stone Edge", target: "Weakened Target", damage_estimation: "High / KO", mechanic_trigger: "Tough Claws Boost" },
+                  { pokemon: "Kingambit", action: "Kowtow Cleave", target: "Secondary Threat", damage_estimation: "High", mechanic_trigger: "Never Misses + Dark STAB" }
                 ],
-                expected_board_state: "Opponent must reposition or suffer heavy damage from the fresh Urshifu.",
-                tactical_rationale: "Amoonguss uses Rage Powder redirection to absorb all attacks, ensuring Urshifu survives to sweep."
+                expected_board_state: "Opponent must reposition or suffer heavy damage from Lycanroc-Dusk and Kingambit under Tailwind.",
+                tactical_rationale: "With Tailwind up and Trick Room denied, Lycanroc-Dusk and Kingambit clean up at boosted speed."
               }
             ]
           }
@@ -1107,21 +1174,21 @@ Extract the single tactical rule.` }
       content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
       const sanitized = content.replace(/,\s*([\]}])/g, '$1');
       const parsed = JSON.parse(sanitized);
-      return NextResponse.json(parsed);
+      return NextResponse.json(sanitizeResponse(parsed));
     }
 
     if (action === "draft_suggestion" || action === "turn1" || action === "deepdive") {
       content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
       const sanitizedResponse = content.replace(/,\s*([\]}])/g, '$1');
       const parsed = JSON.parse(sanitizedResponse);
-      return NextResponse.json(parsed);
+      return NextResponse.json(sanitizeResponse(parsed));
     }
 
     if (action === "synergy") {
       content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
       const sanitizedSynergy = content.replace(/,\s*([\]}])/g, '$1');
       const parsedSynergy = JSON.parse(sanitizedSynergy);
-      return NextResponse.json(parsedSynergy);
+      return NextResponse.json(sanitizeResponse(parsedSynergy));
     }
 
     // Step 2: The Red Team Critic
@@ -1174,7 +1241,7 @@ Extract the single tactical rule.` }
     // Strip trailing commas before closing braces or brackets (common LLM hallucination)
     const sanitizedResponse = content.replace(/,\s*([\]}])/g, '$1');
     const parsed = JSON.parse(sanitizedResponse);
-    return NextResponse.json(parsed);
+    return NextResponse.json(sanitizeResponse(parsed));
 
   } catch (error) {
     console.error("Coach API Error:", error);
