@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     // ── RAG: Fetch active user-defined directives from Supabase ─────────────────
     // Only injected into actions that produce tactical playbook/planning output.
     let userDirectivesContext = "";
-    const RAG_ACTIONS = ["turn1", "deepdive", "assess_team", "draft_suggestion"];
+    const RAG_ACTIONS = ["turn1", "deepdive", "assess_team", "draft_suggestion", "synergy"];
     if (RAG_ACTIONS.includes(action)) {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -534,6 +534,27 @@ Extract a single, hard-hitting VGC tactical rule/instruction (under 30 words) th
 Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Tornadus against Regieleki if they have tailwind pressure.'
 Do not use markdown bolding. If the notes are too general or useless to extract a concrete rule, output exactly: NO_RULE`;
 
+    // ── Synergy Scanner Prompt ────────────────────────────────────────────────
+    const synergySystemPrompt = `${REGULATION_MB_CONTEXT}
+
+You are a World Champion VGC analyst performing a Synergy Scan on a Regulation M-B team roster.
+Your task is to identify structural weaknesses, missing roles, and meta vulnerability — before the player ever steps into a match.
+
+Analyze the provided 6-Pokémon roster for:
+1. OVERLAPPING TYPE WEAKNESSES: Identify any type that 3 or more Pokémon share as a weakness. Note whether any team member provides an immunity or resist to offset it.
+2. MISSING VITAL ROLES: Flag absence of critical roles such as: Speed Control (Tailwind / Trick Room / Icy Wind), Fake Out support, Redirection (Follow Me / Rage Powder), entry hazard control, or significant physical / special split bias.
+3. META VULNERABILITY: Identify which top Regulation M-B archetypes (Rain, Sun, Sand, Snow, Trick Room, Tailwind Offense, Psyspam) will pose the hardest challenges to this team, and name the exact Pokémon from those archetypes that threaten them.
+4. SYNERGY TWEAKS: Suggest up to 3 concrete item, move, or Pokémon swaps that would address the most critical structural hole. Suggestions MUST be drawn exclusively from the STRICT LEGALITY DICTIONARY.
+
+You must output your response STRICTLY as a JSON object matching this schema:
+{
+  "core_identity": "Brief description of the team archetype and primary win condition.",
+  "type_vulnerabilities": ["e.g., 4 Pokémon weak to Ground with no immunity — Excadrill Sand Rush will steamroll this team."],
+  "meta_threats": ["e.g., Abomasnow + Alolan Ninetales Snow: Aurora Veil will shut down your offensive output completely."],
+  "suggested_tweaks": ["e.g., Replace item X on Pokémon Y with Z to address Ground weakness."],
+  "legality_check": true
+}`;
+
     let baseSystemPrompt = action === "optimize" ? optimizeSystemPrompt
       : action === "assess" ? assessSystemPrompt
       : action === "assess_team" ? finalAssessTeamPrompt
@@ -543,6 +564,7 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
       : action === "deepdive" ? deepdiveSystemPrompt
       : action === "extract_lesson" ? extractionSystemPrompt
       : action === "match_debrief" ? matchDebriefSystemPrompt
+      : action === "synergy" ? synergySystemPrompt
       : auditSystemPrompt;
 
     if (action === "draft_suggestion" || action === "audit" || action === "turn1" || action === "deepdive") {
@@ -598,6 +620,8 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
       ? "Deep dive on this 4-Pokémon draft against the Opponent's team.\nOpponent Team: " + JSON.stringify(team, null, 2) + "\nPlayer Draft: " + JSON.stringify(playerLockedRoster, null, 2)
       : action === "assess_team"
       ? "Perform a deep-dive study guide assessment on this Regulation M-B team.\nTeam: " + JSON.stringify(team, null, 2)
+      : action === "synergy"
+      ? "Perform a Synergy Scan on this Regulation M-B roster. Identify type weaknesses, missing roles, meta threats, and suggest concrete fixes.\nTeam: " + JSON.stringify(team, null, 2)
       : "Analyze the following team and provide a VGC Audit and Lead Plan.\nTeam: " + JSON.stringify(team, null, 2) + (opponent ? "\nOpponent: " + JSON.stringify(opponent, null, 2) : "");
 
     const apiKey = process.env.AI_API_KEY;
@@ -796,6 +820,26 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
               rationale: "Ensures speed control goes up first in competitive mirror scenarios."
             }
           ]
+        });
+      }
+
+      if (action === "synergy") {
+        const names = (team || []).map((p: any) => p.name || p.id || "Unknown");
+        return NextResponse.json({
+          core_identity: `A ${names.length}-Pokémon roster centered around ${names.slice(0, 2).join(" and ")} as the primary offensive core.`,
+          type_vulnerabilities: [
+            "3+ Pokémon are weak to Ground — Excadrill under Sand Rush will sweep without a Flying type or Levitate user.",
+            "No Steel or Poison resist to Fairy-type spread moves — Dazzling Gleam will hit the entire front row."
+          ],
+          meta_threats: [
+            "Rain offense (Pelipper + Basculegion): Swift Swim will outspeed your entire roster without Tailwind or Trick Room.",
+            "Psyspam (Indeedee-F + Hatterene): Psychic Terrain will block Fake Out, removing your primary turn-1 tool."
+          ],
+          suggested_tweaks: [
+            "Add Incineroar with Intimidate to patch the physical bulk hole and provide Fake Out support.",
+            "Swap an item to Safety Goggles on a back-row member to counter Amoonguss Spore + Rage Powder redirection."
+          ],
+          legality_check: true
         });
       }
 
@@ -1008,7 +1052,7 @@ Extract the single tactical rule.` }
         model: model,
         messages: finalMessages,
         response_format: (action === "dossier_chat" || action === "extract_lesson" || action === "match_debrief") ? undefined : { type: "json_object" },
-        temperature: (action === "assess_team" || action === "dossier_chat") ? 0.5 : (action === "extract_lesson" || action === "match_debrief") ? 0.1 : action === "extract_dossier" ? 0.1 : 0.2
+        temperature: (action === "assess_team" || action === "dossier_chat" || action === "synergy") ? 0.5 : (action === "extract_lesson" || action === "match_debrief") ? 0.1 : action === "extract_dossier" ? 0.1 : 0.2
       })
     });
 
@@ -1035,6 +1079,13 @@ Extract the single tactical rule.` }
       const sanitizedResponse = content.replace(/,\s*([\]}])/g, '$1');
       const parsed = JSON.parse(sanitizedResponse);
       return NextResponse.json(parsed);
+    }
+
+    if (action === "synergy") {
+      content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
+      const sanitizedSynergy = content.replace(/,\s*([\]}])/g, '$1');
+      const parsedSynergy = JSON.parse(sanitizedSynergy);
+      return NextResponse.json(parsedSynergy);
     }
 
     // Step 2: The Red Team Critic

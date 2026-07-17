@@ -48,6 +48,17 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
   const [preOptimizationState, setPreOptimizationState] = useState<ParsedPokemon[] | null>(null);
   const [optimizationReport, setOptimizationReport] = useState<any[] | null>(null);
 
+  // Synergy Scanner States
+  const [isScanningSynergy, setIsScanningSynergy] = useState(false);
+  const [synergyData, setSynergyData] = useState<{
+    core_identity: string;
+    type_vulnerabilities: string[];
+    meta_threats: string[];
+    suggested_tweaks: string[];
+    legality_check?: boolean;
+  } | null>(null);
+  const [showSynergyPanel, setShowSynergyPanel] = useState(false);
+
   const handleAssessTeamDeepDive = async (chatContextPayload?: any[] | React.MouseEvent) => {
     if (team.length !== 6) return;
     setIsAssessingDeep(true);
@@ -605,6 +616,47 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
           </div>
 
           <div className="grid grid-cols-2 gap-3 w-full max-w-md">
+            {/* Analyze Team Synergy Button */}
+            <button
+              onClick={async () => {
+                if (team.length < 4 || isScanningSynergy) return;
+                setIsScanningSynergy(true);
+                setSynergyData(null);
+                try {
+                  const res = await fetch("/api/coach", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "synergy", team })
+                  });
+                  if (!res.ok) throw new Error("Synergy scan failed.");
+                  const data = await res.json();
+                  setSynergyData(data);
+                  setShowSynergyPanel(true);
+                } catch (err: any) {
+                  alert("Synergy scan error: " + err.message);
+                } finally {
+                  setIsScanningSynergy(false);
+                }
+              }}
+              disabled={team.length < 4 || isScanningSynergy}
+              className="col-span-2 py-3.5 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-amber-700 hover:bg-amber-600 border border-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.15)] uppercase tracking-widest flex items-center justify-center gap-2"
+            >
+              {isScanningSynergy ? (
+                <><span className="animate-spin h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent inline-block" />Scanning Synergy...</>
+              ) : (
+                <>⚡ Analyze Team Synergy</>
+              )}
+            </button>
+
+            {synergyData && (
+              <button
+                onClick={() => setShowSynergyPanel(true)}
+                className="col-span-2 py-2.5 rounded-xl font-bold text-xs transition-all duration-300 bg-amber-950/30 border border-amber-900/30 text-amber-500 hover:bg-amber-950/50 uppercase tracking-widest flex items-center justify-center gap-2"
+              >
+                Re-Open Synergy Report
+              </button>
+            )}
+
             {/* Run Deep Dive Assessment Button */}
             <button
               onClick={handleAssessTeamDeepDive}
@@ -647,7 +699,88 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
         </div>
       )}
 
+      {/* ── Synergy Report Modal ─────────────────────────────────────────── */}
+      {showSynergyPanel && synergyData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/85 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-amber-900/40 rounded-3xl w-full max-w-2xl shadow-[0_0_40px_rgba(245,158,11,0.1)] max-h-[88vh] flex flex-col overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-amber-950/60 to-zinc-900 border-b border-amber-900/30 px-6 py-4 flex justify-between items-center flex-shrink-0">
+              <div>
+                <h3 className="text-base font-black text-amber-400 uppercase tracking-widest">⚡ Synergy Scan Report</h3>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Regulation M-B Structural Analysis</p>
+              </div>
+              <button onClick={() => setShowSynergyPanel(false)} className="text-zinc-500 hover:text-white transition-colors text-xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800">✕</button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto px-6 py-5 space-y-5">
+              {/* Core Identity */}
+              <div className="bg-zinc-800/40 border border-zinc-700/50 rounded-2xl p-4">
+                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1.5">Team Archetype</p>
+                <p className="text-sm text-zinc-200 font-bold leading-relaxed">{synergyData.core_identity}</p>
+              </div>
+
+              {/* Type Vulnerabilities */}
+              {synergyData.type_vulnerabilities.length > 0 && (
+                <div>
+                  <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">⚠ Type Weaknesses</p>
+                  <div className="space-y-2">
+                    {synergyData.type_vulnerabilities.map((v, i) => (
+                      <div key={i} className="flex gap-3 items-start bg-amber-950/20 border border-amber-900/30 rounded-xl px-4 py-3">
+                        <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0">▲</span>
+                        <p className="text-xs text-amber-200/90 leading-relaxed">{v}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Meta Threats */}
+              {synergyData.meta_threats.length > 0 && (
+                <div>
+                  <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-2">☠ Meta Threats</p>
+                  <div className="space-y-2">
+                    {synergyData.meta_threats.map((t, i) => (
+                      <div key={i} className="flex gap-3 items-start bg-red-950/20 border border-red-900/30 rounded-xl px-4 py-3">
+                        <span className="text-red-500 text-xs mt-0.5 flex-shrink-0">●</span>
+                        <p className="text-xs text-red-200/90 leading-relaxed">{t}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Suggested Tweaks */}
+              {synergyData.suggested_tweaks.length > 0 && (
+                <div>
+                  <p className="text-[9px] font-black text-teal-400 uppercase tracking-widest mb-2">✦ Suggested Fixes</p>
+                  <div className="space-y-2">
+                    {synergyData.suggested_tweaks.map((s, i) => (
+                      <div key={i} className="flex gap-3 items-start bg-teal-950/20 border border-teal-900/30 rounded-xl px-4 py-3">
+                        <span className="text-teal-400 text-xs mt-0.5 flex-shrink-0">→</span>
+                        <p className="text-xs text-teal-200/90 leading-relaxed">{s}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-zinc-800 px-6 py-4 flex-shrink-0">
+              <button
+                onClick={() => setShowSynergyPanel(false)}
+                className="w-full py-2.5 rounded-xl font-black text-xs uppercase tracking-widest bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors border border-zinc-700"
+              >
+                Close Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Load Roster Modal */}
+
       {showLoadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
           <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
