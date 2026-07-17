@@ -645,7 +645,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               {isScanningSynergy ? (
                 <><span className="animate-spin h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent inline-block" />Scanning Synergy...</>
               ) : (
-                <>âš¡ Analyze Team Synergy</>
+                <>⚡ Analyze Team Synergy</>
               )}
             </button>
 
@@ -700,17 +700,17 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
         </div>
       )}
 
-      {/* â”€â”€ Synergy Report Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* —— Synergy Report Modal ——————————————————————————————————————————— */}
       {showSynergyPanel && synergyData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/85 backdrop-blur-sm">
           <div className="bg-zinc-900 border border-amber-900/40 rounded-3xl w-full max-w-2xl shadow-[0_0_40px_rgba(245,158,11,0.1)] max-h-[88vh] flex flex-col overflow-hidden">
             {/* Header */}
             <div className="bg-gradient-to-r from-amber-950/60 to-zinc-900 border-b border-amber-900/30 px-6 py-4 flex justify-between items-center flex-shrink-0">
               <div>
-                <h3 className="text-base font-black text-amber-400 uppercase tracking-widest">âš¡ Synergy Scan Report</h3>
+                <h3 className="text-base font-black text-amber-400 uppercase tracking-widest">⚡ Synergy Scan Report</h3>
                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">Regulation M-B Structural Analysis</p>
               </div>
-              <button onClick={() => setShowSynergyPanel(false)} className="text-zinc-500 hover:text-white transition-colors text-xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800">âœ•</button>
+              <button onClick={() => setShowSynergyPanel(false)} className="text-zinc-500 hover:text-white transition-colors text-xl font-bold w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800">✕</button>
             </div>
 
             {/* Scrollable Content */}
@@ -724,11 +724,11 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               {/* Type Vulnerabilities */}
               {synergyData.type_vulnerabilities.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">âš  Type Weaknesses</p>
+                  <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest mb-2">⚠ Type Weaknesses</p>
                   <div className="space-y-2">
                     {synergyData.type_vulnerabilities.map((v, i) => (
                       <div key={i} className="flex gap-3 items-start bg-amber-950/20 border border-amber-900/30 rounded-xl px-4 py-3">
-                        <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0">â–²</span>
+                        <span className="text-amber-500 text-xs mt-0.5 flex-shrink-0">▲</span>
                         <p className="text-xs text-amber-200/90 leading-relaxed">{v}</p>
                       </div>
                     ))}
@@ -739,11 +739,11 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               {/* Meta Threats */}
               {synergyData.meta_threats.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-2">â˜  Meta Threats</p>
+                  <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-2">☠ Meta Threats</p>
                   <div className="space-y-2">
                     {synergyData.meta_threats.map((t, i) => (
                       <div key={i} className="flex gap-3 items-start bg-red-950/20 border border-red-900/30 rounded-xl px-4 py-3">
-                        <span className="text-red-500 text-xs mt-0.5 flex-shrink-0">â—</span>
+                        <span className="text-red-500 text-xs mt-0.5 flex-shrink-0">●</span>
                         <p className="text-xs text-red-200/90 leading-relaxed">{t}</p>
                       </div>
                     ))}
@@ -754,11 +754,11 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               {/* Suggested Tweaks */}
               {synergyData.suggested_tweaks.length > 0 && (
                 <div>
-                  <p className="text-[9px] font-black text-teal-400 uppercase tracking-widest mb-2">âœ¦ Suggested Fixes</p>
+                  <p className="text-[9px] font-black text-teal-400 uppercase tracking-widest mb-2">✦ Suggested Fixes</p>
                   <div className="space-y-2">
                     {synergyData.suggested_tweaks.map((s, i) => (
                       <div key={i} className="flex gap-3 items-start bg-teal-950/20 border border-teal-900/30 rounded-xl px-4 py-3">
-                        <span className="text-teal-400 text-xs mt-0.5 flex-shrink-0">â†’</span>
+                        <span className="text-teal-400 text-xs mt-0.5 flex-shrink-0">→</span>
                         <p className="text-xs text-teal-200/90 leading-relaxed">{s}</p>
                       </div>
                     ))}
@@ -791,7 +791,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                 onClick={() => setShowLoadModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors"
               >
-                âœ•
+                ✕
               </button>
             </div>
 
@@ -864,7 +864,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                 onClick={() => setShowMetaModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors"
               >
-                âœ•
+                ✕
               </button>
             </div>
 
@@ -911,7 +911,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                 onClick={() => setShowDossierModal(false)}
                 className="text-zinc-500 hover:text-white transition-colors text-lg animate-fade-in"
               >
-                âœ•
+                ✕
               </button>
             </div>
 
@@ -963,7 +963,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                           {dossierData.red_flags && dossierData.red_flags.length > 0 && (
                             <div className="bg-red-950/20 border-2 border-red-900/50 rounded-2xl p-5 flex flex-col gap-3 shadow-[0_0_15px_rgba(220,38,38,0.15)]">
                               <div className="flex items-center gap-2 text-red-500 font-black uppercase tracking-widest text-xs">
-                                <span>âš ï¸</span><span>Glaring Weakness Alert</span>
+                                <span>⚠ï¸</span><span>Glaring Weakness Alert</span>
                               </div>
                               <ul className="space-y-1.5 font-mono text-[11px] font-semibold text-zinc-200">
                                 {dossierData.red_flags.map((flag: string, i: number) => (
