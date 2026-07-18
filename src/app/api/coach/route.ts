@@ -104,31 +104,34 @@ export async function POST(request: Request) {
 
     // ── Build REGULATION_MB_CONTEXT (with optional RAG directive injection) ─────
     let REGULATION_MB_CONTEXT = `
-# REGULATION M-B & 2026 META CONTEXT (CRITICAL ENFORCEMENT)
-- You are evaluating teams for the VGC 2026 Regulation M-B format (Pokémon Champions).
-- STRICT ROSTER ADHERENCE: You MUST carefully read the exact team roster provided. Analyze every single Item, SP Stat spread, Move, Nature, and Ability. Do NOT assume a Pokémon is running a standard meta set; base all your tactical advice ONLY on the exact data provided in the user's payload.
-- TERASTALLIZATION IS STRICTLY BANNED. Do not ever suggest Terastallizing a Pokémon.
+# TEXT FORMATTING RULES (CRITICAL ENFORCEMENT)
+You are strictly forbidden from using emojis, emoticons, or special unicode characters. You must use pure, plain ASCII text only. Do not use dashes or parentheses in format names. Refer to the format ONLY as 'Regulation MB' (no hyphen). Refer to stats ONLY as 'SP Distribution' (do not use '66-SP').
+
+# REGULATION MB & 2026 META CONTEXT (CRITICAL ENFORCEMENT)
+- You are evaluating teams for the VGC 2026 Regulation MB format.
+- STRICT ROSTER ADHERENCE: You MUST carefully read the exact team roster provided. Analyze every single Item, SP Distribution spread, Move, Nature, and Ability. Do NOT assume a Pokemon is running a standard meta set; base all your tactical advice ONLY on the exact data provided in the user's payload.
+- TERASTALLIZATION IS STRICTLY BANNED. Do not ever suggest Terastallizing a Pokemon.
 - Z-MOVES AND DYNAMAX ARE STRICTLY BANNED.
 - MEGA EVOLUTION IS LEGAL: Assume holding a Mega Stone means Turn 1 Mega Evolution. You must actively check the provided roster's items for Mega Stones and factor their exact Mega Evolution stats/abilities into your calculations.
-- GEN 7+ SPEED MECHANICS: A Mega-Evolved Pokémon uses its NEW Speed stat on the exact turn it Mega Evolves.
-- CUSTOM 66-SP MATH: All stats use the 66-SP (Stat Point) system (Max 32 SP per stat). Do not use 510-EV math.
-- ANTI-HALLUCINATION: Do not invent stats or mechanics not present in the user's payload. Accept ALL Pokémon, items, abilities, and Mega Evolutions exactly as provided — they are real in this custom format.
+- GEN 7+ SPEED MECHANICS: A Mega-Evolved Pokemon uses its NEW Speed stat on the exact turn it Mega Evolves.
+- CUSTOM SP Distribution MATH: All stats use the SP Distribution system (Max 32 SP per stat). Do not use 510-EV math.
+- ANTI-HALLUCINATION: Do not invent stats or mechanics not present in the user's payload. Accept ALL Pokemon, items, abilities, and Mega Evolutions exactly as provided - they are real in this custom format.
 - FORMATTING RESTRICTION: You must keep your text formatting extremely clean. DO NOT use markdown bolding (**text**) to emphasize words. Do not use excessive headers. Use plain text paragraphs, clean spacing, and simple bullet points only. Let your words carry the weight, not the formatting.
 
 [STRICT WHITELIST ENFORCEMENT - ZERO TOLERANCE]
-You are analyzing the Pokémon Champions Regulation M-B custom format.
-You are FORBIDDEN from suggesting, analyzing, or naming ANY Pokémon that is not explicitly on this exact Whitelist:
+You are analyzing the Regulation MB custom format.
+You are FORBIDDEN from suggesting, analyzing, or naming ANY Pokemon that is not explicitly on this exact Whitelist:
 
 LEGAL SPECIES: ${mbRoster.legal_species.join(", ")}
 LEGAL FORMS: ${mbRoster.legal_forms.join(", ")}
 LEGAL MEGAS: ${mbRoster.legal_megas.join(", ")}
 
-If you suggest a threat, counter, or teammate in any optimization or playbook, it MUST be drawn exclusively from this exact list. No exceptions. If a Pokémon name is not on this list, it does not exist in this format.
+If you suggest a threat, counter, or teammate in any optimization or playbook, it MUST be drawn exclusively from this exact list. No exceptions. If a Pokemon name is not on this list, it does not exist in this format.
 
 # STRICT LEGALITY DICTIONARY (CRITICAL OVERRIDE)
-The following are the ONLY entities legal in Pokémon Champions Regulation M-B. You are strictly forbidden from suggesting, mentioning, or formulating tactics with ANY Pokémon or Ability that is not explicitly listed below. If a user asks about an illegal entity, you MUST reject it and redirect to a legal alternative.
+The following are the ONLY entities legal in Regulation MB. You are strictly forbidden from suggesting, mentioning, or formulating tactics with ANY Pokemon or Ability that is not explicitly listed below. If a user asks about an illegal entity, you MUST reject it and redirect to a legal alternative.
 
-LEGAL POKÉMON (ALL FORMS): ${[
+LEGAL POKEMON (ALL FORMS): ${[
   ...mbRoster.legal_species,
   ...mbRoster.legal_forms,
   ...mbRoster.legal_megas
@@ -142,17 +145,17 @@ LEGAL ABILITIES: ${[
   )
 ].sort().join(", ")}
 
-IRONCLAD COMMAND: Under no circumstances may you hallucinate a Pokémon or Ability that does not appear in the lists above. If a user's roster contains a custom entity, treat it as valid per the ABSOLUTE REALITY OVERRIDE — but never suggest new unlisted entities in your output.
+IRONCLAD COMMAND: Under no circumstances may you hallucinate a Pokemon or Ability that does not appear in the lists above. If a user's roster contains a custom entity, treat it as valid per the ABSOLUTE REALITY OVERRIDE - but never suggest new unlisted entities in your output.
 
 # EXPLICITLY BANNED (PRE-TRAINED BIAS OVERRIDE)
 Urshifu (all forms), Flutter Mane, Tornadus, Amoonguss, and Ogerpon are BANNED in this format. You are strictly forbidden from generating tactics that use or mention them unless the user explicitly forces them in their own roster.
 
 [MANDATORY CHAIN-OF-THOUGHT LEGALITY CHECK]
-Before suggesting ANY Pokémon, Mega Evolution, or Item in your JSON output, you MUST:
-1. Cross-reference EVERY proposed Pokémon against the STRICT LEGALITY DICTIONARY above.
+Before suggesting ANY Pokemon, Mega Evolution, or Item in your JSON output, you MUST:
+1. Cross-reference EVERY proposed Pokemon against the STRICT LEGALITY DICTIONARY above.
 2. Output your verification in the "legality_verification" array at the VERY TOP of your JSON response.
-3. If is_in_strict_dictionary is false for any proposed Pokémon, you MUST discard it and pick a legal alternative from the dictionary immediately.
-4. Do NOT output any Pokémon that fails this check. The legality_verification array proves you performed due diligence.
+3. If is_in_strict_dictionary is false for any proposed Pokemon, you MUST discard it and pick a legal alternative from the dictionary immediately.
+4. Do NOT output any Pokemon that fails this check. The legality_verification array proves you performed due diligence.
 `;
 
     if (userDirectivesContext) {
@@ -294,13 +297,13 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
     const fetchMetaSystemPrompt = `${REGULATION_MB_CONTEXT}
 
-You are an expert VGC analyst with knowledge of the current Pokémon VGC 2026 Regulation M-B competitive landscape.
-Your task is to output exactly 5 distinct, high-level competitive tournament teams that are currently strong in the Regulation M-B format.
-Regulation M-B includes Mega Evolutions and the latest Pokémon series up to the current date.
+You are an expert VGC analyst with knowledge of the current Pokemon VGC 2026 Regulation MB competitive landscape.
+Your task is to output exactly 5 distinct, high-level competitive tournament teams that are currently strong in the Regulation MB format.
+Regulation MB includes Mega Evolutions and the latest Pokemon series up to the current date.
 
-Each team MUST contain EXACTLY 6 Pokémon entries written in Pokémon Showdown import format (also called PokePaste).
-Separate each Pokémon block with exactly TWO blank lines (\n\n).
-Each block MUST include: Species @ Item, Ability, Nature, and at least 2 moves prefixed with \"- \".
+Each team MUST contain EXACTLY 6 Pokemon entries written in Pokemon Showdown import format (also called PokePaste).
+Separate each Pokemon block with exactly TWO blank lines (\n\n).
+Each block MUST include: Species @ Item, Ability, Nature, and at least 2 moves prefixed with "- ".
 
 You MUST output ONLY a raw JSON object. Do NOT add any commentary, markdown, or explanatory text.
 The JSON object MUST match this exact schema:
@@ -308,7 +311,7 @@ The JSON object MUST match this exact schema:
   "teams": [
     {
       "name": "Descriptive team archetype name (e.g. Tailwind Rain, Hard Trick Room)",
-      "paste": "Full 6-Pokémon PokePaste text with double-newline separators"
+      "paste": "Full 6-Pokemon PokePaste text with double-newline separators"
     }
   ]
 }
@@ -316,18 +319,18 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
     const optimizeSystemPrompt = `${REGULATION_MB_CONTEXT}
 
-You are an expert Pokemon VGC Teambuilder. Your task is to calculate optimal 66-SP math distributions for the provided team, complete the roster to exactly 6 Pokémon, and optimize items, moves, abilities, and natures as needed.
+You are an expert Pokemon VGC Teambuilder. Your task is to calculate optimal SP Distribution math distributions for the provided team, complete the roster to exactly 6 Pokemon, and optimize items, moves, abilities, and natures as needed.
 
-# 66-SP Math Engine Constraints
+# SP Distribution Math Engine Constraints
 1. The SP (Stat Point) system uses a strict maximum of 66 total SP per Pokemon.
 2. The total sum of SP across HP, atk, def, spa, spd, and spe MUST EXACTLY EQUAL 66.
 3. NO individual stat can exceed 32 SP. (0 is the minimum).
 4. Standard 252 EVs map exactly to 32 SP. 4 EVs map to 2 SP.
 
 # teambuilding & autocomplete rules:
-- If the user provides fewer than 6 Pokémon, you MUST generate synergistic meta Pokémon to fill the empty slots so the returned optimized_team array always contains exactly 6 Pokémon.
-- You are authorized to change items, abilities, natures, and moves if the user's current selections are unviable in the Regulation M-B VGC meta.
-- Document every change (including adding new Pokémon, changing moves/items/abilities/natures) in the optimization_report.
+- If the user provides fewer than 6 Pokemon, you MUST generate synergistic meta Pokemon to fill the empty slots so the returned optimized_team array always contains exactly 6 Pokemon.
+- You are authorized to change items, abilities, natures, and moves if the user's current selections are unviable in the Regulation MB VGC meta.
+- Document every change (including adding new Pokemon, changing moves/items/abilities/natures) in the optimization_report.
 - For every stat that has an SP allocation greater than 0, you must provide a 1-sentence educational explanation in the spExplanations object.
 
 You must output your response STRICTLY as a JSON object matching this schema:
@@ -360,7 +363,7 @@ Do NOT wrap the JSON in Markdown (e.g. \`\`\`json). Output RAW JSON only.`;
 
     const assessSystemPrompt = `${REGULATION_MB_CONTEXT}
 
-You are a World Champion VGC Coach analyzing a Regulation M-B team.
+You are a World Champion VGC Coach analyzing a Regulation MB team.
 Identify structural vulnerabilities and recommend strong opening leads based on the team's composition.
 
 You must output your response STRICTLY as a JSON object matching this schema:
@@ -379,9 +382,9 @@ You must output your response STRICTLY as a JSON object matching this schema:
 You are a World Champion VGC Coach sitting in the War Room mid-match. Turn 1 has started.
 
 # The Board State
-- You know exactly which 4 Pokémon the player brought.
-- You know exactly which 2 Pokémon the opponent led with.
-- The opponent has 4 Potential Backline Pokémon (only 2 of them were brought, but you don't know which 2).
+- You know exactly which 4 Pokemon the player brought.
+- You know exactly which 2 Pokemon the opponent led with.
+- The opponent has 4 Potential Backline Pokemon (only 2 of them were brought, but you don't know which 2).
 
 # Turn 1 Tactical Recalculation
 1. Analyze the exact 2v2 opening matchup (Player Leads vs Opponent Leads).
@@ -396,7 +399,7 @@ Every turn MUST have exactly 2 player actions. You MUST explicitly name the 2 Le
 Before providing the turn actions, you MUST evaluate the board state step-by-step.
 Include a \`decision_audit\` object containing:
 - \`speed_tier_analysis\`: Who goes first based on base stats, Tailwind, or Trick Room.
-- \`primary_threat_identified\`: Which opponent Pokémon poses the immediate highest risk.
+- \`primary_threat_identified\`: Which opponent Pokemon poses the immediate highest risk.
 - \`risk_assessment_justification\`: Why you chose the primary strategy instead of pivoting or using an alternative plan. Ensure you explicitly verify mechanical legality and Mega Evolution mechanics here.
 
 You must output your response STRICTLY as a JSON object matching this schema:
@@ -440,23 +443,23 @@ You must output your response STRICTLY as a JSON object matching this schema:
     const draftSuggestionSystemPrompt = `${REGULATION_MB_CONTEXT}
 
 You are a World Champion VGC Coach. The player is in the Team Preview phase against their opponent.
-Your task is to analyze the Player's 6-man roster and the Opponent's 6-man roster, and suggest exactly 4 Pokémon for the player to bring into the match.
+Your task is to analyze the Player's 6-man roster and the Opponent's 6-man roster, and suggest exactly 4 Pokemon for the player to bring into the match.
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
   "suggestedDraft": ["Pokemon A", "Pokemon B", "Pokemon C", "Pokemon D"],
   "suggestedLeads": ["Pokemon A", "Pokemon B"],
-  "rationale": "A brief explanation of why these 4 Pokémon optimally counter the opponent's composition, and why those 2 are the best leads."
+  "rationale": "A brief explanation of why these 4 Pokemon optimally counter the opponent's composition, and why those 2 are the best leads."
 }`;
 
     const deepdiveSystemPrompt = `${REGULATION_MB_CONTEXT}
 
-You are a World Champion VGC Coach. The player has selected a specific 4-Pokémon draft to face the Opponent's 6-man team in Regulation M-B.
+You are a World Champion VGC Coach. The player has selected a specific 4-Pokemon draft to face the Opponent's 6-man team in Regulation MB.
 Your task is to analyze this draft and provide a deep dive explanation.
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
-  "draft_justification": "Detailed explanation of why these specific 4 Pokémon are the optimal response to the opponent's roster.",
+  "draft_justification": "Detailed explanation of why these specific 4 Pokemon are the optimal response to the opponent's roster.",
   "potential_weaknesses": ["String 1", "String 2", "String 3"],
   "things_to_watch_out_for": ["Threat 1", "Threat 2", "Threat 3"]
 }`;
@@ -465,22 +468,22 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
 TONE DIRECTIVE: Speak with the absolute authority and extreme tactical depth of a World Champion. DO NOT give generic, beginner-level advice. Be highly opinionated, cite specific meta threats by name, and provide advanced, cutthroat VGC strategies.
 
-You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation M-B team.
-Your task is to analyze the team's core identity, determine the absolute best 4-Pokémon lineup, and map out matchups against the top-tier Regulation M-B meta.
+You are a World Champion VGC Coach performing a deep-dive "Study Guide" assessment of a Regulation MB team.
+Your task is to analyze the team's core identity, determine the absolute best 4-Pokemon lineup, and map out matchups against the top-tier Regulation MB meta.
 
-You MUST base your entire analysis on the specific 66-SP distributions, items, abilities, and movesets provided in the roster. Do not give generic advice. If a Pokémon has 32 Speed SP, explain how that exact speed tier dictates their gameplan. Keep explanations deeply detailed but extremely easy to understand (jargon-free).
+You MUST base your entire analysis on the specific SP Distribution spreads, items, abilities, and movesets provided in the roster. Do not give generic advice. If a Pokemon has 32 Speed SP, explain how that exact speed tier dictates their gameplan. Keep explanations deeply detailed but extremely easy to understand (jargon-free).
 
-If the user is in Beginner Mode, you must scan the team for glaring structural weaknesses (e.g., '4 Pokémon are weak to Ground', 'Zero Protects on the team', 'No Speed Control'). Output 1 to 3 severe warnings in the red_flags array. If the team is structurally sound, or if Beginner Mode is disabled, leave the array empty.
+If the user is in Beginner Mode, you must scan the team for glaring structural weaknesses (e.g., '4 Pokemon are weak to Ground', 'Zero Protects on the team', 'No Speed Control'). Output 1 to 3 severe warnings in the red_flags array. If the team is structurally sound, or if Beginner Mode is disabled, leave the array empty.
 
 You must score the team on a scale of 0 to 100 for these four pillars (offense, bulk, speed_control, synergy). Be highly critical. An all-attack team should have 90 Offense but 10 Bulk. A team with no Tailwind or Trick Room should have 0 Speed Control.
 
-[BRING 6 PICK 4 — MULTI-CORE MANDATE]
+[BRING 6 PICK 4 - MULTI-CORE MANDATE]
 VGC teams play "Bring 6, Pick 4". Your roster contains multiple distinct viable cores. You MUST identify exactly 4 named cores a player can build their game plan around. Do NOT collapse them into a single team.
 
 [STRICT MATCHUP & WHITE LIST CONSTRAINTS]
-- You MUST output exactly 4 distinct optimal_cores. Each core is 4 Pokémon chosen from the provided 6-man roster. Cores may overlap in membership.
-- You MUST generate exactly 6 detailed matchup strategies (meta_matchups) against 6 different top-tier Regulation M-B meta archetypes. Each matchup must name which of the 4 optimal_cores the player should select.
-- Ensure the meta teams you invent for the opponent strictly adhere to the Regulation M-B Whitelist (NO Urshifu, NO Calyrex, NO Paradoxes).
+- You MUST output exactly 4 distinct optimal_cores. Each core is 4 Pokemon chosen from the provided 6-man roster. Cores may overlap in membership.
+- You MUST generate exactly 6 detailed matchup strategies (meta_matchups) against 6 different top-tier Regulation MB meta archetypes. Each matchup must name which of the 4 optimal_cores the player should select.
+- Ensure the meta teams you invent for the opponent strictly adhere to the Regulation MB Whitelist (NO Urshifu, NO Calyrex, NO Paradoxes).
 
 [TACTICAL MANDATE: HYPER-AGGRESSION & BOARD CONTROL]
 Your strategies must NOT be passive. Do not default to safe, defensive switching unless absolutely necessary. You must dictate the pace of the game.
@@ -529,18 +532,18 @@ You must output your response STRICTLY as a JSON object matching this schema:
       "recommended_core": "Tailwind Offense",
       "turn_1_plan": "Describe exactly what moves to use Turn 1 to immediately apply pressure. Be ruthless and specific.",
       "play_by_play": {
-        "turn_1": "Same content as turn_1_plan — exact moves to use Turn 1 to immediately apply pressure.",
+        "turn_1": "Same content as turn_1_plan - exact moves to use Turn 1 to immediately apply pressure.",
         "turn_2": "Exact moves/pivots for Turn 2 based on the expected Turn 1 board state.",
         "turn_3": "Exact moves/pivots for Turn 3.",
         "turn_4": "Exact moves/pivots for Turn 4, closing out the win condition."
       },
-      "win_condition": "The critical path to victory — what needs to happen to close out the game."
+      "win_condition": "The critical path to victory - what needs to happen to close out the game."
     }
   ],
   "optimizations": [
     {
       "target_pokemon": "Pokemon Name",
-      "suggested_tweak": "Suggested move, item, or 66-SP point redistribution.",
+      "suggested_tweak": "Suggested move, item, or SP Distribution point redistribution.",
       "rationale": "Why this tweak improves the team's synergy and matchups."
     }
   ],
@@ -556,7 +559,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
     const criticSystemPrompt = `
 # CRITIC PERSONA:
-You are a cynical, mathematically flawless VGC World Champion. Your only job is to review the Primary Draft VGC strategy/playbook and aggressively correct any game-losing mechanical errors, rule violations, or illegal plays under Regulation M-B.
+You are a cynical, mathematically flawless VGC World Champion. Your only job is to review the Primary Draft VGC strategy/playbook and aggressively correct any game-losing mechanical errors, rule violations, or illegal plays under Regulation MB.
 
 ${REGULATION_MB_CONTEXT}
 
@@ -565,12 +568,12 @@ ${REGULATION_MB_CONTEXT}
    - Fake Out and Prankster-boosted moves fail completely against active Psychic Terrain.
    - Fake Out and Prankster-boosted moves fail completely against targets with Armor Tail or Queenly Majesty.
    - Fake Out fails against Inner Focus targets (they do not flinch).
-   - Fake Out and First Impression ONLY work on the absolute first turn a Pokémon is on the field.
+   - Fake Out and First Impression ONLY work on the absolute first turn a Pokemon is on the field.
 
 2. TYPE & ITEM IMMUNITIES:
-   - Spore, Rage Powder, and other powder-based moves have zero effect against Grass-type Pokémon or Pokémon holding Safety Goggles.
-   - Prankster Taunt and other Prankster-boosted status moves fail completely against Dark-type Pokémon.
-   - Thunder Wave fails completely against Ground-type or Electric-type Pokémon.
+   - Spore, Rage Powder, and other powder-based moves have zero effect against Grass-type Pokemon or Pokemon holding Safety Goggles.
+   - Prankster Taunt and other Prankster-boosted status moves fail completely against Dark-type Pokemon.
+   - Thunder Wave fails completely against Ground-type or Electric-type Pokemon.
 
 3. REDIRECTION & SPREAD FAILURES:
    - Rage Powder fails to redirect Grass-type opponents.
@@ -597,14 +600,14 @@ Do not use markdown bolding. If the notes are too general or useless to extract 
     // ── Synergy Scanner Prompt ────────────────────────────────────────────────
     const synergySystemPrompt = `${REGULATION_MB_CONTEXT}
 
-You are a World Champion VGC analyst performing a Synergy Scan on a Regulation M-B team roster.
-Your task is to identify structural weaknesses, missing roles, and meta vulnerability — before the player ever steps into a match.
+You are a World Champion VGC analyst performing a Synergy Scan on a Regulation MB team roster.
+Your task is to identify structural weaknesses, missing roles, and meta vulnerability - before the player ever steps into a match.
 
-Analyze the provided 6-Pokémon roster for:
-1. OVERLAPPING TYPE WEAKNESSES: Identify any type that 3 or more Pokémon share as a weakness. Note whether any team member provides an immunity or resist to offset it.
+Analyze the provided 6-Pokemon roster for:
+1. OVERLAPPING TYPE WEAKNESSES: Identify any type that 3 or more Pokemon share as a weakness. Note whether any team member provides an immunity or resist to offset it.
 2. MISSING VITAL ROLES: Flag absence of critical roles such as: Speed Control (Tailwind / Trick Room / Icy Wind), Fake Out support, Redirection (Follow Me / Rage Powder), entry hazard control, or significant physical / special split bias.
-3. META VULNERABILITY: Identify which top Regulation M-B archetypes (Rain, Sun, Sand, Snow, Trick Room, Tailwind Offense, Psyspam) will pose the hardest challenges to this team, and name the exact Pokémon from those archetypes that threaten them.
-4. SYNERGY TWEAKS: Suggest up to 3 concrete item, move, or Pokémon swaps that would address the most critical structural hole. Suggestions MUST be drawn exclusively from the STRICT LEGALITY DICTIONARY.
+3. META VULNERABILITY: Identify which top Regulation MB archetypes (Rain, Sun, Sand, Snow, Trick Room, Tailwind Offense, Psyspam) will pose the hardest challenges to this team, and name the exact Pokemon from those archetypes that threaten them.
+4. SYNERGY TWEAKS: Suggest up to 3 concrete item, move, or Pokemon swaps that would address the most critical structural hole. Suggestions MUST be drawn exclusively from the STRICT LEGALITY DICTIONARY.
 
 You must output your response STRICTLY as a JSON object matching this schema:
 {
@@ -612,9 +615,9 @@ You must output your response STRICTLY as a JSON object matching this schema:
     {"proposed_pokemon": "Every Pokemon you mention in this response", "is_in_strict_dictionary": true}
   ],
   "core_identity": "Brief description of the team archetype and primary win condition.",
-  "type_vulnerabilities": ["e.g., 4 Pokémon weak to Ground with no immunity — Excadrill Sand Rush will steamroll this team."],
+  "type_vulnerabilities": ["e.g., 4 Pokemon weak to Ground with no immunity - Excadrill Sand Rush will steamroll this team."],
   "meta_threats": ["e.g., Abomasnow + Alolan Ninetales Snow: Aurora Veil will shut down your offensive output completely."],
-  "suggested_tweaks": ["e.g., Replace item X on Pokémon Y with Z to address Ground weakness."],
+  "suggested_tweaks": ["e.g., Replace item X on Pokemon Y with Z to address Ground weakness."],
   "legality_check": true
 }`;
 
@@ -670,21 +673,21 @@ You must output your response STRICTLY as a JSON object matching this schema:
     const finalSystemPrompt = injectSystemRole(baseSystemPrompt, isBeginnerMode === true);
 
     const userPrompt = action === "optimize"
-      ? "Calculate the optimal 66-SP distributions for this team.\nTeam: " + JSON.stringify(team, null, 2)
+      ? "Calculate the optimal SP Distribution math distributions for this team.\nTeam: " + JSON.stringify(team, null, 2)
       : action === "assess"
-      ? "Analyze this Regulation M-B team for meta weaknesses and suggest strong leads.\nTeam: " + JSON.stringify(team, null, 2)
+      ? "Analyze this Regulation MB team for meta weaknesses and suggest strong leads.\nTeam: " + JSON.stringify(team, null, 2)
       : action === "fetch_meta"
-      ? "Generate 5 distinct, high-level competitive VGC 2026 Regulation M-B tournament teams. Return ONLY the JSON object."
+      ? "Generate 5 distinct, high-level competitive VGC 2026 Regulation MB tournament teams. Return ONLY the JSON object."
       : action === "turn1"
       ? "Turn 1 has begun. Recalculate tactics.\nPlayer Locked Roster: " + JSON.stringify(playerLockedRoster, null, 2) + "\nOpponent Known Leads: " + JSON.stringify(opponentKnownLeads, null, 2) + "\nOpponent Potential Backline: " + JSON.stringify(opponentPotentialBackline, null, 2) + (currentMatchContext ? `\n\nCRITICAL UPDATE: This is Turn 2+. The user has provided the following context for what just happened:\n"${currentMatchContext}"\nRecalculate all tactics based on this new board state.` : "")
       : action === "draft_suggestion"
-      ? "Analyze the matchup and suggest 4 Pokémon for the player to bring.\nPlayer Roster: " + JSON.stringify(team, null, 2) + "\nOpponent Roster: " + JSON.stringify(opponent, null, 2)
+      ? "Analyze the matchup and suggest 4 Pokemon for the player to bring.\nPlayer Roster: " + JSON.stringify(team, null, 2) + "\nOpponent Roster: " + JSON.stringify(opponent, null, 2)
       : action === "deepdive"
-      ? "Deep dive on this 4-Pokémon draft against the Opponent's team.\nOpponent Team: " + JSON.stringify(team, null, 2) + "\nPlayer Draft: " + JSON.stringify(playerLockedRoster, null, 2)
+      ? "Deep dive on this 4-Pokemon draft against the Opponent's team.\nOpponent Team: " + JSON.stringify(team, null, 2) + "\nPlayer Draft: " + JSON.stringify(playerLockedRoster, null, 2)
       : action === "assess_team"
-      ? "Perform a deep-dive study guide assessment on this Regulation M-B team.\nTeam: " + JSON.stringify(team, null, 2)
+      ? "Perform a deep-dive study guide assessment on this Regulation MB team.\nTeam: " + JSON.stringify(team, null, 2)
       : action === "synergy"
-      ? "Perform a Synergy Scan on this Regulation M-B roster. Identify type weaknesses, missing roles, meta threats, and suggest concrete fixes.\nTeam: " + JSON.stringify(team, null, 2)
+      ? "Perform a Synergy Scan on this Regulation MB roster. Identify type weaknesses, missing roles, meta threats, and suggest concrete fixes.\nTeam: " + JSON.stringify(team, null, 2)
       : "Analyze the following team and provide a VGC Audit and Lead Plan.\nTeam: " + JSON.stringify(team, null, 2) + (opponent ? "\nOpponent: " + JSON.stringify(opponent, null, 2) : "");
 
     const apiKey = process.env.AI_API_KEY;
@@ -737,7 +740,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
           report.push({
             pokemon: nextMock.name,
             changes: [`Added ${nextMock.name} to complete the meta core.`],
-            rationale: `Roster had fewer than 6 Pokémon. Added standard top-tier synergy pick.`
+            rationale: `Roster had fewer than 6 Pokemon. Added standard top-tier synergy pick.`
           });
         }
 
@@ -761,7 +764,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
         if (team && team.length > 0) {
           report.unshift({
             pokemon: team[0].name,
-            changes: ["Optimized 66-SP math distribution.", "Set optimal competitive nature & moveset."],
+            changes: ["Optimized SP Distribution math distribution.", "Set optimal competitive nature & moveset."],
             rationale: "Fitted stat distribution to align with their primary team preview speed-control profile."
           });
         }
@@ -807,7 +810,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
             { proposed_pokemon: p5, is_in_strict_dictionary: true },
             { proposed_pokemon: p6, is_in_strict_dictionary: true }
           ],
-          red_flags: ["3 Pokémon are weak to Fire / Flying", "No Protects on Amoonguss"],
+          red_flags: ["3 Pokemon are weak to Fire / Flying", "No Protects on Amoonguss"],
           team_grades: {
             offense: 80,
             bulk: 75,
@@ -858,7 +861,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
                 turn_1: `Lead ${p3} + ${p4}. Use Fake Out on Indeedee to stall the Follow Me redirect. Simultaneously Taunt Hatterene to deny Trick Room setup entirely.`,
                 turn_2: "If Trick Room still goes up, switch to your bulkiest attacker and Protect with the other to scout their new lead.",
                 turn_3: "Stall out the remaining Trick Room turns with defensive pivots while chipping the slowest threat.",
-                turn_4: "Trick Room expires — your natural speed advantage returns; press the attack immediately."
+                turn_4: "Trick Room expires - your natural speed advantage returns; press the attack immediately."
               },
               win_condition: "If Trick Room is up, switch in your fastest attacker and stall out the turns with Protect. Your speed advantage returns in 4 turns."
             },
@@ -872,14 +875,14 @@ You must output your response STRICTLY as a JSON object matching this schema:
                 turn_3: "Clean up the now-unboosted sun attackers while Tailwind speed advantage still holds.",
                 turn_4: "Finish the game before Tailwind expires; re-set only if the opponent has a second sun setter."
               },
-              win_condition: "Remove Lilligant immediately — without redirection and Sleep, their sun offense falls apart. Their Torkoal is the weather anchor, target it next."
+              win_condition: "Remove Lilligant immediately - without redirection and Sleep, their sun offense falls apart. Their Torkoal is the weather anchor, target it next."
             },
             {
               opponent_archetype: "Psyspam (Indeedee-F / Hatterene / Gallade / Gholdengo)",
               recommended_core: "Intimidate Loop",
-              turn_1_plan: `Lead ${p2} + ${p4}. Psychic Terrain blocks Fake Out — pivot to Intimidate cycling and spread moves instead. Target Gholdengo with dark-type coverage.`,
+              turn_1_plan: `Lead ${p2} + ${p4}. Psychic Terrain blocks Fake Out - pivot to Intimidate cycling and spread moves instead. Target Gholdengo with dark-type coverage.`,
               play_by_play: {
-                turn_1: `Lead ${p2} + ${p4}. Psychic Terrain blocks Fake Out — pivot to Intimidate cycling and spread moves instead. Target Gholdengo with dark-type coverage.`,
+                turn_1: `Lead ${p2} + ${p4}. Psychic Terrain blocks Fake Out - pivot to Intimidate cycling and spread moves instead. Target Gholdengo with dark-type coverage.`,
                 turn_2: "Parting Shot pivot to refresh Intimidate and bring in your dark-type attacker to continue pressuring Gholdengo.",
                 turn_3: "Isolate and remove Gholdengo before it stacks further Nasty Plot boosts.",
                 turn_4: "With Gholdengo gone, mop up the remaining Psychic Terrain support with spread damage."
@@ -908,7 +911,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
                 turn_3: "Systematically chip Gholdengo with your redirection support keeping your attackers safe.",
                 turn_4: "Close the game once sand offense has no remaining speed-control answer."
               },
-              win_condition: "Remove Excadrill early. Without their Sand Rush sweeper, their offense stalls and you can pivot to systematic chip damage + redirection to close."
+              win_condition: "Remove Excadrill early. Without their Sand Rush sweeper, their offense stalls and you can pivot to systematic chip damage - redirection to close."
             }
           ],
           optimizations: [
@@ -929,10 +932,10 @@ You must output your response STRICTLY as a JSON object matching this schema:
             { proposed_pokemon: names[1] || "Unknown", is_in_strict_dictionary: true },
             { proposed_pokemon: "Incineroar", is_in_strict_dictionary: true }
           ],
-          core_identity: `A ${names.length}-Pokémon roster centered around ${names.slice(0, 2).join(" and ")} as the primary offensive core.`,
+          core_identity: `A ${names.length}-Pokemon roster centered around ${names.slice(0, 2).join(" and ")} as the primary offensive core.`,
           type_vulnerabilities: [
-            "3+ Pokémon are weak to Ground — Excadrill under Sand Rush will sweep without a Flying type or Levitate user.",
-            "No Steel or Poison resist to Fairy-type spread moves — Dazzling Gleam will hit the entire front row."
+            "3+ Pokemon are weak to Ground - Excadrill under Sand Rush will sweep without a Flying type or Levitate user.",
+            "No Steel or Poison resist to Fairy-type spread moves - Dazzling Gleam will hit the entire front row."
           ],
           meta_threats: [
             "Rain offense (Pelipper + Basculegion): Swift Swim will outspeed your entire roster without Tailwind or Trick Room.",
@@ -988,7 +991,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
       if (action === "deepdive") {
         return NextResponse.json({
-          draft_justification: "These 4 Pokémon were chosen to create a strong defensive pivot core while maintaining offensive pressure against their primary threats.",
+          draft_justification: "These 4 Pokemon were chosen to create a strong defensive pivot core while maintaining offensive pressure against their primary threats.",
           potential_weaknesses: ["Vulnerable to fast spread damage", "Relies heavily on speed control"],
           things_to_watch_out_for: ["Surprise Choice Scarf users", "Opposing Tailwind", "Unexpected Tera-like abilities (if any)"]
         });
@@ -1080,7 +1083,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
     const dossierChatSystemPrompt = `${REGULATION_MB_CONTEXT}
 
-You are a World Champion VGC Coach engaging in a tactical debate/chat with a user about their Regulation M-B team.
+You are a World Champion VGC Coach engaging in a tactical debate/chat with a user about their Regulation MB team.
 The team's current roster: ${JSON.stringify(team, null, 2)}
 The current Roster Study Dossier: ${JSON.stringify(dossier, null, 2)}
  

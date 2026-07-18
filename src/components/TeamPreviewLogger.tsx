@@ -797,6 +797,13 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge, sessio
         </div>
       )}
     </div>
+
+    {/* Damage Calculator (Draft Phase / Pregame) */}
+    {matchPhase === "pregame" && selected.length > 0 && playerTeam.length > 0 && (
+      <div className="w-full max-w-xl mx-auto mt-8">
+        <DamageCalculator playerMons={playerTeam} opponentMons={selected} />
+      </div>
+    )}
     
     {matchPhase === "pregame" && (
       <div className="w-full flex justify-center py-6 border-t border-zinc-800/40 mt-4">
