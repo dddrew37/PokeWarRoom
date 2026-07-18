@@ -342,7 +342,7 @@ export default function LivePlaybook({
               <div>
                 <div className={`text-[9px] font-bold uppercase tracking-widest ${activeIndex === 0 ? "text-red-500" : "text-zinc-600"}`}>Primary Win Condition</div>
                 <div className={`text-sm font-black tracking-wide truncate ${activeIndex === 0 ? "text-white" : "text-zinc-400"}`}>
-                  {allPaths[0].path_name || allPaths[0].matchup_condition || "Default Matchup"}
+                  {sanitizeText(allPaths[0].path_name || allPaths[0].matchup_condition || "Default Matchup")}
                 </div>
               </div>
               {activeIndex === 0 && <span className="text-red-500 font-bold text-xs uppercase tracking-widest">Active</span>}
@@ -369,7 +369,7 @@ export default function LivePlaybook({
                       Contingency {actualIndex}
                     </div>
                     <div className={`text-xs font-black truncate mt-0.5 ${isActive ? "text-white" : "text-zinc-500"}`}>
-                      {path.path_name || path.matchup_condition || `Path ${actualIndex + 1}`}
+                      {sanitizeText(path.path_name || path.matchup_condition || `Path ${actualIndex + 1}`)}
                     </div>
                   </button>
                 );

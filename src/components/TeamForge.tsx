@@ -1073,7 +1073,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                               <div key={i} className="bg-zinc-950 border border-zinc-800 rounded-3xl p-5 flex flex-col gap-4 hover:border-red-900/40 transition-colors animate-fade-in">
                                 {/* Archetype Header */}
                                 <div className="flex justify-between items-start gap-2 border-b border-zinc-800/60 pb-3">
-                                  <h5 className="text-sm font-black text-white uppercase tracking-wide leading-tight">{matchup.opponent_archetype}</h5>
+                                  <h5 className="text-sm font-black text-white uppercase tracking-wide leading-tight">{sanitizeText(matchup.opponent_archetype)}</h5>
                                   <span className="text-[8px] font-black text-red-400 bg-red-950/20 border border-red-900/35 rounded px-1.5 py-0.5 uppercase font-mono shrink-0">#{i + 1}</span>
                                 </div>
 
@@ -1082,7 +1082,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                                   <div className="flex items-center gap-2">
                                     <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest font-mono">Bring Core:</span>
                                     <span className="px-3 py-1 bg-red-700/20 border border-red-600/40 text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest shadow-[0_0_8px_rgba(220,38,38,0.2)]">
-                                      {matchup.recommended_core}
+                                      {sanitizeText(matchup.recommended_core)}
                                     </span>
                                   </div>
                                 )}

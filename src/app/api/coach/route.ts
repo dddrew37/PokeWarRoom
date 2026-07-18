@@ -793,7 +793,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
       }
 
       if (action === "assess_team") {
-        const defaultMons = ["Tornadus", "Gholdengo", "Incineroar", "Amoonguss", "Dragonite", "Rillaboom"];
+        const defaultMons = ["Murkrow", "Gholdengo", "Incineroar", "Sinistcha", "Dragonite", "Rillaboom"];
         const p1 = team[0]?.name || defaultMons[0];
         const p2 = team[1]?.name || defaultMons[1];
         const p3 = team[2]?.name || defaultMons[2];
@@ -810,7 +810,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
             { proposed_pokemon: p5, is_in_strict_dictionary: true },
             { proposed_pokemon: p6, is_in_strict_dictionary: true }
           ],
-          red_flags: ["3 Pokemon are weak to Fire / Flying", "No Protects on Amoonguss"],
+          red_flags: ["3 Pokemon are weak to Fire / Flying", "No Protect on a key support slot"],
           team_grades: {
             offense: 80,
             bulk: 75,
@@ -943,7 +943,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
           ],
           suggested_tweaks: [
             "Add Incineroar with Intimidate to patch the physical bulk hole and provide Fake Out support.",
-            "Swap an item to Safety Goggles on a back-row member to counter Amoonguss Spore + Rage Powder redirection."
+            "Swap an item to Safety Goggles on a back-row member to counter Spore + Rage Powder redirection."
           ],
           legality_check: true
         });
