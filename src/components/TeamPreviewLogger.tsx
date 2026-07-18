@@ -360,6 +360,9 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge, sessio
               onUpdateSpeedStage={(key, stage) => setSpeedStages(prev => ({ ...prev, [key]: stage }))}
               onUpdateChoiceScarf={(key, val) => setChoiceScarfs(prev => ({ ...prev, [key]: val }))}
               onUpdateMaxSpeed={(key, val) => setOpponentMaxSpeeds(prev => ({ ...prev, [key]: val }))}
+              onToggleTrickRoom={() => setIsTrickRoom(prev => !prev)}
+              onTogglePlayerTailwind={() => setPlayerTailwind(prev => !prev)}
+              onToggleOpponentTailwind={() => setOpponentTailwind(prev => !prev)}
             />
 
             <DamageCalculator 
