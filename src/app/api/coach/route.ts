@@ -5,6 +5,42 @@ import metaData from '../../../data/meta_data.json';
 import mbRoster from '../../../data/regulation_mb_roster.json';
 import mbItemsMoves from '../../../data/regulation_mb_items_moves.json';
 
+function clampSP(sp: any): any {
+  if (!sp || typeof sp !== 'object') return sp;
+  const newSp: Record<string, number> = {
+    hp: 0,
+    atk: 0,
+    def: 0,
+    spa: 0,
+    spd: 0,
+    spe: 0,
+    ...sp
+  };
+  const STATS = ["hp", "atk", "def", "spa", "spd", "spe"] as const;
+  
+  let total = 0;
+  STATS.forEach(s => {
+    newSp[s] = Math.max(0, Math.min(Math.floor(Number(newSp[s])) || 0, 32));
+    total += newSp[s];
+  });
+  
+  if (total > 66) {
+    let diff = total - 66;
+    while (diff > 0) {
+      const highestStat = STATS.reduce((max, s) => {
+        if (newSp[s] <= 0) return max;
+        if (newSp[max] <= 0) return s;
+        return newSp[s] > newSp[max] ? s : max;
+      }, "hp" as const);
+      
+      if (newSp[highestStat] <= 0) break;
+      newSp[highestStat] -= 1;
+      diff--;
+    }
+  }
+  return newSp;
+}
+
 function sanitizeResponse(obj: any): any {
   if (typeof obj === 'string') {
     return obj
@@ -20,14 +56,25 @@ function sanitizeResponse(obj: any): any {
   if (obj && typeof obj === 'object') {
     const result: Record<string, any> = {};
     for (const key of Object.keys(obj)) {
-      result[key] = sanitizeResponse(obj[key]);
+      if (key === 'sp' && obj[key] && typeof obj[key] === 'object') {
+        result[key] = clampSP(obj[key]);
+      } else {
+        result[key] = sanitizeResponse(obj[key]);
+      }
     }
     return result;
   }
   return obj;
 }
 
-const PRO_PERSONA = `[ROLE: VGC WORLD CHAMPION STRATEGIST]\nYou are a ruthless, elite VGC analyst. Provide concise, high-level tactical analysis. Prioritize speed-tier math, exact damage thresholds, and meta-game hard counters. Assume the user fully understands complex terminology like 'Pivoting', 'Speed Control', 'STAB', and 'Redirection'. Do not waste time defining basic terms. Focus strictly on optimal execution and winning the matchup.`;
+const PRO_PERSONA = `[ROLE: VGC WORLD CHAMPION STRATEGIST]
+You are a ruthless, elite VGC analyst. Provide concise, high-level tactical analysis.
+Analyze matchups like a professional Champion:
+1. WIN CONDITIONS (WINCONS): Identify early how we win the late-game (e.g., removing a key check so a sweeper can clean up) and outline the path to secure it.
+2. TEMPO & POSITIONING: Prioritize board control, speed control, switch initiative, and positioning. Recommend cycling Intimidate, utilizing safe pivots (Parting Shot, U-turn), and breaking opposing Focus Sashes early.
+3. BENCHMARK THINKING: Base calculations on specific speed creep thresholds and damage benchmarks.
+4. SLOT PRESSURE & RISK MITIGATION: Plan around opposing Protects, redirection baiting, and double-targeting slots to guarantee critical KOs.
+Assume the user fully understands complex VGC terminology. Do not waste time defining basic terms. Focus strictly on optimal execution and winning the matchup.`;
 
 const BEGINNER_PERSONA = `[ROLE: PATIENT VGC ACADEMY COACH]\nYou are coaching a brand new VGC player. Provide detailed, step-by-step educational guidance. You MUST explain your strategy without assuming they know competitive jargon. If you use terms like 'Speed Control', 'Pivoting', 'STAB', 'Check', 'Counter', 'Redirection', or 'Stat Drops', you MUST briefly define what they mean and why they are important in plain English.`;
 
@@ -1098,6 +1145,11 @@ You are a competitive Pokemon VGC Coach assisting the user in brainstorming team
 You can recommend full 6-Pokemon team rosters or discuss strategy.
 If the user asks you to build or suggest a team, or if you propose a team roster during the conversation, you MUST generate a complete 6-Pokemon team matching the requested JSON schema.
 Ensure that every Pokemon in the team is whitelisted and legal according to the whitelisted legal species and forms.
+
+# VGC CHAMPION DESIGN DECISION PRINCIPLES
+1. MULTI-CORE SYNERGY: Do not suggest a collection of random good Pokemon. Every roster must have a clear strategy (e.g. Rain Swift Swim, Sun Chlorophyll, Tailwind Hyper Offense, or Hard Trick Room) with supportive elements (e.g. Fake Out, redirection, pivots like Parting Shot or U-turn, and helper items like Choice Scarf or Focus Sash).
+2. BENCHMARK-DRIVEN SP DISTRIBUTION: Distribute SP stats intentionally. Speed tier stats should explicitly target outspeeding key threats. Bulky Pokemon should invest in HP/Def/SpD to survive specific attacks. Do not just output default values.
+3. ITEM VARIETY & META-COMPLIANCE: Make sure every item is fully legal in Regulation MB. Only one Mega Stone is allowed per roster. Do not suggest duplicate items on the same team.
 
 # SP Distribution Math Engine Constraints
 1. The SP (Stat Point) system uses a strict maximum of 66 total SP per Pokemon.
