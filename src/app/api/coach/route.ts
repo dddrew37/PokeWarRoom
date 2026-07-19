@@ -1083,11 +1083,34 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
     const dossierChatSystemPrompt = `${REGULATION_MB_CONTEXT}
 
-You are a World Champion VGC Coach engaging in a tactical debate/chat with a user about their Regulation MB team.
-The team's current roster: ${JSON.stringify(team, null, 2)}
-The current Roster Study Dossier: ${JSON.stringify(dossier, null, 2)}
- 
 Provide advanced, highly opinionated, cutthroat tactical insights. Defend your logic, explain your thoughts, or agree to adjust the strategies. Speak with extreme competitive authority.`;
+
+    const builderChatSystemPrompt = `${REGULATION_MB_CONTEXT}
+
+You are a competitive Pokemon VGC Coach assisting the user in brainstorming team strategies and building rosters for Regulation MB.
+You can recommend full 6-Pokemon team rosters or discuss strategy.
+If the user asks you to build or suggest a team, or if you propose a team roster during the conversation, you MUST generate a complete 6-Pokemon team matching the requested JSON schema.
+Ensure that every Pokemon in the team is whitelisted and legal according to the whitelisted legal species and forms.
+
+You MUST return ONLY valid JSON matching this exact schema:
+{
+  "message": "Conversational coach text explaining the strategy...",
+  "team": [
+    {
+      "id": "lowercase_id",
+      "name": "Pokemon Name",
+      "item": "Held Item",
+      "ability": "Ability",
+      "nature": "Nature",
+      "moves": ["Move 1", "Move 2", "Move 3", "Move 4"],
+      "sp": { "hp": 0, "atk": 0, "def": 0, "spa": 0, "spd": 0, "spe": 0 }
+    }
+  ],
+  "strategy": "Summary of the team's core strategy..."
+}
+
+Note: If you are NOT suggesting a team (e.g. you are answering a general strategy question or explaining mechanics), you MUST set "team" and "strategy" to null.
+Remember, you are strictly forbidden from using emojis, emoticons, or special unicode characters in the "message" or "strategy". Use pure, plain ASCII text only.`;
 
     const extractDossierSystemPrompt = `${REGULATION_MB_CONTEXT}
 
@@ -1117,6 +1140,11 @@ Note: extracted_team and extracted_tactic may each be null if no relevant data w
     if (action === "dossier_chat") {
       finalMessages = [
         { role: "system", content: dossierChatSystemPrompt },
+        ...(messages || []).map((msg: any) => ({ role: msg.role, content: msg.content }))
+      ];
+    } else if (action === "builder_chat") {
+      finalMessages = [
+        { role: "system", content: builderChatSystemPrompt },
         ...(messages || []).map((msg: any) => ({ role: msg.role, content: msg.content }))
       ];
     } else if (action === "extract_lesson") {
@@ -1158,7 +1186,7 @@ Extract the single tactical rule.` }
         model: model,
         messages: finalMessages,
         response_format: (action === "dossier_chat" || action === "extract_lesson" || action === "match_debrief") ? undefined : { type: "json_object" },
-        temperature: (action === "assess_team" || action === "dossier_chat" || action === "synergy") ? 0.5 : (action === "extract_lesson" || action === "match_debrief") ? 0.1 : action === "extract_dossier" ? 0.1 : 0.2
+        temperature: (action === "assess_team" || action === "dossier_chat" || action === "synergy" || action === "builder_chat") ? 0.5 : (action === "extract_lesson" || action === "match_debrief") ? 0.1 : action === "extract_dossier" ? 0.1 : 0.2
       })
     });
 
@@ -1171,6 +1199,13 @@ Extract the single tactical rule.` }
 
     if (action === "dossier_chat" || action === "extract_lesson" || action === "match_debrief") {
       return NextResponse.json({ message: content });
+    }
+
+    if (action === "builder_chat") {
+      content = content.replace(/^\s*```json/i, '').replace(/```\s*$/i, '').trim();
+      const sanitized = content.replace(/,\s*([\]}])/g, '$1');
+      const parsed = JSON.parse(sanitized);
+      return NextResponse.json(sanitizeResponse(parsed));
     }
 
     if (action === "extract_dossier") {

@@ -7,12 +7,13 @@ import TeamPreviewLogger from "@/components/TeamPreviewLogger";
 import SavedStrategies from "@/components/SavedStrategies";
 import RosterDossier from "@/components/RosterDossier";
 import MemoryDashboard from "@/components/MemoryDashboard";
+import AIBuilder from "@/components/AIBuilder";
 import { ParsedPokemon } from "@/lib/parser";
 import { supabase } from "@/lib/supabase";
 import AuthOverlay from "@/components/AuthOverlay";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"forge" | "logger" | "saved" | "dossier" | "memory">("forge");
+  const [activeTab, setActiveTab] = useState<"forge" | "logger" | "saved" | "dossier" | "memory" | "builder">("forge");
   const [teamState, setTeamState] = useState<ParsedPokemon[]>([]);
   const [session, setSession] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -244,6 +245,16 @@ export default function Home() {
         >
           Coach Memory
         </button>
+        <button
+          onClick={() => setActiveTab("builder")}
+          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+            activeTab === "builder"
+              ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40"
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          AI Builder
+        </button>
       </div>
 
       <div className="w-full relative z-10">
@@ -252,6 +263,7 @@ export default function Home() {
         {activeTab === "saved" && <SavedStrategies session={session} />}
         {activeTab === "dossier" && <RosterDossier session={session} />}
         {activeTab === "memory" && <MemoryDashboard session={session} />}
+        {activeTab === "builder" && <AIBuilder setTeam={setTeamState} setActiveTab={setActiveTab} session={session} />}
       </div>
 
       {/* Account Deletion Confirmation Modal */}
