@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { team, opponent, action = "audit", playerLockedRoster, opponentKnownLeads, opponentPotentialBackline, currentMatchContext, dossier, messages, chatContext, isBeginnerMode } = body;
 
-    if (!team && !playerLockedRoster && action !== "fetch_meta" && action !== "extract_lesson" && action !== "match_debrief" && action !== "extract_dossier") {
+    if (!team && !playerLockedRoster && action !== "fetch_meta" && action !== "extract_lesson" && action !== "match_debrief" && action !== "extract_dossier" && action !== "builder_chat" && action !== "dossier_chat") {
       return NextResponse.json({ error: 'Team data is required' }, { status: 400 });
     }
 
