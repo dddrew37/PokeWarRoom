@@ -118,24 +118,21 @@ export default function Home() {
     }
 
     // 1. Initial Check: Try to get existing session on load
+    const isRecoverySession = typeof window !== 'undefined' && window.location.hash.includes("type=recovery");
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       syncSessionCookie(session);
       setAuthLoading(false);
-      // If session exists, we are done
-      if (session) return;
 
-      // 2. PKCE/Hash Handler: Check the URL for the #access_token hash
+      if (isRecoverySession) {
+        setShowProfileModal(true);
+        setResetSuccess("Recovery session established. Please set a new passkey below.");
+      }
+
+      // Clean the URL bar if there is a hash
       if (typeof window !== 'undefined' && window.location.hash) {
-        const client = supabase;
-        if (client) {
-          client.auth.getUser().then(({ data: { user } }) => {
-            if (user) {
-              // Successfully exchanged token. Clean the URL bar.
-              window.history.replaceState(null, '', window.location.pathname);
-            }
-          });
-        }
+        window.history.replaceState(null, '', window.location.pathname);
       }
     });
 
@@ -207,12 +204,6 @@ export default function Home() {
                 className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg cursor-pointer"
               >
                 👤 Operator Profile
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="text-red-500 hover:text-white hover:border-red-900 hover:bg-red-950/50 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-red-950/45 bg-red-950/10 px-3 py-1.5 rounded-lg cursor-pointer"
-              >
-                ⚠️ Delete Account
               </button>
               <button
                 onClick={async () => {
@@ -384,7 +375,23 @@ export default function Home() {
                 <p className="text-zinc-200 font-extrabold break-all font-sans lowercase">{session.user?.email}</p>
                 
                 <p className="text-[9px] font-bold text-zinc-500 tracking-wider mt-4">Security Passkey ID:</p>
-                <p className="text-zinc-400 break-all text-[10px] font-mono">{session.user?.id}</p>
+                <p className="text-zinc-400 break-all text-[10px] font-mono mb-4">
+                  {session.user?.id ? `${session.user.id.slice(0, 8)}-••••-••••-••••-••••••••••••` : "Unknown"}
+                </p>
+
+                <div className="border-t border-zinc-900 pt-3 mt-3 flex justify-between items-center">
+                  <span className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">Danger Zone</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowProfileModal(false);
+                      setShowDeleteConfirm(true);
+                    }}
+                    className="text-red-500 hover:text-white hover:border-red-950 hover:bg-red-950/40 transition-all flex items-center gap-1 py-1.5 px-3 rounded-lg border border-red-950/30 bg-red-950/10 cursor-pointer text-[8px] font-black uppercase tracking-widest font-mono"
+                  >
+                    ⚠️ Delete Account
+                  </button>
+                </div>
               </div>
 
               {/* Feedback messages */}
