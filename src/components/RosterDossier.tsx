@@ -300,7 +300,9 @@ function ExtractionModal({
 export default function RosterDossier({ session }: { session?: any }) {
   const [pasteInput, setPasteInput]     = useState("");
   const [team, setTeam]                 = useState<ParsedPokemon[]>([]);
-  const [messages, setMessages]         = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [messages, setMessages]         = useState<{ role: "user" | "assistant"; content: string }[]>([
+    { role: "assistant", content: "Let us craft a specialized strategy for this 6-Pokemon roster. What would you like to analyze first?" }
+  ]);
   const [chatInput, setChatInput]       = useState("");
   const [isChatting, setIsChatting]     = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -319,7 +321,9 @@ export default function RosterDossier({ session }: { session?: any }) {
       if (parsed.length === 0) { alert("Could not parse any Pokemon. Please check the paste format."); return; }
       setTeam(parsed);
       setPasteInput("");
-      setMessages([]);
+      setMessages([
+        { role: "assistant", content: "Let us craft a specialized strategy for this 6-Pokemon roster. What would you like to analyze first?" }
+      ]);
     } catch (e) {
       console.error(e);
       alert("Parsing failed. Check your input formatting.");

@@ -41,7 +41,9 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
   const [dossierTab, setDossierTab] = useState<"cores" | "matchups" | "chat">("cores");
 
   // Dossier Sparring Chat States
-  const [dossierChat, setDossierChat] = useState<{ role: string; content: string }[]>([]);
+  const [dossierChat, setDossierChat] = useState<{ role: string; content: string }[]>([
+    { role: "assistant", content: "Let us craft a specialized strategy for this 6-Pokemon roster. What would you like to analyze first?" }
+  ]);
   const [chatInput, setChatInput] = useState("");
   const [isChatting, setIsChatting] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -80,9 +82,9 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setDossierData(data);
-      if (chatContext) {
-        setDossierChat([]); // Wiping chat clean upon successful regeneration
-      }
+      setDossierChat([
+        { role: "assistant", content: "Let us craft a specialized strategy for this 6-Pokemon roster. What would you like to analyze first?" }
+      ]); // Wiping chat clean upon successful regeneration
     } catch (e) {
       console.error("[TeamForge] Deep Dive Assess error:", e);
       alert("Failed to analyze team. Check API config.");
@@ -180,7 +182,9 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
   };
 
   const handleClearChat = () => {
-    setDossierChat([]);
+    setDossierChat([
+      { role: "assistant", content: "Let us craft a specialized strategy for this 6-Pokemon roster. What would you like to analyze first?" }
+    ]);
   };
 
   const handleExport = async () => {
