@@ -1150,9 +1150,21 @@ Note: extracted_team and extracted_tactic may each be null if no relevant data w
         ...(messages || []).map((msg: any) => ({ role: msg.role, content: msg.content }))
       ];
     } else if (action === "builder_chat") {
+      // DeepSeek json_object mode requires the word "json" in at least one user message.
+      // We append a silent suffix to the last user turn to satisfy this constraint.
+      const rawMsgs = (messages || []).map((msg: any) => ({ role: msg.role as string, content: msg.content as string }));
+      if (rawMsgs.length > 0) {
+        const lastIdx = rawMsgs.length - 1;
+        if (rawMsgs[lastIdx].role === "user") {
+          rawMsgs[lastIdx] = {
+            ...rawMsgs[lastIdx],
+            content: rawMsgs[lastIdx].content + "\n\nRespond in JSON format."
+          };
+        }
+      }
       finalMessages = [
         { role: "system", content: builderChatSystemPrompt },
-        ...(messages || []).map((msg: any) => ({ role: msg.role, content: msg.content }))
+        ...rawMsgs
       ];
     } else if (action === "extract_lesson") {
       // Pass the raw chat log as a single user message for the extractor to parse
@@ -1198,7 +1210,9 @@ Extract the single tactical rule.` }
     });
 
     if (!response.ok) {
-      throw new Error("API returned " + response.status);
+      const errBody = await response.text().catch(() => "(unreadable)");
+      console.error(`[coach] API error ${response.status} for action=${action}:`, errBody);
+      throw new Error(`API returned ${response.status}: ${errBody}`);
     }
 
     const data = await response.json();
