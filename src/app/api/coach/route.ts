@@ -41,6 +41,81 @@ function clampSP(sp: any): any {
   return newSp;
 }
 
+function sanitizePokemon(p: any): any {
+  if (!p || typeof p !== 'object' || !p.name) return p;
+  
+  const clean = { ...p };
+  const query = String(clean.name).toLowerCase().trim();
+  const normalizedQuery = query.replace(/[^a-z0-9]/g, '');
+  
+  let dbMatch = metaData.pokemon.find(m => 
+    m.name.toLowerCase() === query || 
+    m.id === query ||
+    m.id === normalizedQuery
+  );
+
+  // Fallbacks for Mega names
+  if (!dbMatch && normalizedQuery.startsWith("mega")) {
+    const baseName = normalizedQuery.substring(4);
+    dbMatch = metaData.pokemon.find(m => m.id === baseName + "mega");
+  }
+  if (!dbMatch && normalizedQuery.endsWith("mega")) {
+    const baseName = normalizedQuery.substring(0, normalizedQuery.length - 4);
+    dbMatch = metaData.pokemon.find(m => m.id === baseName + "mega");
+  }
+
+  if (dbMatch) {
+    clean.name = dbMatch.name;
+    
+    // Validate Ability
+    if (clean.ability) {
+      const abilitiesLower = dbMatch.abilities.map(a => a.toLowerCase().trim());
+      const curAbility = String(clean.ability).toLowerCase().trim();
+      if (!abilitiesLower.includes(curAbility)) {
+        const foundMatch = dbMatch.abilities.find(a => a.toLowerCase().trim() === curAbility);
+        clean.ability = foundMatch || dbMatch.abilities[0] || "No Ability";
+      } else {
+        const idx = abilitiesLower.indexOf(curAbility);
+        clean.ability = dbMatch.abilities[idx];
+      }
+    } else if (dbMatch.abilities.length > 0) {
+      clean.ability = dbMatch.abilities[0];
+    }
+    
+    // Validate Moves
+    if (Array.isArray(clean.moves)) {
+      const dbMovesLower = dbMatch.moves.map(m => m.toLowerCase().trim());
+      const legalMovesLower = mbItemsMoves.legal_moves.map(m => m.toLowerCase().trim());
+      
+      clean.moves = clean.moves.map((move: any) => {
+        if (!move || typeof move !== 'string') return "Protect";
+        const curMove = move.toLowerCase().trim();
+        if (dbMovesLower.includes(curMove) && legalMovesLower.includes(curMove)) {
+          const matchIdx = dbMovesLower.indexOf(curMove);
+          return dbMatch.moves[matchIdx];
+        }
+        // Fallback move that is legal and learned by this Pokemon
+        const fallback = dbMatch.moves.find(dm => {
+          const dmLower = dm.toLowerCase().trim();
+          return legalMovesLower.includes(dmLower) && !clean.moves.some((m: string) => String(m || "").toLowerCase().trim() === dmLower);
+        });
+        return fallback || "Protect";
+      });
+    }
+    
+    // Validate Mega Stone
+    if (clean.item && typeof clean.item === 'string' && clean.item.toLowerCase().endsWith('ite')) {
+      const speciesName = dbMatch.name.toLowerCase();
+      const hasLegalMega = mbRoster.legal_megas.some(m => m.toLowerCase().startsWith(speciesName));
+      if (!hasLegalMega) {
+        clean.item = "Sitrus Berry"; // Swap invalid Mega Stones
+      }
+    }
+  }
+  
+  return clean;
+}
+
 function sanitizeResponse(obj: any): any {
   if (typeof obj === 'string') {
     return obj
@@ -54,6 +129,20 @@ function sanitizeResponse(obj: any): any {
     return obj.map((item) => sanitizeResponse(item));
   }
   if (obj && typeof obj === 'object') {
+    // If it looks like a Pokemon object (has name and moves / ability)
+    if (obj.name && (obj.moves || obj.ability)) {
+      const cleanedPoke = sanitizePokemon(obj);
+      const result: Record<string, any> = {};
+      for (const key of Object.keys(cleanedPoke)) {
+        if (key === 'sp' && cleanedPoke[key] && typeof cleanedPoke[key] === 'object') {
+          result[key] = clampSP(cleanedPoke[key]);
+        } else {
+          result[key] = sanitizeResponse(cleanedPoke[key]);
+        }
+      }
+      return result;
+    }
+
     const result: Record<string, any> = {};
     for (const key of Object.keys(obj)) {
       if (key === 'sp' && obj[key] && typeof obj[key] === 'object') {
@@ -102,7 +191,7 @@ export async function POST(request: Request) {
     // ── RAG: Fetch active user-defined directives from Supabase ─────────────────
     // Only injected into actions that produce tactical playbook/planning output.
     let userDirectivesContext = "";
-    const RAG_ACTIONS = ["turn1", "deepdive", "assess_team", "draft_suggestion", "synergy"];
+    const RAG_ACTIONS = ["turn1", "deepdive", "assess_team", "draft_suggestion", "synergy", "builder_chat", "dossier_chat"];
     if (RAG_ACTIONS.includes(action)) {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -134,7 +223,7 @@ export async function POST(request: Request) {
                 .from('ai_learned_tactics')
                 .select('rule_text')
                 .eq('is_active', true)
-                .eq('user_id', user.id);
+                .or(`user_id.eq.${user.id},user_id.is.null`);
 
               if (!tacticsError && tactics && tactics.length > 0) {
                 userDirectivesContext = tactics
@@ -1150,6 +1239,7 @@ Ensure that every Pokemon in the team is whitelisted and legal according to the 
 1. MULTI-CORE SYNERGY: Do not suggest a collection of random good Pokemon. Every roster must have a clear strategy (e.g. Rain Swift Swim, Sun Chlorophyll, Tailwind Hyper Offense, or Hard Trick Room) with supportive elements (e.g. Fake Out, redirection, pivots like Parting Shot or U-turn, and helper items like Choice Scarf or Focus Sash).
 2. BENCHMARK-DRIVEN SP DISTRIBUTION: Distribute SP stats intentionally. Speed tier stats should explicitly target outspeeding key threats. Bulky Pokemon should invest in HP/Def/SpD to survive specific attacks. Do not just output default values.
 3. ITEM VARIETY & META-COMPLIANCE: Make sure every item is fully legal in Regulation MB. Only one Mega Stone is allowed per roster. Do not suggest duplicate items on the same team.
+4. MOVESET & ABILITY COMPLIANCE: Every Pokemon you recommend MUST run moves and abilities that it can actually learn or possess in the official games. For example, do not suggest Spore on a non-mushroom Pokemon, or Intimidate on a Pokemon that doesn't have it as an ability. Double-check move and ability legality for each specific species.
 
 # SP Distribution Math Engine Constraints
 1. The SP (Stat Point) system uses a strict maximum of 66 total SP per Pokemon.

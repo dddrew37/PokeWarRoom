@@ -62,8 +62,8 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from(TABLE)
-    .select('id, rule_text, is_active, created_at')
-    .eq('user_id', user.id)
+    .select('id, rule_text, is_active, created_at, user_id')
+    .or(`user_id.eq.${user.id},user_id.is.null`)
     .order('created_at', { ascending: false });
 
   if (error) {

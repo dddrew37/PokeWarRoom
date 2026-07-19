@@ -11,13 +11,16 @@ import metaTeamsData from "../data/meta_teams.json";
 import { exportTeamToPokepaste } from "../utils/exporter";
 import { sanitizeText } from "../utils/sanitizeText";
 
+import { triggerAutoLearning } from "../lib/learning";
+
 interface TeamForgeProps {
   team: ParsedPokemon[];
   setTeam: React.Dispatch<React.SetStateAction<ParsedPokemon[]>>;
   session?: any;
+  onTacticLearned?: (rule: string) => void;
 }
 
-export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
+export default function TeamForge({ team, setTeam, session, onTacticLearned }: TeamForgeProps) {
   const [paste, setPaste] = useState("");
   const [mode, setMode] = useState<"paste" | "manual">("manual");
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -117,6 +120,12 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
       if (data.error) throw new Error(data.error);
       if (data.message) {
         setDossierChat(prev => [...prev, { role: "assistant", content: data.message }]);
+        
+        // Asynchronously check and learn strategy in the background
+        const assistantMsg = { role: "assistant" as const, content: data.message };
+        triggerAutoLearning([...updatedChat, assistantMsg], session).then(rule => {
+          if (rule && onTacticLearned) onTacticLearned(rule);
+        });
       }
     } catch (e) {
       console.error("[TeamForge] Dossier chat error:", e);

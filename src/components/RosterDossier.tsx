@@ -297,7 +297,9 @@ function ExtractionModal({
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export default function RosterDossier({ session }: { session?: any }) {
+import { triggerAutoLearning } from "../lib/learning";
+
+export default function RosterDossier({ session, onTacticLearned }: { session?: any, onTacticLearned?: (rule: string) => void }) {
   const [pasteInput, setPasteInput]     = useState("");
   const [team, setTeam]                 = useState<ParsedPokemon[]>([]);
   const [messages, setMessages]         = useState<{ role: "user" | "assistant"; content: string }[]>([
@@ -379,7 +381,15 @@ export default function RosterDossier({ session }: { session?: any }) {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      if (data.message) setMessages(prev => [...prev, { role: "assistant" as const, content: data.message }]);
+      if (data.message) {
+        setMessages(prev => [...prev, { role: "assistant" as const, content: data.message }]);
+        
+        // Asynchronously check and extract strategies in background
+        const assistantMsg = { role: "assistant" as const, content: data.message };
+        triggerAutoLearning([...updatedMessages, assistantMsg], session).then(rule => {
+          if (rule && onTacticLearned) onTacticLearned(rule);
+        });
+      }
     } catch (e) { console.error(e); alert("Failed to get VGC Coach response."); }
     finally { setIsChatting(false); }
   };

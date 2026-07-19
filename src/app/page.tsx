@@ -27,6 +27,16 @@ export default function Home() {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState("");
+  
+  const [learningNotification, setLearningNotification] = useState<string | null>(null);
+
+  const handleTacticLearned = (rule: string) => {
+    setLearningNotification(rule);
+    // Auto-dismiss after 6 seconds
+    setTimeout(() => {
+      setLearningNotification(null);
+    }, 6000);
+  };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -298,12 +308,12 @@ export default function Home() {
       </div>
 
       <div className="w-full relative z-10">
-        {activeTab === "forge" && <TeamForge team={teamState} setTeam={setTeamState} session={session} />}
+        {activeTab === "forge" && <TeamForge team={teamState} setTeam={setTeamState} session={session} onTacticLearned={handleTacticLearned} />}
         {activeTab === "logger" && <TeamPreviewLogger playerTeam={teamState} onGoToForge={() => setActiveTab("forge")} session={session} />}
         {activeTab === "saved" && <SavedStrategies session={session} />}
-        {activeTab === "dossier" && <RosterDossier session={session} />}
+        {activeTab === "dossier" && <RosterDossier session={session} onTacticLearned={handleTacticLearned} />}
         {activeTab === "memory" && <MemoryDashboard session={session} />}
-        {activeTab === "builder" && <AIBuilder setTeam={setTeamState} setActiveTab={setActiveTab} session={session} />}
+        {activeTab === "builder" && <AIBuilder setTeam={setTeamState} setActiveTab={setActiveTab} session={session} onTacticLearned={handleTacticLearned} />}
       </div>
 
       {/* Account Deletion Confirmation Modal */}
@@ -449,6 +459,25 @@ export default function Home() {
               </form>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Learned Tactic Floating Notification Toast */}
+      {learningNotification && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm bg-zinc-950/90 border-2 border-red-500/50 rounded-2xl p-4 shadow-2xl backdrop-blur-md animate-bounce duration-500 flex gap-3 items-start">
+          <div className="h-8 w-8 rounded-full bg-red-950/40 border border-red-500 flex items-center justify-center text-red-500 font-bold shrink-0 animate-pulse">
+            💡
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-[10px] font-black uppercase tracking-widest text-red-500 font-mono">Coach Memory Updated</h4>
+            <p className="text-xs text-zinc-200 font-semibold leading-relaxed uppercase font-mono">{learningNotification}</p>
+          </div>
+          <button
+            onClick={() => setLearningNotification(null)}
+            className="text-zinc-500 hover:text-zinc-300 font-mono text-[9px] font-bold"
+          >
+            ×
+          </button>
         </div>
       )}
     </main>

@@ -12,10 +12,13 @@ interface Message {
   strategy?: string | null;
 }
 
+import { triggerAutoLearning } from "../lib/learning";
+
 interface AIBuilderProps {
   setTeam: React.Dispatch<React.SetStateAction<ParsedPokemon[]>>;
   setActiveTab: (tab: "forge" | "logger" | "saved" | "dossier" | "memory") => void;
   session?: any;
+  onTacticLearned?: (rule: string) => void;
 }
 
 const QUICK_SUGGESTIONS = [
@@ -25,7 +28,7 @@ const QUICK_SUGGESTIONS = [
   "Create an offensive Sun team featuring Mega Houndoom"
 ];
 
-export default function AIBuilder({ setTeam, setActiveTab, session }: AIBuilderProps) {
+export default function AIBuilder({ setTeam, setActiveTab, session, onTacticLearned }: AIBuilderProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -81,6 +84,12 @@ export default function AIBuilder({ setTeam, setActiveTab, session }: AIBuilderP
           strategy: data.strategy || null
         }
       ]);
+
+      // Asynchronously check and learn new VGC principles from this chat turn
+      const assistantMsg = { role: "assistant" as const, content: data.message || "" };
+      triggerAutoLearning([...updatedMessages, assistantMsg], session).then(rule => {
+        if (rule && onTacticLearned) onTacticLearned(rule);
+      });
     } catch (e) {
       console.error("[AIBuilder] Chat error:", e);
       setMessages(prev => [
