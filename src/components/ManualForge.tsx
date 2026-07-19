@@ -285,7 +285,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
           <h3 className="text-2xl font-black text-white tracking-tight">
             {isEditing ? "Edit Pokémon" : "Draft Pokémon"}
           </h3>
-          <p className="text-zinc-400 text-sm mt-1">Configure stats using the 66-SP math engine</p>
+          <p className="text-zinc-400 text-sm mt-1">Configure stats using the SP math engine</p>
         </div>
 
         {/* Basic Info */}
@@ -343,7 +343,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
           </div>
         </div>
 
-        {/* 66-SP Math Engine */}
+        {/* SP Math Engine */}
         <div className="bg-zinc-950 rounded-2xl p-6 border border-zinc-800">
           <div className="flex justify-between items-center mb-6">
             <div>

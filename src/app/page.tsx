@@ -20,6 +20,49 @@ export default function Home() {
   const [isGuest, setIsGuest] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !confirmPassword) {
+      setResetError("Please fill in all fields.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetError("Passwords do not match.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setResetError("Password must be at least 6 characters.");
+      return;
+    }
+    if (!supabase) {
+      setResetError("Supabase client is not initialized.");
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError("");
+    setResetSuccess("");
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setResetSuccess("Passkey updated successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      console.error("[Profile] Error resetting password:", err);
+      setResetError(err.message || "Failed to update passkey.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const syncSessionCookie = (session: any) => {
     if (session) {
@@ -160,6 +203,12 @@ export default function Home() {
           {session && (
             <>
               <button
+                onClick={() => setShowProfileModal(true)}
+                className="text-zinc-400 hover:text-red-500 hover:border-red-900/40 hover:bg-red-950/10 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 rounded-lg cursor-pointer"
+              >
+                👤 Operator Profile
+              </button>
+              <button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="text-red-500 hover:text-white hover:border-red-900 hover:bg-red-950/50 transition-all flex items-center gap-1.5 font-black uppercase tracking-widest text-[8px] border border-red-950/45 bg-red-950/10 px-3 py-1.5 rounded-lg cursor-pointer"
               >
@@ -188,16 +237,16 @@ export default function Home() {
           </div>
           <div>
             <span className="text-zinc-600 mr-1.5 font-semibold">ENGINE:</span>
-            <span className="text-zinc-300 font-black">66-SP V2</span>
+            <span className="text-zinc-300 font-black">SP V2</span>
           </div>
         </div>
       </div>
 
       {/* Tabs Menu */}
-      <div className="w-full max-w-2xl flex bg-black/40 backdrop-blur-md rounded-2xl p-1.5 mb-10 border border-zinc-850 shadow-2xl relative z-10">
+      <div className="w-full max-w-3xl flex bg-black/40 backdrop-blur-md rounded-2xl p-1.5 mb-10 border border-zinc-850 shadow-2xl relative z-10">
         <button
           onClick={() => setActiveTab("forge")}
-          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+          className={`flex-1 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
             activeTab === "forge" 
               ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40" 
               : "text-zinc-500 hover:text-zinc-300"
@@ -206,18 +255,8 @@ export default function Home() {
           Team Forge
         </button>
         <button
-          onClick={() => setActiveTab("logger")}
-          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
-            activeTab === "logger" 
-              ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40" 
-              : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          Live Logger
-        </button>
-        <button
           onClick={() => setActiveTab("dossier")}
-          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+          className={`flex-1 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
             activeTab === "dossier" 
               ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40" 
               : "text-zinc-500 hover:text-zinc-300"
@@ -226,8 +265,28 @@ export default function Home() {
           Roster Dossier
         </button>
         <button
+          onClick={() => setActiveTab("builder")}
+          className={`flex-1 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+            activeTab === "builder"
+              ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40"
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          AI Team Builder
+        </button>
+        <button
+          onClick={() => setActiveTab("logger")}
+          className={`flex-1 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+            activeTab === "logger" 
+              ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40" 
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Live Logger
+        </button>
+        <button
           onClick={() => setActiveTab("saved")}
-          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+          className={`flex-1 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
             activeTab === "saved" 
               ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40" 
               : "text-zinc-500 hover:text-zinc-300"
@@ -237,23 +296,13 @@ export default function Home() {
         </button>
         <button
           onClick={() => setActiveTab("memory")}
-          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
+          className={`flex-1 py-2.5 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
             activeTab === "memory"
               ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40"
               : "text-zinc-500 hover:text-zinc-300"
           }`}
         >
           Coach Memory
-        </button>
-        <button
-          onClick={() => setActiveTab("builder")}
-          className={`flex-1 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${
-            activeTab === "builder"
-              ? "bg-red-950/20 text-red-500 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] border border-red-900/40"
-              : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          AI Builder
         </button>
       </div>
 
@@ -301,6 +350,96 @@ export default function Home() {
                   "Wipe Account"
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Operator Profile Modal */}
+      {showProfileModal && session && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/90 backdrop-blur-sm">
+          <div className="relative max-w-md w-full bg-zinc-900 border-2 border-zinc-800 rounded-3xl p-8 shadow-2xl flex flex-col gap-6">
+            <div className="flex justify-between items-center border-b border-zinc-800 pb-4">
+              <div>
+                <h3 className="text-lg font-black uppercase tracking-wider text-white">Operator Profile</h3>
+                <p className="text-[9px] text-zinc-500 font-mono font-bold uppercase tracking-widest mt-1">Credentials & Passkey Management</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowProfileModal(false);
+                  setResetError("");
+                  setResetSuccess("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                }}
+                className="text-zinc-500 hover:text-zinc-300 text-xs font-mono font-black border border-zinc-800 bg-zinc-950/40 px-2.5 py-1 rounded-md"
+              >
+                ESC
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs font-mono uppercase">
+              <div className="bg-zinc-950 p-4 border border-zinc-800 rounded-xl space-y-2">
+                <p className="text-[9px] font-bold text-zinc-500 tracking-wider">Operational Email:</p>
+                <p className="text-zinc-200 font-extrabold break-all font-sans lowercase">{session.user?.email}</p>
+                
+                <p className="text-[9px] font-bold text-zinc-500 tracking-wider mt-4">Security Passkey ID:</p>
+                <p className="text-zinc-400 break-all text-[10px] font-mono">{session.user?.id}</p>
+              </div>
+
+              {/* Feedback messages */}
+              {resetError && (
+                <div className="bg-red-950/20 border border-red-900/45 text-red-400 p-4 rounded-xl font-bold leading-relaxed">
+                  ⚠️ {resetError}
+                </div>
+              )}
+              {resetSuccess && (
+                <div className="bg-green-950/20 border border-green-900/45 text-green-400 p-4 rounded-xl font-bold leading-relaxed">
+                  ✓ {resetSuccess}
+                </div>
+              )}
+
+              {/* Change Password Form */}
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-bold text-zinc-500 tracking-widest block">New Passkey (Password)</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    disabled={resetLoading}
+                    className="bg-zinc-950 border border-zinc-800 text-zinc-200 placeholder:text-zinc-750 rounded-xl px-4 py-3 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none w-full"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-bold text-zinc-500 tracking-widest block">Confirm Passkey</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    disabled={resetLoading}
+                    className="bg-zinc-950 border border-zinc-800 text-zinc-200 placeholder:text-zinc-750 rounded-xl px-4 py-3 text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none w-full"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={resetLoading}
+                  className="w-full py-3 rounded-xl font-black text-xs transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed bg-red-700 hover:bg-red-600 border border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.2)] uppercase tracking-widest flex items-center justify-center gap-2"
+                >
+                  {resetLoading ? (
+                    <>
+                      <div className="animate-spin h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full" />
+                      <span>Saving Passkey...</span>
+                    </>
+                  ) : (
+                    "Update Passkey"
+                  )}
+                </button>
+              </form>
             </div>
           </div>
         </div>

@@ -515,7 +515,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
               </select>
             </div>
           </div>
-          <p className="text-zinc-400 text-sm font-medium">Build or Import your 66-SP Roster</p>
+          <p className="text-zinc-400 text-sm font-medium">Build or Import your SP Roster</p>
         </div>
 
         <div className="flex bg-black p-1.5 rounded-2xl border-2 border-zinc-800 shadow-inner w-full max-w-md">
@@ -586,7 +586,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
             
             {team.length > 0 && (
                <p className="text-zinc-500 text-[10px] text-center font-bold tracking-widest uppercase">
-                 Team imported. Auto-Optimize calculates 66-SP spreads.
+                 Team imported. Auto-Optimize calculates SP spreads.
                </p>
             )}
           </div>

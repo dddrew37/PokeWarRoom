@@ -276,7 +276,7 @@ export function determineTurnOrder(activePokemon: BattleFieldState | BattleField
     } else if (mon.evs && typeof mon.evs === "object") {
       speEvs = mon.evs.spe || 0;
     } else if (mon.sp && typeof (mon as any).sp === "object") {
-      // Custom 66-SP math conversion: SP * 8 = EV
+      // Custom SP math conversion: SP * 8 = EV
       speEvs = (((mon as any).sp.spe || 0) * 8);
     }
 

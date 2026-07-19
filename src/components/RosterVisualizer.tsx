@@ -34,7 +34,7 @@ export default function RosterVisualizer({ team, onEdit }: { team: ParsedPokemon
           </div>
 
           <div className="bg-black/60 rounded-2xl p-4 border border-zinc-850 shadow-inner">
-            <h4 className="text-[9px] font-black uppercase tracking-widest text-red-500 mb-3 font-mono">66-SP Distribution</h4>
+            <h4 className="text-[9px] font-black uppercase tracking-widest text-red-500 mb-3 font-mono">SP Distribution</h4>
             <div className="grid grid-cols-6 gap-2 text-center text-xs font-black font-mono">
               <div className={p.sp.hp > 0 ? "text-red-500" : "text-zinc-700"}><span className="block text-[8px] font-bold text-zinc-500 uppercase mb-1">HP</span>{p.sp.hp}</div>
               <div className={p.sp.atk > 0 ? "text-red-500" : "text-zinc-700"}><span className="block text-[8px] font-bold text-zinc-500 uppercase mb-1">ATK</span>{p.sp.atk}</div>

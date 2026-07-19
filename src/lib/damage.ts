@@ -19,7 +19,7 @@ export interface DamagePokemon {
   name: string;
   id?: string;
   baseStats?: VGCStats;
-  sp?: Partial<VGCStats>; // Custom 66-SP stats structure
+  sp?: Partial<VGCStats>; // Custom SP stats structure
   nature?: string;
   item?: string;
   ability?: string;
@@ -39,7 +39,7 @@ export interface DamageModifiers {
 }
 
 /**
- * Converts a Pokémon's 66-SP point allocation to its EV representation.
+ * Converts a Pokémon's SP point allocation to its EV representation.
  * EV = (SP - 1) * 8 + 4 (if SP > 0), else 0.
  */
 export function convertSPToEV(sp: number): number {

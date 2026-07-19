@@ -65,7 +65,7 @@ export default function SpeedBoard({
       const key = `p-${i}`;
       const baseSpeed = lookupBaseSpeed(p.name);
 
-      // Derive Speed EVs from 66-SP math
+      // Derive Speed EVs from SP math
       const speEvs = p.sp?.spe !== undefined ? p.sp.spe * 8 : 0;
 
       // Nature modifier

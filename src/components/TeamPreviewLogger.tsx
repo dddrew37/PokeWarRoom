@@ -424,7 +424,7 @@ export default function TeamPreviewLogger({ playerTeam = [], onGoToForge, sessio
             </div>
           </div>
           <p className="text-red-500 text-sm font-bold tracking-widest uppercase">
-            {matchPhase === "turn1" ? `Select Brought ( ${playerLockedIndices.length}/4 )` : "Optimized 66-SP Roster"}
+            {matchPhase === "turn1" ? `Select Brought ( ${playerLockedIndices.length}/4 )` : "Optimized SP Roster"}
           </p>
         </div>
         

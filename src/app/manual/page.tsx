@@ -19,8 +19,8 @@ export default function UserManual() {
       ]
     },
     {
-      q: "3. What is the 66-SP Math Engine?",
-      a: "PokeWarRoom uses a custom, streamlined Stat Point (SP) system instead of the traditional 510 EV system to make quick mental calculations easier mid-match.",
+      q: "3. What is the SP (Skill Points) Math Engine?",
+      a: "PokeWarRoom uses a custom, streamlined Stat Point (SP) / Skill Points system instead of the traditional 510 EV system to make quick mental calculations easier mid-match.",
       bullets: [
         "The Conversion: 252 traditional EVs equal 32 SP. 4 traditional EVs equal 2 SP.",
         "The Cap: A single stat can have a maximum of 32 SP.",
@@ -29,7 +29,7 @@ export default function UserManual() {
     },
     {
       q: "4. How does the \"Auto-Optimize SP\" feature work?",
-      a: "If you import a team without EV spreads, click the \"Auto-Optimize SP\" button in the Team Forge. The AI will evaluate the Pokémon's role and automatically snap the sliders to a mathematically perfect 66-SP distribution. It also generates a brief explanation (visible by hovering over the ? icon next to the stat) detailing why it chose that spread. If you manually adjust a slider afterward, the AI's tooltip for that stat will disappear."
+      a: "If you import a team without EV spreads, click the \"Auto-Optimize SP\" button in the Team Forge. The AI will evaluate the Pokémon's role and automatically snap the sliders to a mathematically perfect SP distribution. It also generates a brief explanation (visible by hovering over the ? icon next to the stat) detailing why it chose that spread. If you manually adjust a slider afterward, the AI's tooltip for that stat will disappear."
     },
     {
       q: "5. What is the \"Beginner Coach\" vs. \"Pro War Room\" toggle?",
@@ -40,7 +40,35 @@ export default function UserManual() {
       ]
     },
     {
-      q: "6. What is the \"Live Logger\" used for?",
+      q: "6. What is the \"AI Team Builder\"?",
+      a: "The AI Team Builder lets you chat with an advanced VGC Coach to brainstorm team strategies. You can ask the AI to build complete custom teams (e.g. \"Build a Rain core around Mega Swampert\"), and it will recommend a fully formatted 6-Pokemon roster with optimized items, moves, abilities, and SP spreads, which you can directly import into the Team Forge or save to your library.",
+      bullets: [
+        "VGC Champion Prompting: The AI is engineered with VGC Champion design logic (Intimidate cycling, benchmark speed creeping, tempo/board pressure, and hazard control).",
+        "Strict Legality Check: Every team generated is automatically audited and filtered to ensure 100% legal species, forms, moves, and held items."
+      ]
+    },
+    {
+      q: "7. How are Regulation M-B Whitelists enforced?",
+      a: "The app enforces absolute compliance with official Regulation M-B whitelists (scraped from rotompicks.com):",
+      bullets: [
+        "Legal Pokemon: Supports exactly the 231 legal base species, regional variants, and 75 Mega Evolutions (including new additions like floette-eternal).",
+        "Legal Items: Strictly whitelists the 148 battle-legal items, Mega Stones, and Berries.",
+        "Legal Moves: Restricts moveset autocompletes to the 486 legal moves.",
+        "Double-Pass Critic: If the primary coach draft recommends an illegal move or item, the VGC Critic AI automatically intercepts, flags, and rewrites the payload before it reaches your screen."
+      ]
+    },
+    {
+      q: "8. How do Operator Accounts, Profiles, and Passkey Resets work?",
+      a: "PokeWarRoom supports full operational credentials and access controls:",
+      bullets: [
+        "Login / Sign Up: Register a secure operator account using your email link and password.",
+        "Forgot Passkey: In the login screen, click 'Forgot Passkey?' to send password recovery instructions to your email.",
+        "Operator Profile Modal: When logged in, click the Profile button in the status bar to view your operator details (email, security ID) and change your password securely.",
+        "Delete Account: You can wipe your account and all associated cloud strategies/teams permanently via the 'Delete Account' button."
+      ]
+    },
+    {
+      q: "9. How does the \"Live Logger\" work?",
       a: "The Live Logger is your mid-match tactical dashboard, designed to be used during the intense 90-second Team Preview phase.",
       bullets: [
         "Scouting: As you see your opponent's team, quickly input their 6 Pokémon.",
@@ -49,16 +77,8 @@ export default function UserManual() {
       ]
     },
     {
-      q: "7. What is the Visual Team Grading Dashboard?",
-      a: "When you assess a team in the Forge or Study Dossier, the AI scores your overall composition out of 100 on four critical pillars: Offense, Bulk, Speed Control, and Synergy. These scores are displayed as visual progress bars. If your team is fundamentally flawed, the dashboard will flag a \"Glaring Weakness Alert\" before you even play a match."
-    },
-    {
-      q: "8. How does the AI \"Learn\"? (The Memory Engine)",
+      q: "10. How does the AI \"Learn\"? (The Memory Engine)",
       a: "PokeWarRoom features a Long-Term Memory Engine. After a match, open the Match Debrief modal to log a Win or Loss and add a brief note about what happened. The backend extracts a concrete VGC rule from that debrief and saves it to your database. The AI cross-references this memory bank in future sessions, actively avoiding strategies that have burned you in the past."
-    },
-    {
-      q: "9. Can I play matches against other people in the app?",
-      a: "No. PokeWarRoom is strictly a solo preparation and coaching tool. The app will never host simulation battles. All actual gameplay must happen on Pokémon Showdown or your Nintendo Switch."
     }
   ];
 

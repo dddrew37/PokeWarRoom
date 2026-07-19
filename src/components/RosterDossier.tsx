@@ -360,7 +360,7 @@ export default function RosterDossier({ session }: { session?: any }) {
           return p;
         }));
       }
-    } catch (e) { console.error(e); alert("Failed to calculate optimal 66-SP spreads."); }
+    } catch (e) { console.error(e); alert("Failed to calculate optimal SP spreads."); }
     finally { setIsOptimizing(false); }
   };
 
@@ -500,7 +500,7 @@ export default function RosterDossier({ session }: { session?: any }) {
       {/* Header */}
       <div className="space-y-2">
         <h2 className="text-3xl font-black tracking-tight text-white uppercase">Roster Study Dossier</h2>
-        <p className="text-zinc-400 text-sm font-medium">Import any meta team sheet to visually inspect their 66-SP splits and debate tactics with the sparring coach.</p>
+        <p className="text-zinc-400 text-sm font-medium">Import any meta team sheet to visually inspect their SP splits and debate tactics with the sparring coach.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -542,7 +542,7 @@ export default function RosterDossier({ session }: { session?: any }) {
                     disabled={isOptimizing}
                     className="px-4 py-2 rounded-lg font-black text-[10px] bg-red-700 hover:bg-red-600 text-white border border-red-500 uppercase tracking-widest transition-all disabled:opacity-50"
                   >
-                    {isOptimizing ? "Optimizing..." : "Optimize 66-SP Spreads"}
+                    {isOptimizing ? "Optimizing..." : "Optimize SP Spreads"}
                   </button>
                 </div>
               )}
@@ -562,12 +562,12 @@ export default function RosterDossier({ session }: { session?: any }) {
                         onError={(e) => { e.currentTarget.src = POKEBALL_FALLBACK; }}
                       />
                     </div>
-                    <div className="text-[10px] text-zinc-350 space-y-1 font-mono uppercase tracking-wider">
+                    <div className="text-[10px] text-zinc-355 space-y-1 font-mono uppercase tracking-wider">
                       <p><span className="font-bold text-zinc-500">Ability:</span> <span className="text-zinc-200 font-extrabold">{p.ability || "None"}</span></p>
                       <p><span className="font-bold text-zinc-500">Nature:</span> <span className="text-zinc-200 font-extrabold">{p.nature || "Neutral"}</span></p>
                     </div>
                     <div className="bg-black/40 rounded-xl p-3 border border-zinc-900">
-                      <h4 className="text-[8px] font-black uppercase text-red-500 mb-2 font-mono">66-SP Stats</h4>
+                      <h4 className="text-[8px] font-black uppercase text-red-500 mb-2 font-mono">SP Stats</h4>
                       <div className="grid grid-cols-6 gap-1 text-center text-[10px] font-black font-mono">
                         <div className={p.sp.hp  > 0 ? "text-red-500" : "text-zinc-700"}><span className="block text-[8px] font-bold text-zinc-500 uppercase mb-0.5">HP</span>{p.sp.hp}</div>
                         <div className={p.sp.atk > 0 ? "text-red-500" : "text-zinc-700"}><span className="block text-[8px] font-bold text-zinc-500 uppercase mb-0.5">ATK</span>{p.sp.atk}</div>
