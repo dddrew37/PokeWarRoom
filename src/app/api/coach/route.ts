@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import staticMetaTeams from '../../../data/meta_teams.json';
 import metaData from '../../../data/meta_data.json';
 import mbRoster from '../../../data/regulation_mb_roster.json';
+import mbItemsMoves from '../../../data/regulation_mb_items_moves.json';
 
 function sanitizeResponse(obj: any): any {
   if (typeof obj === 'string') {
@@ -145,17 +146,21 @@ LEGAL ABILITIES: ${[
   )
 ].sort().join(", ")}
 
-IRONCLAD COMMAND: Under no circumstances may you hallucinate a Pokemon or Ability that does not appear in the lists above. If a user's roster contains a custom entity, treat it as valid per the ABSOLUTE REALITY OVERRIDE - but never suggest new unlisted entities in your output.
+LEGAL ITEMS: ${mbItemsMoves.legal_items.join(", ")}
+
+LEGAL MOVES: ${mbItemsMoves.legal_moves.join(", ")}
+
+IRONCLAD COMMAND: Under no circumstances may you hallucinate a Pokemon, Ability, Item, or Move that does not appear in the lists above. If a user's roster contains a custom entity, treat it as valid per the ABSOLUTE REALITY OVERRIDE - but never suggest new unlisted entities in your output.
 
 # EXPLICITLY BANNED (PRE-TRAINED BIAS OVERRIDE)
 Urshifu (all forms), Flutter Mane, Tornadus, Amoonguss, and Ogerpon are BANNED in this format. You are strictly forbidden from generating tactics that use or mention them unless the user explicitly forces them in their own roster.
 
 [MANDATORY CHAIN-OF-THOUGHT LEGALITY CHECK]
-Before suggesting ANY Pokemon, Mega Evolution, or Item in your JSON output, you MUST:
-1. Cross-reference EVERY proposed Pokemon against the STRICT LEGALITY DICTIONARY above.
+Before suggesting ANY Pokemon, Mega Evolution, Item, or Move in your JSON output, you MUST:
+1. Cross-reference EVERY proposed Pokemon, Item, and Move against the STRICT LEGALITY DICTIONARY above.
 2. Output your verification in the "legality_verification" array at the VERY TOP of your JSON response.
-3. If is_in_strict_dictionary is false for any proposed Pokemon, you MUST discard it and pick a legal alternative from the dictionary immediately.
-4. Do NOT output any Pokemon that fails this check. The legality_verification array proves you performed due diligence.
+3. If is_in_strict_dictionary is false for any proposed element, you MUST discard it and pick a legal alternative from the dictionary immediately.
+4. Do NOT output any Pokemon, Item, or Move that fails this check. The legality_verification array proves you performed due diligence.
 `;
 
     if (userDirectivesContext) {
@@ -582,7 +587,7 @@ ${REGULATION_MB_CONTEXT}
 
 # MANDATORY INSTRUCTIONS:
 - Review the provided Primary Draft JSON against the original VGC user request/board state.
-- If you find any mechanical error, rule violation, or illegal play (such as the failures/immunities listed above), rewrite the affected sections of the JSON to use legal, optimal plays.
+- If you find any mechanical error, rule violation, illegal play (such as the failures/immunities listed above), or any Pokemon, Item, or Move that is NOT in the Whitelist/STRICT LEGALITY DICTIONARY, rewrite the affected sections of the JSON to use legal, optimal plays.
 - If the draft is mechanically flawless, approve it as is.
 - The output MUST be a JSON object conforming EXACTLY to the same JSON schema requested by the action. Do not add any markdown bolding, explanation, or text outside the JSON.
 `;

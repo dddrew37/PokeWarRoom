@@ -5,6 +5,8 @@ import Combobox from "./Combobox";
 import { ParsedPokemon, Stats } from "../lib/parser";
 import { POKEBALL_FALLBACK } from "../lib/pokemon";
 import metaData from "../data/meta_data.json";
+import mbRoster from "../data/regulation_mb_roster.json";
+import mbItemsMoves from "../data/regulation_mb_items_moves.json";
 
 interface ManualForgeProps {
   onAddPokemon: (pokemon: ParsedPokemon) => void;
@@ -42,7 +44,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
       const metadataMon = metaData.pokemon.find(m => m.name.toLowerCase() === p.name.toLowerCase());
       setName(metadataMon ? metadataMon.name : p.name);
       
-      const canonicalItem = metaData.legal_items.find(i => i.toLowerCase() === (p.item || "").toLowerCase()) || p.item || "";
+      const canonicalItem = mbItemsMoves.legal_items.find(i => i.toLowerCase() === (p.item || "").toLowerCase()) || p.item || "";
       setItem(canonicalItem);
       
       const canonicalAbility = metadataMon?.abilities.find(a => a.toLowerCase() === (p.ability || "").toLowerCase()) || p.ability || "";
@@ -50,7 +52,10 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
       
       setNature(p.nature || "");
       
-      const availableMoves = metadataMon ? metadataMon.moves : metaData.legal_moves;
+      const availableMovesRaw = metadataMon ? metadataMon.moves : mbItemsMoves.legal_moves;
+      const availableMoves = availableMovesRaw.filter(m =>
+        mbItemsMoves.legal_moves.map(lm => lm.toLowerCase()).includes(m.toLowerCase())
+      );
       const matchMove = (m: string) => {
         if (!m) return "";
         return availableMoves.find(am => am.toLowerCase() === m.toLowerCase()) || m;
@@ -212,18 +217,50 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
     }
   };
 
-  const pokemonOptions = metaData.pokemon.map(p => p.name);
+  const pokemonOptions = useMemo(() => {
+    return metaData.pokemon
+      .filter(p => {
+        const lower = p.name.toLowerCase();
+        const id = p.id.toLowerCase();
+        return mbRoster.legal_species.includes(lower) ||
+               mbRoster.legal_forms.includes(lower) ||
+               mbRoster.legal_megas.includes(lower) ||
+               mbRoster.legal_species.some(s => lower.startsWith(s + "-")) ||
+               mbRoster.legal_forms.some(f => lower.startsWith(f + "-")) ||
+               mbRoster.legal_megas.some(m => lower.startsWith(m + "-")) ||
+               mbRoster.legal_species.includes(id) ||
+               mbRoster.legal_forms.includes(id) ||
+               mbRoster.legal_megas.includes(id);
+      })
+      .map(p => p.name);
+  }, []);
+
   const selectedPokemonData = useMemo(() => metaData.pokemon.find(p => p.name === name), [name]);
   const abilityOptions = selectedPokemonData ? selectedPokemonData.abilities : [];
-  const availableMoves = selectedPokemonData ? selectedPokemonData.moves : metaData.legal_moves;
+  
+  const availableMoves = useMemo(() => {
+    const rawMoves = selectedPokemonData ? selectedPokemonData.moves : mbItemsMoves.legal_moves;
+    return rawMoves.filter(m =>
+      mbItemsMoves.legal_moves.includes(m) ||
+      mbItemsMoves.legal_moves.map(lm => lm.toLowerCase()).includes(m.toLowerCase())
+    );
+  }, [selectedPokemonData]);
 
-  const isValidSpecies = metaData.pokemon.some(p => p.name === name);
+  const isValidSpecies = useMemo(() => pokemonOptions.includes(name), [pokemonOptions, name]);
   // Mega Stones end in 'ite' (Froslassite, Gardevoirite, etc.) and are always legal
   const isMegaStone = item.toLowerCase().endsWith('ite');
-  const isValidItem = item !== "" && (isMegaStone || metaData.legal_items.includes(item));
+  const isValidItem = item !== "" && (
+    isMegaStone || 
+    mbItemsMoves.legal_items.includes(item) || 
+    mbItemsMoves.legal_items.map(i => i.toLowerCase()).includes(item.toLowerCase())
+  );
   const isValidAbility = ability !== "" && abilityOptions.includes(ability);
   const isValidNature = nature !== "";
-  const isValidMoves = moves[0] !== "" && moves.every(m => m === "" || availableMoves.includes(m));
+  const isValidMoves = moves[0] !== "" && moves.every(m => 
+    m === "" || 
+    availableMoves.includes(m) || 
+    availableMoves.map(am => am.toLowerCase()).includes(m.toLowerCase())
+  );
   
   const hasAtLeastOneMove = moves.some(m => m.trim() !== "");
   const isEditing = activeEditIndex !== null;
@@ -231,8 +268,8 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
 
   // Compute a human-readable list of unmet conditions for the tooltip / diagnostic
   const validationIssues: string[] = [];
-  if (!isValidSpecies) validationIssues.push(`Species not set or not in legal list`);
-  if (!isValidItem)    validationIssues.push(`Item not set or not in legal list (Mega Stones ending in "ite" are auto-allowed)`);
+  if (!isValidSpecies) validationIssues.push(`Species not set or not in Regulation MB legal list`);
+  if (!isValidItem)    validationIssues.push(`Item not set or not in Regulation MB legal list (Mega Stones ending in "ite" are auto-allowed)`);
   if (!isValidAbility) validationIssues.push(`Ability not set or not valid for species`);
   if (!isValidNature)  validationIssues.push(`Nature not set`);
   if (!isValidMoves)   validationIssues.push(`Move 1 is required; all selected moves must be legal`);
@@ -254,7 +291,7 @@ export default function ManualForge({ onAddPokemon, onUpdatePokemon, canAdd, tea
         {/* Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <Combobox label="Species" value={name} onChange={setName} options={pokemonOptions} placeholder="e.g. Incineroar" />
-          <Combobox label="Item" value={item} onChange={setItem} options={metaData.legal_items} placeholder="e.g. Sitrus Berry" />
+          <Combobox label="Item" value={item} onChange={setItem} options={mbItemsMoves.legal_items} placeholder="e.g. Sitrus Berry" />
           <Combobox label="Ability" value={ability} onChange={setAbility} options={abilityOptions} placeholder="e.g. Intimidate" />
           <Combobox label="Nature" value={nature} onChange={setNature} placeholder="e.g. Careful" />
         </div>
