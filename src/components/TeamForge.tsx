@@ -307,7 +307,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
     console.log("[TeamForge] team.length =", team.length, "| teamName =", JSON.stringify(teamName), "| supabase configured =", !!supabase);
 
     if (team.length !== 6) {
-      const msg = `Cannot save: roster has ${team.length}/6 PokÃ©mon. You need exactly 6 to save.`;
+      const msg = `Cannot save: roster has ${team.length}/6 Pokemon. You need exactly 6 to save.`;
       console.warn("[TeamForge] Guard:", msg);
       alert(msg);
       return;
@@ -443,7 +443,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
   };
 
   /**
-   * Defensive normalizer: ensures every PokÃ©mon loaded from Supabase has
+   * Defensive normalizer: ensures every Pokemon loaded from Supabase has
    * the full expected shape. Fills missing `sp` / `evs` / `moves` fields so
    * legacy rows never crash the UI.
    */
@@ -511,7 +511,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                 onChange={(e) => setFormat(e.target.value)}
                 className="bg-zinc-900 border border-zinc-700 text-zinc-300 text-sm font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:border-red-500"
               >
-                <option value="reg_mb">PokÃ©mon Champions (Reg M-B)</option>
+                <option value="reg_mb">Pokemon Champions (Reg M-B)</option>
               </select>
             </div>
           </div>
@@ -968,7 +968,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                           {dossierData.red_flags && dossierData.red_flags.length > 0 && (
                             <div className="bg-red-950/20 border-2 border-red-900/50 rounded-2xl p-5 flex flex-col gap-3 shadow-[0_0_15px_rgba(220,38,38,0.15)]">
                               <div className="flex items-center gap-2 text-red-500 font-black uppercase tracking-widest text-xs">
-                                <span>⚠ï¸</span><span>Glaring Weakness Alert</span>
+                                <span>⚠</span><span>Glaring Weakness Alert</span>
                               </div>
                               <ul className="space-y-1.5 font-mono text-[11px] font-semibold text-zinc-200">
                                 {dossierData.red_flags.map((flag: string, i: number) => (
@@ -1021,7 +1021,7 @@ export default function TeamForge({ team, setTeam, session }: TeamForgeProps) {
                                       <span className="text-xs font-black text-red-400 uppercase tracking-widest">{core.core_name}</span>
                                       <span className="text-[9px] font-black bg-red-950/30 border border-red-900/30 text-red-500 rounded px-1.5 py-0.5 uppercase font-mono">Core {cIdx + 1}</span>
                                     </div>
-                                    {/* PokÃ©mon Sprites */}
+                                    {/* Pokemon Sprites */}
                                     <div className="flex gap-3 justify-center flex-wrap">
                                       {(core.pokemon_lineup || []).map((monName: string, mIdx: number) => {
                                         const match = team.find((t: any) => t.name.toLowerCase() === monName.toLowerCase() || t.name.toLowerCase().includes(monName.toLowerCase()));

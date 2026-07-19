@@ -261,7 +261,7 @@ export default function SpeedBoard({
                     : "bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
                 }`}
               >
-                Opp Tailwind
+                Opponent Tailwind
               </button>
             )}
           </div>
@@ -368,9 +368,15 @@ export default function SpeedBoard({
                       </span>
 
                       {/* Base Speed (dim label) */}
-                      <span className="text-[7px] font-bold text-zinc-600 font-mono">
+                      <span className="text-[7px] font-bold text-zinc-650 font-mono">
                         Base: {slot.baseSpeed}
                       </span>
+
+                      {/* Calculated Speed Row */}
+                      <div className="text-[9px] font-black text-red-500 font-mono mt-0.5 bg-red-950/30 border border-red-900/40 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-sm select-none">
+                        <span>Speed:</span>
+                        <span className="text-white font-bold">{slot.modifiedSpeed}</span>
+                      </div>
 
                       {/* ── Speed Stage Adjuster ────────────────────────── */}
                       <div className="flex items-center gap-[1px] mt-1">
