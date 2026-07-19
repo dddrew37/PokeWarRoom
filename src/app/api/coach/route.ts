@@ -594,7 +594,7 @@ Your ONLY job is to analyze why a match was won or lost based on:
 3. The player's post-match observations.
 
 Extract a single, hard-hitting VGC tactical rule/instruction (under 30 words) that we must remember for future matches.
-Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Tornadus against Regieleki if they have tailwind pressure.'
+Start the sentence with 'MATCHUP OVERRIDE:'. Example: 'MATCHUP OVERRIDE: Do not lead Pelipper against Abomasnow if they have tailwind pressure.'
 Do not use markdown bolding. If the notes are too general or useless to extract a concrete rule, output exactly: NO_RULE`;
 
     // ── Synergy Scanner Prompt ────────────────────────────────────────────────
@@ -706,7 +706,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
 
       if (action === "match_debrief") {
         return NextResponse.json({
-          message: "MATCHUP OVERRIDE: Do not lead Tornadus when opponents have active Trick Room setters and redirection."
+          message: "MATCHUP OVERRIDE: Do not lead Pelipper when opponents have active Trick Room setters and redirection."
         });
       }
 
@@ -793,7 +793,7 @@ You must output your response STRICTLY as a JSON object matching this schema:
       }
 
       if (action === "assess_team") {
-        const defaultMons = ["Murkrow", "Gholdengo", "Incineroar", "Sinistcha", "Dragonite", "Rillaboom"];
+        const defaultMons = ["Pelipper", "Gholdengo", "Incineroar", "Sinistcha", "Dragonite", "Kingambit"];
         const p1 = team[0]?.name || defaultMons[0];
         const p2 = team[1]?.name || defaultMons[1];
         const p3 = team[2]?.name || defaultMons[2];
@@ -1091,6 +1091,11 @@ You are a competitive Pokemon VGC Coach assisting the user in brainstorming team
 You can recommend full 6-Pokemon team rosters or discuss strategy.
 If the user asks you to build or suggest a team, or if you propose a team roster during the conversation, you MUST generate a complete 6-Pokemon team matching the requested JSON schema.
 Ensure that every Pokemon in the team is whitelisted and legal according to the whitelisted legal species and forms.
+
+# SP Distribution Math Engine Constraints
+1. The SP (Stat Point) system uses a strict maximum of 66 total SP per Pokemon.
+2. The total sum of SP across HP, atk, def, spa, spd, and spe MUST EXACTLY EQUAL 66.
+3. NO individual stat can exceed 32 SP. (0 is the minimum).
 
 You MUST return ONLY valid JSON matching this exact schema:
 {
