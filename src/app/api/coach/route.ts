@@ -691,7 +691,9 @@ You must output your response STRICTLY as a JSON object matching this schema:
       : "Analyze the following team and provide a VGC Audit and Lead Plan.\nTeam: " + JSON.stringify(team, null, 2) + (opponent ? "\nOpponent: " + JSON.stringify(opponent, null, 2) : "");
 
     const apiKey = process.env.AI_API_KEY;
-    const baseUrl = process.env.AI_BASE_URL || "https://api.deepseek.com/v1";
+    let baseUrl = process.env.AI_BASE_URL || "https://api.deepseek.com/v1";
+    // Strip trailing /chat/completions to avoid double appending
+    baseUrl = baseUrl.replace(/\/chat\/completions\/?$/, "");
     
     const model = process.env.AI_MODEL || process.env.AI_HEAVY_MODEL || "deepseek-chat";
 
