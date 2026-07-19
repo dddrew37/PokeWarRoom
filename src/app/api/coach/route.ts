@@ -1150,8 +1150,9 @@ Note: extracted_team and extracted_tactic may each be null if no relevant data w
 
     let finalMessages = [];
     if (action === "dossier_chat") {
+      const activeTeamPrompt = `${dossierChatSystemPrompt}\n\nACTIVE TEAM ROSTER BEING DISCUSSED:\n${JSON.stringify(team || [], null, 2)}`;
       finalMessages = [
-        { role: "system", content: dossierChatSystemPrompt },
+        { role: "system", content: activeTeamPrompt },
         ...(messages || []).map((msg: any) => ({ role: msg.role, content: msg.content }))
       ];
     } else if (action === "builder_chat") {
